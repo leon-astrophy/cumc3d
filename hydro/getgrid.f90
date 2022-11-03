@@ -128,29 +128,30 @@ radbar2(:,:,:) = rad2(:,:,:)/rmax2
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-! Get the volume 
+! Get the volume, assuming full box simulation ! 
 IF(coordinate_flag == 0) THEN
-    vol2(:,:,:) = 8.0D0 * dh_x * dh_y * dh_z
+    vol2(:,:,:) = dh_x * dh_y * dh_z
 ELSEIF(coordinate_flag == 1) THEN
-   	IF(hemisphere_flag == 1) THEN
-      	! You need to change this volume if we use
-      	! stricktly Cartesian coordinate
-      	DO j = -4, length_step_r_2 + 5, 1
-         	vol2(j,:) = pi * (rF2 (j)**2 - rF2 (j-1)**2) * dxz
-      	ENDDO
-   	ELSEIF(hemisphere_flag == 0) THEN
-      	DO j = -4, length_step_r_2 + 5, 1
-         	vol2(j,:) = 2.0D0 * pi * (rF2 (j)**2 - rF2 (j-1)**2) * dxz
-      	ENDDO
-   	ELSE
-      	STOP 'Check hemisphere flag, stopped at GetGrid'
-   	ENDIF
+   	DO j = -2, nx_2 + 3
+    	vol2(j,:,:) = 0.5D0 * (xF2 (j)**2 - xF2 (j-1)**2) * dh_y * dh_z
+    ENDDO
 ELSEIF(coordinate_flag == 2) THEN
-    DO j = -4, length_step_r_2 + 5, 1	
-	 	DO k = -4, length_step_z_2 + 5, 1
-           vol2(j,k) = (4.0D0/3.0D0) * pi * (rF2 (j)**3 - rF2 (j-1)**3) * ABS(COS(zF2(k)) - COS(zF2(k-1)))
+    DO j = -2, nx_2 + 3
+	 	DO k = -2, ny_2 + 3
+           vol2(j,k,:) = (1.0D0/3.0D0) * (xF2 (j)**3 - xF2 (j-1)**3) * ABS(COS(yF2(k)) - COS(yF2(k-1))) * dh_z
 	 	END DO
     ENDDO
+END IF
+
+! Special treatment for full box simulation !
+IF(NOT(fullx_flag)) THEN
+	vol2(:,:,:) = vol2(:,:,:)*2.0D0
+END IF
+IF(NOT(fully_flag)) THEN
+	vol2(:,:,:) = vol2(:,:,:)*2.0D0
+END IF
+IF(NOT(fullz_flag)) THEN
+	vol2(:,:,:) = vol2(:,:,:)*2.0D0
 END IF
 
 ! Dimensionless volume !
