@@ -2,8 +2,16 @@ include ../make.inc
 
 SOURCES=definition.f90 \
 	main.f90 \
+	boundary.f90 \
+	findpressure.f90 \
+	fromrvetou.f90 \
+	getgrid.f90 \
 	initial.f90 \
-	setup.f90
+	riemann1d.f90 \
+	rungekutta.f90 \
+	setup.f90 \
+	soundspeed.f90 \
+	update.f90 
 
 OBJECTS=$(SOURCES:.f90=.o )
 

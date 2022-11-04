@@ -10,19 +10,6 @@ IMPLICIT NONE
 SAVE
 INCLUDE "parameter.h"
 
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-! Supplementary data for eos table
-
-! Number of line in the polytropic EOS table
-INTEGER :: eoslineno = 27644
-
-! Number of lines in the other EOS tables
-INTEGER :: eosline1, eosline2
-
-! THe corresponding EOS tables for DM and NM
-REAL (DP), ALLOCATABLE, DIMENSION(:,:) :: eostable1
-REAL (DP), ALLOCATABLE, DIMENSION(:,:) :: eostable2
-
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 ! Boundary flag for variables !
 
@@ -124,7 +111,8 @@ REAL (DP), ALLOCATABLE, DIMENSION (:) :: prim1_a
 REAL (DP), ALLOCATABLE, DIMENSION (:,:,:,:) :: prim1
 REAL (DP), ALLOCATABLE, DIMENSION (:,:,:,:) :: cons1
 
-! DM speed of sound, and pressure derivatives !
+! DM pressure, speed of sound, and pressure derivatives !
+REAL (DP), ALLOCATABLE, DIMENSION (:,:,:) :: p1
 REAL (DP), ALLOCATABLE, DIMENSION (:,:,:) :: cs1
 REAL (DP), ALLOCATABLE, DIMENSION (:,:,:) :: dpdrho1
 REAL (DP), ALLOCATABLE, DIMENSION (:,:,:) :: dpdeps1
@@ -148,11 +136,6 @@ REAL (DP), ALLOCATABLE, DIMENSION (:,:,:) :: phi1_z
 
 ! Lapse function !
 REAL (DP), ALLOCATABLE, DIMENSION (:,:,:) :: alapse_1
-
-! DM moving frame velocity !
-REAL (DP), ALLOCATABLE, DIMENSION (:,:,:) :: vel_frame_x1
-REAL (DP), ALLOCATABLE, DIMENSION (:,:,:) :: vel_frame_y1
-REAL (DP), ALLOCATABLE, DIMENSION (:,:,:) :: vel_frame_z1
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 ! The following are the hydro set for NM sector
@@ -199,11 +182,6 @@ REAL (DP), ALLOCATABLE, DIMENSION (:,:,:) :: alapse_2
 REAL (DP), ALLOCATABLE, DIMENSION (:,:,:) :: dpdx2
 REAL (DP), ALLOCATABLE, DIMENSION (:,:,:) :: dpdy2
 REAL (DP), ALLOCATABLE, DIMENSION (:,:,:) :: dpdz2
-
-! Moving frame velocities !
-REAL (DP), ALLOCATABLE, DIMENSION (:,:,:) :: vel_frame_x2
-REAL (DP), ALLOCATABLE, DIMENSION (:,:,:) :: vel_frame_y2
-REAL (DP), ALLOCATABLE, DIMENSION (:,:,:) :: vel_frame_z2
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 ! Section for multipole solvers 
@@ -255,13 +233,15 @@ REAL (DP) :: dt
 REAL (DP) :: delta1	
 REAL (DP) :: delta2
 
-! Fermi momenta !
-REAL (DP) :: dlfmmo1
-REAL (DP) :: dlfmmo2
+! Polytropic index !
+REAL (DP) :: kgas1, ggas1
+REAL (DP) :: kgas2, ggas2
 
-! Fermi gas scaling constants !
-REAL (DP) :: a_max1, a_max2
-REAL (DP) :: b_max1, b_max2
+! Atmospheric temperature !
+REAL (DP) :: temp2_a
+
+! Atmospheric epsilon !
+REAL (DP) :: eps1_a, eps2_a
 
 ! Masses ! 
 REAL (DP) :: mass1, mass2

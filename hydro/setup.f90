@@ -167,11 +167,16 @@ ALLOCATE(cons2(-2:nx_2+3,-2:ny_2+3,-2:nz_2+3,imin2:imax2))
 
 ! Allocate flux arrays for NM !
 ALLOCATE(dfdx2(-2:nx_2+3,-2:ny_2+3,-2:nz_2+3,imin2:imax2))
-ALLOCATE(dfdy2(-2:nx_2+3,-2:ny_2+3,-2:nz_2+3,imin2:imax2))
-ALLOCATE(dfdz2(-2:nx_2+3,-2:ny_2+3,-2:nz_2+3,imin2:imax2))
 ALLOCATE(flx_2(-2:nx_2+3,-2:ny_2+3,-2:nz_2+3,imin2:imax2))
-ALLOCATE(fly_2(-2:nx_2+3,-2:ny_2+3,-2:nz_2+3,imin2:imax2))
-ALLOCATE(flz_2(-2:nx_2+3,-2:ny_2+3,-2:nz_2+3,imin2:imax2))
+IF(dimension_flag == 2) THEN
+	ALLOCATE(dfdy2(-2:nx_2+3,-2:ny_2+3,-2:nz_2+3,imin2:imax2))
+	ALLOCATE(fly_2(-2:nx_2+3,-2:ny_2+3,-2:nz_2+3,imin2:imax2))
+ELSEIF(dimension_flag == 3) THEN
+	ALLOCATE(dfdy2(-2:nx_2+3,-2:ny_2+3,-2:nz_2+3,imin2:imax2))
+	ALLOCATE(fly_2(-2:nx_2+3,-2:ny_2+3,-2:nz_2+3,imin2:imax2))
+	ALLOCATE(dfdz2(-2:nx_2+3,-2:ny_2+3,-2:nz_2+3,imin2:imax2))
+	ALLOCATE(flz_2(-2:nx_2+3,-2:ny_2+3,-2:nz_2+3,imin2:imax2))
+END IF
 ALLOCATE(src2(-2:nx_2+3,-2:ny_2+3,-2:nz_2+3,imin2:imax2))
 
 ! For DM !
@@ -185,11 +190,16 @@ IF(RUNDM_flag) THEN
     ALLOCATE(prim1(-2:nx_1+3,-2:ny_1+3,-2:nz_1+3,imin1:imax1))
     ALLOCATE(cons1(-2:nx_1+3,-2:ny_1+3,-2:nz_1+3,imin1:imax1))
     ALLOCATE(dfdx1(-2:nx_1+3,-2:ny_1+3,-2:nz_1+3,imin1:imax1))
-    ALLOCATE(dfdy1(-2:nx_1+3,-2:ny_1+3,-2:nz_1+3,imin1:imax1))
-    ALLOCATE(dfdz1(-2:nx_1+3,-2:ny_1+3,-2:nz_1+3,imin1:imax1))
-    ALLOCATE(flx_1(-2:nx_1+3,-2:ny_1+3,-2:nz_1+3,imin1:imax1))
-    ALLOCATE(fly_1(-2:nx_1+3,-2:ny_1+3,-2:nz_1+3,imin1:imax1))
-    ALLOCATE(flz_1(-2:nx_1+3,-2:ny_1+3,-2:nz_1+3,imin1:imax1))
+	ALLOCATE(flx_1(-2:nx_1+3,-2:ny_1+3,-2:nz_1+3,imin1:imax1))
+	IF(dimension_flag == 2) THEN
+   		ALLOCATE(dfdy1(-2:nx_1+3,-2:ny_1+3,-2:nz_1+3,imin1:imax1))
+		ALLOCATE(fly_1(-2:nx_1+3,-2:ny_1+3,-2:nz_1+3,imin1:imax1))
+    ELSEIF(dimension_flag == 3) THEN
+   		ALLOCATE(dfdy1(-2:nx_1+3,-2:ny_1+3,-2:nz_1+3,imin1:imax1))
+		ALLOCATE(fly_1(-2:nx_1+3,-2:ny_1+3,-2:nz_1+3,imin1:imax1))
+    	ALLOCATE(dfdz1(-2:nx_1+3,-2:ny_1+3,-2:nz_1+3,imin1:imax1))
+    	ALLOCATE(flz_1(-2:nx_1+3,-2:ny_1+3,-2:nz_1+3,imin1:imax1))
+	END IF
     ALLOCATE(src1(-2:nx_1+3,-2:ny_1+3,-2:nz_1+3,imin1:imax1))
 END IF
 
@@ -256,8 +266,12 @@ ALLOCATE (phi2(-2:nx_2+3,-2:ny_2+3,-2:nz_2+3))
 ALLOCATE (phi2_dm(-2:nx_2+3,-2:ny_2+3,-2:nz_2+3))
 ALLOCATE (phi2_nm(-2:nx_2+3,-2:ny_2+3,-2:nz_2+3))
 ALLOCATE (phi2_x(-2:nx_2+3,-2:ny_2+3,-2:nz_2+3))
-ALLOCATE (phi2_y(-2:nx_2+3,-2:ny_2+3,-2:nz_2+3))
-ALLOCATE (phi2_z(-2:nx_2+3,-2:ny_2+3,-2:nz_2+3))
+IF(dimension_flag == 2) THEN
+	ALLOCATE (phi2_y(-2:nx_2+3,-2:ny_2+3,-2:nz_2+3))
+ELSEIF(dimension_flag == 3) THEN
+	ALLOCATE (phi2_y(-2:nx_2+3,-2:ny_2+3,-2:nz_2+3))
+	ALLOCATE (phi2_z(-2:nx_2+3,-2:ny_2+3,-2:nz_2+3))
+END IF
 
 ! Lapse !
 IF(lapse_flag) THEN
@@ -267,21 +281,18 @@ END IF
 ! Extra Hydrodynamic variables !
 IF (dual_energy) THEN
     ALLOCATE (dpdx2(-2:nx_2+3,-2:ny_2+3,-2:nz_2+3))
-    ALLOCATE (dpdy2(-2:nx_2+3,-2:ny_2+3,-2:nz_2+3))
-    ALLOCATE (dpdz2(-2:nx_2+3,-2:ny_2+3,-2:nz_2+3))
-END IF
-
-! Moving grid !
-IF(found_movinggridnm_flag) THEN
-	ALLOCATE (vel_frame_x2(-2:nx_2+3,-2:ny_2+3,-2:nz_2+3))
-	ALLOCATE (vel_frame_y2(-2:nx_2+3,-2:ny_2+3,-2:nz_2+3))
-    ALLOCATE (vel_frame_z2(-2:nx_2+3,-2:ny_2+3,-2:nz_2+3))
+	IF(dimension_flag == 2) THEN
+    	ALLOCATE (dpdy2(-2:nx_2+3,-2:ny_2+3,-2:nz_2+3))
+	ELSEIF(dimension_flag == 3) THEN
+		ALLOCATE (dpdy2(-2:nx_2+3,-2:ny_2+3,-2:nz_2+3))
+   		ALLOCATE (dpdz2(-2:nx_2+3,-2:ny_2+3,-2:nz_2+3))
+	END IF
 END IF
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 ! For the DM sector !
 
-IF (DM_flag == 1) THEN
+IF (DM_flag) THEN
 
 	! Legendre polynominal and mutlipole moments !
 	IF(coordinate_flag == 2) THEN
@@ -310,6 +321,7 @@ IF (DM_flag == 1) THEN
 	ALLOCATE (volbar1(-2:nx_1+3,-2:ny_1+3,-2:nz_1+3))
 
 	! Hydrodynamic variables !
+	ALLOCATE (p1(-2:nx_1+3,-2:ny_1+3,-2:nz_1+3))
 	ALLOCATE (cs1(-2:nx_1+3,-2:ny_1+3,-2:nz_1+3))
 	ALLOCATE (dpdrho1(-2:nx_1+3,-2:ny_1+3,-2:nz_1+3))
 	ALLOCATE (dpdeps1(-2:nx_1+3,-2:ny_1+3,-2:nz_1+3))
@@ -324,14 +336,11 @@ IF (DM_flag == 1) THEN
 	ALLOCATE (phi1_dm(-2:nx_1+3,-2:ny_1+3,-2:nz_1+3))
 	ALLOCATE (phi1_nm(-2:nx_1+3,-2:ny_1+3,-2:nz_1+3))
 	ALLOCATE (phi1_x(-2:nx_1+3,-2:ny_1+3,-2:nz_1+3))
-	ALLOCATE (phi1_y(-2:nx_1+3,-2:ny_1+3,-2:nz_1+3))
-	ALLOCATE (phi1_z(-2:nx_1+3,-2:ny_1+3,-2:nz_1+3))
-
-	! Moving grid !
-	IF(found_movinggriddm_flag) THEN
-		ALLOCATE (vel_frame_x1(-2:nx_1+3,-2:ny_1+3,-2:nz_1+3))
-		ALLOCATE (vel_frame_y1(-2:nx_1+3,-2:ny_1+3,-2:nz_1+3))
-		ALLOCATE (vel_frame_z1(-2:nx_1+3,-2:ny_1+3,-2:nz_1+3))
+	IF(dimension_flag == 2) THEN
+		ALLOCATE (phi1_y(-2:nx_1+3,-2:ny_1+3,-2:nz_1+3))
+	ELSEIF(dimension_flag == 3) THEN
+		ALLOCATE (phi1_y(-2:nx_1+3,-2:ny_1+3,-2:nz_1+3))
+		ALLOCATE (phi1_z(-2:nx_1+3,-2:ny_1+3,-2:nz_1+3))
 	END IF
 
 END IF

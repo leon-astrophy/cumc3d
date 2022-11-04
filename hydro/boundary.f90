@@ -12,423 +12,343 @@
 !
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-SUBROUTINE BOUNDARY1D_DM (array, sign)
+SUBROUTINE BOUNDARY1D_DM (array, sign, domain)
 USE DEFINITION
 IMPLICIT NONE
 
 ! Input/Output array
-REAL (DP), INTENT (INOUT), DIMENSION (-4 : length_step_r_1 + 5, -4 : length_step_z_1 + 5) :: array
+REAL (DP), INTENT (INOUT), DIMENSION (-2:nx_1+3,-2:ny_1+3,-2:nz_1+3) :: array
 
 ! Input parity
-INTEGER, INTENT (IN) :: sign
+INTEGER, INTENT (IN) :: sign, domain
 
 ! Dummy variables
-INTEGER :: j, k
+INTEGER :: j
+
+! Integer for domain size !
+INTEGER :: nx_min, nx_max
+INTEGER :: ny_min, ny_max
+INTEGER :: nz_min, nz_max
 
 ! Parity factor
-INTEGER :: fac_r, fac_z
+INTEGER :: fac_x, fac_y, fac_z
+
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+! Setup domain size !
+IF(domain == 0) THEN
+   nx_min = nx_min_1
+   ny_min = ny_min_1
+   nz_min = nz_min_1
+   nx_max = nx_part_1
+   ny_max = ny_part_1
+   nz_max = nz_part_1
+ELSEIF(domain == 1) THEN
+   nx_min = 1
+   ny_min = 1
+   nz_min = 1
+   nx_max = nx_1
+   ny_max = ny_1
+   nz_max = nz_1
+END IF
+
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 ! Set up the parity factor according to the input sign
 IF(sign == 0) THEN
-   fac_r = 1
+   fac_x = 1
+   fac_y = 1
    fac_z = 1
 ELSEIF(sign == 1) THEN
-   fac_r = -1
+   fac_x = -1
+   fac_y = 1
    fac_z = 1
 ELSEIF(sign == 2) THEN
-   fac_r = 1
-   fac_z = -1
+   fac_x = 1
+   fac_y = -1
+   fac_z = 1
 ELSEIF(sign == 3) THEN
-   fac_r = -1
+   fac_x = 1
+   fac_y = 1
    fac_z = -1
 ENDIF
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+! x-boundary
 
-! Now do it case by case
+! Do the inner boundary
 IF(boundary_flag(1) == 0) THEN
-   DO j = 1, 5, 1
-      array(1-j,:) = array(length_step_r_part_1+1-j,:)
+   DO j = 1, 3
+      array(nx_min-j,:,:) = array(nx_max+1-j,:,:)                     
    ENDDO
-ELSEIF(boundary_flag(1) == 1) THEN
-   DO j = 1, 5, 1
-      array(1-j,:) = fac_r * array(j,:)
+ELSEIF(boundary_flag(1) == 1) THEN                 
+   DO j = 1, 3
+      array(nx_min-j,:,:) = fac_x * array(nx_min-1+j,:,:)
    ENDDO
 ELSEIF(boundary_flag(1) == 2) THEN
-   DO j = 1, 5, 1
-      array(1-j,:) = array(1,:)
+   DO j = 1, 3  
+      array(nx_min-j,:,:) = array(nx_min,:,:)
    ENDDO
 ENDIF
 
-! Do the second (r-outer) boundary
+! Do the outer boundary
 IF(boundary_flag(2) == 0) THEN
-   DO j = 1, 5, 1
-      array(length_step_r_part_1+j,:) = array(j,:)
+   DO j = 1, 3
+      array(nx_max+j,:,:) = array(nx_min-1+j,:,:)
    ENDDO
 ELSEIF(boundary_flag(2) == 1) THEN
-   DO j = 1, 5, 1
-      array(length_step_r_part_1+j,:) = fac_r * array(length_step_r_part_1+1-j,:)
+   DO j = 1, 3
+      array(nx_max+j,:,:) = fac_x * array(nx_max+1-j,:,:)
    ENDDO
 ELSEIF(boundary_flag(2) == 2) THEN
-   DO j = 1, 5, 1
-      array(length_step_r_part_1+j,:) = array(length_step_r_part_1,:)                  
+   DO j = 1, 3
+      array(nx_max+j,:,:) = array(nx_max,:,:)
    ENDDO
 ENDIF
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+! y-boundary
 
-! Do the third (z-inner) boundary
+! Do the inner boundary
 IF(boundary_flag(3) == 0) THEN
-   DO j = 1, 5, 1
-      array(:,length_step_z_min_part_1-j) = array(:,length_step_z_part_1+1-j)                     
+   DO j = 1, 3
+      array(:,ny_min-j,:) = array(:,ny_max+1-j,:)                     
    ENDDO
 ELSEIF(boundary_flag(3) == 1) THEN                 
-   DO j = 1, 5, 1
-      array(:,length_step_z_min_part_1-j) = fac_z * array(:,length_step_z_min_part_1-1+j)
+   DO j = 1, 3
+      array(:,ny_min-j,:) = fac_y * array(:,ny_min-1+j,:)
    ENDDO
 ELSEIF(boundary_flag(3) == 2) THEN
-   DO j = 1, 5, 1              
-      array(:,length_step_z_min_part_1-j) = array(:,length_step_z_min_part_1)
+   DO j = 1, 3  
+      array(:,ny_min-j,:) = array(:,ny_min,:)
    ENDDO
 ENDIF
 
-! Do the fourth (z-outer) boundary
+! Do the outer boundary
 IF(boundary_flag(4) == 0) THEN
-   DO j = 1, 5, 1
-      array(:,length_step_z_part_1+j) = array(:,length_step_z_min_part_1-1+j)
+   DO j = 1, 3
+      array(:,ny_max+j,:) = array(:,ny_min-1+j,:)
    ENDDO
 ELSEIF(boundary_flag(4) == 1) THEN
-   DO j = 1, 5, 1
-      array(:,length_step_z_part_1+j) = fac_z * array(:,length_step_z_part_1+1-j)
+   DO j = 1, 3
+      array(:,ny_max+j,:) = fac_y * array(:,ny_max+1-j,:)
    ENDDO
 ELSEIF(boundary_flag(4) == 2) THEN
-   DO j = 1, 5, 1
-      array(:,length_step_z_part_1+j) = array(:,length_step_z_part_1)
+   DO j = 1, 3
+      array(:,ny_max+j,:) = array(:,ny_max,:)
    ENDDO
 ENDIF
+
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+! z-boundary
+
+! Do the inner boundary
+IF(boundary_flag(5) == 0) THEN
+   DO j = 1, 3
+      array(:,:,nz_min-j) = array(:,:,nz_max+1-j)                     
+   ENDDO
+ELSEIF(boundary_flag(5) == 1) THEN                 
+   DO j = 1, 3
+      array(:,:,nz_min-j) = fac_z * array(:,:,nz_min-1+j)
+   ENDDO
+ELSEIF(boundary_flag(5) == 2) THEN
+   DO j = 1, 3  
+      array(:,:,nz_min-j) = array(:,:,nz_min)
+   ENDDO
+ENDIF
+
+! Do the outer boundary
+IF(boundary_flag(6) == 0) THEN
+   DO j = 1, 3
+      array(:,:,nz_max+j) = array(:,:,nz_min-1+j)
+   ENDDO
+ELSEIF(boundary_flag(6) == 1) THEN
+   DO j = 1, 3
+      array(:,:,nz_max+j) = fac_z * array(:,:,nz_max+1-j)
+   ENDDO
+ELSEIF(boundary_flag(6) == 2) THEN
+   DO j = 1, 3
+      array(:,:,nz_max+j) = array(:,:,nz_max)
+   ENDDO
+ENDIF
+
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 END SUBROUTINE boundary1D_DM
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !
-! To copy values to boundary ghost cell, for dark matter
+! To copy values to boundary ghost cell, for normal matter
 !
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-SUBROUTINE BOUNDARY1D_NM (array, sign)
+SUBROUTINE BOUNDARY1D_NM (array, sign, domain)
 USE DEFINITION
 IMPLICIT NONE
 
 ! Input/Output array
-REAL (DP), INTENT (INOUT), DIMENSION (-4 : length_step_r_2 + 5, -4 : length_step_z_2 + 5) :: array
+REAL (DP), INTENT (INOUT), DIMENSION (-2:nx_2+3,-2:ny_2+3,-2:nz_2+3) :: array
 
 ! Input parity
-INTEGER, INTENT (IN) :: sign
+INTEGER, INTENT (IN) :: sign, domain
 
 ! Dummy variables
-INTEGER :: j, k
+INTEGER :: j
+
+! Integer for domain size !
+INTEGER :: nx_min, nx_max
+INTEGER :: ny_min, ny_max
+INTEGER :: nz_min, nz_max
 
 ! Parity factor
-INTEGER :: fac_r, fac_z
+INTEGER :: fac_x, fac_y, fac_z
+
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+! Setup domain size !
+IF(domain == 0) THEN
+   nx_min = nx_min_2
+   ny_min = ny_min_2
+   nz_min = nz_min_2
+   nx_max = nx_part_2
+   ny_max = ny_part_2
+   nz_max = nz_part_2
+ELSEIF(domain == 1) THEN
+   nx_min = 1
+   ny_min = 1
+   nz_min = 1
+   nx_max = nx_2
+   ny_max = ny_2
+   nz_max = nz_2
+END IF
+
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 ! Set up the parity factor according to the input sign
 IF(sign == 0) THEN
-   fac_r = 1
+   fac_x = 1
+   fac_y = 1
    fac_z = 1
 ELSEIF(sign == 1) THEN
-   fac_r = -1
+   fac_x = -1
+   fac_y = 1
    fac_z = 1
 ELSEIF(sign == 2) THEN
-   fac_r = 1
-   fac_z = -1
+   fac_x = 1
+   fac_y = -1
+   fac_z = 1
 ELSEIF(sign == 3) THEN
-   fac_r = -1
+   fac_x = 1
+   fac_y = 1
    fac_z = -1
 ENDIF
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+! x-boundary
 
-! Now do it case by case
+! Do the inner boundary
 IF(boundary_flag(1) == 0) THEN
-   DO j = 1, 5, 1
-      array(1-j,:) = array(length_step_r_part_2+1-j,:)
+   DO j = 1, 3
+      array(nx_min-j,:,:) = array(nx_max+1-j,:,:)                     
    ENDDO
-ELSEIF(boundary_flag(1) == 1) THEN
-   DO j = 1, 5, 1
-      array(1-j,:) = fac_r * array(j,:)
+ELSEIF(boundary_flag(1) == 1) THEN                 
+   DO j = 1, 3
+      array(nx_min-j,:,:) = fac_x * array(nx_min-1+j,:,:)
    ENDDO
 ELSEIF(boundary_flag(1) == 2) THEN
-   DO j = 1, 5, 1
-      array(1-j,:) = array(1,:)
+   DO j = 1, 3  
+      array(nx_min-j,:,:) = array(nx_min,:,:)
    ENDDO
 ENDIF
 
-! Do the second (r-outer) boundary
+! Do the outer boundary
 IF(boundary_flag(2) == 0) THEN
-   DO j = 1, 5, 1
-      array(length_step_r_part_2+j,:) = array(j,:)
+   DO j = 1, 3
+      array(nx_max+j,:,:) = array(nx_min-1+j,:,:)
    ENDDO
 ELSEIF(boundary_flag(2) == 1) THEN
-   DO j = 1, 5, 1
-      array(length_step_r_part_2+j,:) = fac_r * array(length_step_r_part_2+1-j,:)
+   DO j = 1, 3
+      array(nx_max+j,:,:) = fac_x * array(nx_max+1-j,:,:)
    ENDDO
 ELSEIF(boundary_flag(2) == 2) THEN
-   DO j = 1, 5, 1
-      array(length_step_r_part_2+j,:) = array(length_step_r_part_2,:)                  
+   DO j = 1, 3
+      array(nx_max+j,:,:) = array(nx_max,:,:)
    ENDDO
 ENDIF
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+! y-boundary
 
-! Do the third (z-inner) boundary
+! Do the inner boundary
 IF(boundary_flag(3) == 0) THEN
-   DO j = 1, 5, 1
-      array(:,length_step_z_min_part_2-j) = array(:,length_step_z_part_2+1-j)                     
+   DO j = 1, 3
+      array(:,ny_min-j,:) = array(:,ny_max+1-j,:)                     
    ENDDO
 ELSEIF(boundary_flag(3) == 1) THEN                 
-   DO j = 1, 5, 1
-      array(:,length_step_z_min_part_2-j) = fac_z * array(:,length_step_z_min_part_2-1+j)
+   DO j = 1, 3
+      array(:,ny_min-j,:) = fac_y * array(:,ny_min-1+j,:)
    ENDDO
 ELSEIF(boundary_flag(3) == 2) THEN
-   DO j = 1, 5, 1              
-      array(:,length_step_z_min_part_2-j) = array(:,length_step_z_min_part_2)
+   DO j = 1, 3  
+      array(:,ny_min-j,:) = array(:,ny_min,:)
    ENDDO
 ENDIF
 
-! Do the fourth (z-outer) boundary
+! Do the outer boundary
 IF(boundary_flag(4) == 0) THEN
-   DO j = 1, 5, 1
-      array(:,length_step_z_part_2+j) = array(:,length_step_z_min_part_2-1+j)
+   DO j = 1, 3
+      array(:,ny_max+j,:) = array(:,ny_min-1+j,:)
    ENDDO
 ELSEIF(boundary_flag(4) == 1) THEN
-   DO j = 1, 5, 1
-      array(:,length_step_z_part_2+j) = fac_z * array(:,length_step_z_part_2+1-j)
+   DO j = 1, 3
+      array(:,ny_max+j,:) = fac_y * array(:,ny_max+1-j,:)
    ENDDO
 ELSEIF(boundary_flag(4) == 2) THEN
-   DO j = 1, 5, 1
-      array(:,length_step_z_part_2+j) = array(:,length_step_z_part_2)
+   DO j = 1, 3
+      array(:,ny_max+j,:) = array(:,ny_max,:)
    ENDDO
 ENDIF
+
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+! z-boundary
+
+! Do the inner boundary
+IF(boundary_flag(5) == 0) THEN
+   DO j = 1, 3
+      array(:,:,nz_min-j) = array(:,:,nz_max+1-j)                     
+   ENDDO
+ELSEIF(boundary_flag(5) == 1) THEN                 
+   DO j = 1, 3
+      array(:,:,nz_min-j) = fac_z * array(:,:,nz_min-1+j)
+   ENDDO
+ELSEIF(boundary_flag(5) == 2) THEN
+   DO j = 1, 3  
+      array(:,:,nz_min-j) = array(:,:,nz_min)
+   ENDDO
+ENDIF
+
+! Do the outer boundary
+IF(boundary_flag(6) == 0) THEN
+   DO j = 1, 3
+      array(:,:,nz_max+j) = array(:,:,nz_min-1+j)
+   ENDDO
+ELSEIF(boundary_flag(6) == 1) THEN
+   DO j = 1, 3
+      array(:,:,nz_max+j) = fac_z * array(:,:,nz_max+1-j)
+   ENDDO
+ELSEIF(boundary_flag(6) == 2) THEN
+   DO j = 1, 3
+      array(:,:,nz_max+j) = array(:,:,nz_max)
+   ENDDO
+ENDIF
+
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 END SUBROUTINE boundary1D_NM
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !
-! This subroutine creates the suitable boundary for WENO
-! Written by Leung Shing Chi in 2016
-! The subroutine takes ARRAY as input/output and SIGN
-! for doing odd/even parity extension
-! Notice that this subroutines worked for full size arrays 
-!
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
-SUBROUTINE BOUNDARY1D_DMFULL (array, sign)
-USE DEFINITION
-IMPLICIT NONE
-
-! Input/Output array
-REAL (DP), INTENT (INOUT), DIMENSION (-4 : length_step_r_1 + 5, -4 : length_step_z_1 + 5) :: array
-
-! Input parity
-INTEGER, INTENT (IN) :: sign
-
-! Dummy variables
-INTEGER :: j, k
-
-! Parity factor
-INTEGER :: fac_r, fac_z
-
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
-! Set up the parity factor according to the input sign
-IF(sign == 0) THEN
-   fac_r = 1
-   fac_z = 1
-ELSEIF(sign == 1) THEN
-   fac_r = -1
-   fac_z = 1
-ELSEIF(sign == 2) THEN
-   fac_r = 1
-   fac_z = -1
-ELSEIF(sign == 3) THEN
-   fac_r = -1
-   fac_z = -1
-ENDIF
-
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
-! Now do it case by case
-IF(boundary_flag(1) == 0) THEN
-   DO j = 1, 5, 1
-      array(1-j,:) = array(length_step_r_1+1-j,:)
-   ENDDO
-ELSEIF(boundary_flag(1) == 1) THEN
-   DO j = 1, 5, 1
-      array(1-j,:) = fac_r * array(j,:)
-   ENDDO
-ELSEIF(boundary_flag(1) == 2) THEN
-   DO j = 1, 5, 1
-      array(1-j,:) = array(1,:)
-   ENDDO
-ENDIF
-
-! Do the second (r-outer) boundary
-IF(boundary_flag(2) == 0) THEN
-   DO j = 1, 5, 1
-      array(length_step_r_1+j,:) = array(j,:)
-   ENDDO
-ELSEIF(boundary_flag(2) == 1) THEN
-   DO j = 1, 5, 1
-      array(length_step_r_1+j,:) = fac_r * array(length_step_r_1+1-j,:)
-   ENDDO
-ELSEIF(boundary_flag(2) == 2) THEN
-   DO j = 1, 5, 1
-      array(length_step_r_1+j,:) = array(length_step_r_1,:)                  
-   ENDDO
-ENDIF
-
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
-! Do the third (z-inner) boundary
-IF(boundary_flag(3) == 0) THEN
-   DO j = 1, 5, 1
-      array(:,1-j) = array(:,length_step_z_1+1-j)                     
-   ENDDO
-ELSEIF(boundary_flag(3) == 1) THEN                 
-   DO j = 1, 5, 1
-      array(:,1-j) = fac_z * array(:,j)
-   ENDDO
-ELSEIF(boundary_flag(3) == 2) THEN
-   DO j = 1, 5, 1              
-      array(:,1-j) = array(:,1)
-   ENDDO
-ENDIF
-
-! Do the fourth (z-outer) boundary
-IF(boundary_flag(4) == 0) THEN
-   DO j = 1, 5, 1
-      array(:,length_step_z_1+j) = array(:,j)
-   ENDDO
-ELSEIF(boundary_flag(4) == 1) THEN
-   DO j = 1, 5, 1
-      array(:,length_step_z_1+j) = fac_z * array(:,length_step_z_1+1-j)
-   ENDDO
-ELSEIF(boundary_flag(4) == 2) THEN
-   DO j = 1, 5, 1
-      array(:,length_step_z_1+j) = array(:,length_step_z_1)
-   ENDDO
-ENDIF
-
-END SUBROUTINE
-
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!
-! To copy values to boundary ghost cell, for Normal matter
-!
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
-SUBROUTINE BOUNDARY1D_NMFULL (array, sign)
-USE DEFINITION
-IMPLICIT NONE
-
-! Input/Output array
-REAL (DP), INTENT (INOUT), DIMENSION (-4 : length_step_r_2 + 5, -4 : length_step_z_2 + 5) :: array
-
-! Input parity
-INTEGER, INTENT (IN) :: sign
-
-! Dummy variables
-INTEGER :: j, k
-
-! Parity factor
-INTEGER :: fac_r, fac_z
-
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
-! Set up the parity factor according to the input sign
-IF(sign == 0) THEN
-   fac_r = 1
-   fac_z = 1
-ELSEIF(sign == 1) THEN
-   fac_r = -1
-   fac_z = 1
-ELSEIF(sign == 2) THEN
-   fac_r = 1
-   fac_z = -1
-ELSEIF(sign == 3) THEN
-   fac_r = -1
-   fac_z = -1
-ENDIF
-
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
-! Now do it case by case
-IF(boundary_flag(1) == 0) THEN
-   DO j = 1, 5, 1
-      array(1-j,:) = array(length_step_r_2+1-j,:)
-   ENDDO
-ELSEIF(boundary_flag(1) == 1) THEN
-   DO j = 1, 5, 1
-      array(1-j,:) = fac_r * array(j,:)
-   ENDDO
-ELSEIF(boundary_flag(1) == 2) THEN
-   DO j = 1, 5, 1
-      array(1-j,:) = array(1,:)
-   ENDDO
-ENDIF
-
-! Do the second (r-outer) boundary
-IF(boundary_flag(2) == 0) THEN
-   DO j = 1, 5, 1
-      array(length_step_r_2+j,:) = array(j,:)
-   ENDDO
-ELSEIF(boundary_flag(2) == 1) THEN
-   DO j = 1, 5, 1
-      array(length_step_r_2+j,:) = fac_r * array(length_step_r_2+1-j,:)
-   ENDDO
-ELSEIF(boundary_flag(2) == 2) THEN
-   DO j = 1, 5, 1
-      array(length_step_r_2+j,:) = array(length_step_r_2,:)                  
-   ENDDO
-ENDIF
-
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
-! Do the third (z-inner) boundary
-IF(boundary_flag(3) == 0) THEN
-   DO j = 1, 5, 1
-      array(:,1-j) = array(:,length_step_z_2+1-j)                     
-   ENDDO
-ELSEIF(boundary_flag(3) == 1) THEN                 
-   DO j = 1, 5, 1
-      array(:,1-j) = fac_z * array(:,j)
-   ENDDO
-ELSEIF(boundary_flag(3) == 2) THEN
-   DO j = 1, 5, 1              
-      array(:,1-j) = array(:,1)
-   ENDDO
-ENDIF
-
-! Do the fourth (z-outer) boundary
-IF(boundary_flag(4) == 0) THEN
-   DO j = 1, 5, 1
-      array(:,length_step_z_2+j) = array(:,j)
-   ENDDO
-ELSEIF(boundary_flag(4) == 1) THEN
-   DO j = 1, 5, 1
-      array(:,length_step_z_2+j) = fac_z * array(:,length_step_z_2+1-j)
-   ENDDO
-ELSEIF(boundary_flag(4) == 2) THEN
-   DO j = 1, 5, 1
-      array(:,length_step_z_2+j) = array(:,length_step_z_2)
-   ENDDO
-ENDIF
-
-END SUBROUTINE
-
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!
-! This subroutine creates the suitable boundary for the primitive variables
+! This subroutine creates the suitable boundary for the conservative variables
 ! Written by Leung Shing Chi in 2016
 ! The subroutine takes the full U arrays as input
 ! and do the odd/even parity extension
@@ -440,87 +360,253 @@ END SUBROUTINE
 !
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-SUBROUTINE boundary2D_DM
+SUBROUTINE BOUNDARYU_DM
 USE DEFINITION
-USE helmeos_module
-USE Levelset_module
-USE Turb_module
 IMPLICIT NONE
 
 ! Dummy variables
-INTEGER :: i, j, k
+INTEGER :: i, j
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+! x-boundary 
 
-! Do the first (r-inner) boundary
+! Do the inner boundary
 IF(boundary_flag(1) == 0) THEN
-   DO j = 1, 5, 1
-      u1(1-j,:,:) = u1(length_step_r_part_1+1-j,:,:)
+   DO j = 1, 3
+      cons1(nx_min_1-j,:,:,:) = cons1(nx_part_1+1-j,:,:,:)                     
    ENDDO
-ELSEIF(boundary_flag(1) == 1) THEN
-   DO j = 1, 5, 1
+ELSEIF(boundary_flag(1) == 1) THEN                 
+   DO j = 1, 3
       DO i = imin1, imax1
-         u1(1-j,:,i) = bfac_r(i) * u1(j,:,i)
+         cons1(nx_min_1-j,:,:,i) = bfac_x(i) * cons1(nx_min_1-1+j,:,:,i)
       END DO
    ENDDO
 ELSEIF(boundary_flag(1) == 2) THEN
-   DO j = 1, 5, 1
-      u1(1-j,:,:) = u1(1,:,:)
-   ENDDO
+   DO j = 1, 3    
+      cons1(nx_min_1-j,:,:,:) = cons1(nx_min_1,:,:,:)
+   ENDDO             
 ENDIF
 
-! Do the second (r-outer) boundary
+! Do the outer boundary
 IF(boundary_flag(2) == 0) THEN
-   DO j = 1, 5, 1
-      u1(length_step_r_part_1+j,:,:) = u1(j,:,:)
+   DO j = 1, 3
+      cons1(nx_part_1+j,:,:,:) = cons1(nx_min_1-1+j,:,:,:)
    ENDDO
 ELSEIF(boundary_flag(2) == 1) THEN
-   DO j = 1, 5, 1
+   DO j = 1, 3
       DO i = imin1, imax1
-         u1(length_step_r_part_1+j,:,i) = bfac_r(i) * u1(length_step_r_part_1+1-j,:,i)
+         cons1(nx_part_1+j,:,:,i) = bfac_x(i) * cons1(nx_part_1+1-j,:,:,i)
       END DO
    ENDDO
 ELSEIF(boundary_flag(2) == 2) THEN
-   DO j = 1, 5, 1
-      u1(length_step_r_part_1+j,:,:) = u1(length_step_r_part_1,:,:)                  
+   DO j = 1, 3
+      cons1(nx_part_1+j,:,:,:) = cons1(nx_part_1,:,:,:)
+   ENDDO
+ENDIF
+
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+! y-boundary 
+
+! Do the inner boundary
+IF(boundary_flag(3) == 0) THEN
+   DO j = 1, 3
+      cons1(:,ny_min_1-j,:,:) = cons1(:,ny_part_1+1-j,:,:)                     
+   ENDDO
+ELSEIF(boundary_flag(3) == 1) THEN                 
+   DO j = 1, 3
+      DO i = imin1, imax1
+         cons1(:,ny_min_1-j,:,i) = bfac_y(i) * cons1(:,ny_min_1-1+j,:,i)
+      END DO
+   ENDDO
+ELSEIF(boundary_flag(3) == 2) THEN
+   DO j = 1, 3    
+      cons1(:,ny_min_1-j,:,:) = cons1(:,ny_min_1,:,:)
+   ENDDO             
+ENDIF
+
+! Do the outer boundary
+IF(boundary_flag(4) == 0) THEN
+   DO j = 1, 3
+      cons1(:,ny_part_1+j,:,:) = cons1(:,ny_min_1-1+j,:,:)
+   ENDDO
+ELSEIF(boundary_flag(4) == 1) THEN
+   DO j = 1, 3
+      DO i = imin1, imax1
+         cons1(:,ny_part_1+j,:,i) = bfac_y(i) * cons1(:,ny_part_1+1-j,:,i)
+      END DO
+   ENDDO
+ELSEIF(boundary_flag(4) == 2) THEN
+   DO j = 1, 3
+      cons1(:,ny_part_1+j,:,:) = cons1(:,ny_part_1,:,:)
+   ENDDO
+ENDIF
+
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+! z-boundary 
+
+! Do the inner boundary
+IF(boundary_flag(5) == 0) THEN
+   DO j = 1, 3
+      cons1(:,:,nz_min_1-j,:) = cons1(:,:,nz_part_1+1-j,:)                     
+   ENDDO
+ELSEIF(boundary_flag(5) == 1) THEN                 
+   DO j = 1, 3
+      DO i = imin1, imax1
+         cons1(:,:,nz_min_1-j,i) = bfac_z(i) * cons1(:,:,nz_min_1-1+j,i)
+      END DO
+   ENDDO
+ELSEIF(boundary_flag(5) == 2) THEN
+   DO j = 1, 3    
+      cons1(:,:,nz_min_1-j,:) = cons1(:,:,nz_min_1,:)
+   ENDDO             
+ENDIF
+
+! Do the outer boundary
+IF(boundary_flag(6) == 0) THEN
+   DO j = 1, 3
+      cons1(:,:,nz_part_1+j,:) = cons1(:,:,nz_min_1-1+j,:)
+   ENDDO
+ELSEIF(boundary_flag(6) == 1) THEN
+   DO j = 1, 3
+      DO i = imin1, imax1
+         cons1(:,:,nz_part_1+j,i) = bfac_z(i) * cons1(:,:,nz_part_1+1-j,i)
+      END DO
+   ENDDO
+ELSEIF(boundary_flag(6) == 2) THEN
+   DO j = 1, 3
+      cons1(:,:,nz_part_1+j,:) = cons1(:,:,nz_part_1,:)
    ENDDO
 ENDIF
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-! Do the third (z-inner) boundary
-IF(boundary_flag(3) == 0) THEN
-   DO j = 1, 5, 1
-      u1(:,length_step_z_min_part_1-j,:) = u1(:,length_step_z_part_1+1-j,:)                     
+END SUBROUTINE
+
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!
+! This subroutine creates the suitable boundary for the primitive variables
+!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+SUBROUTINE BOUNDARYP_DM
+USE DEFINITION
+IMPLICIT NONE
+
+! Dummy variables
+INTEGER :: i, j
+
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+! x-boundary 
+
+! Do the inner boundary
+IF(boundary_flag(1) == 0) THEN
+   DO j = 1, 3
+      prim1(nx_min_1-j,:,:,:) = prim1(nx_part_1+1-j,:,:,:)                     
    ENDDO
-ELSEIF(boundary_flag(3) == 1) THEN                 
-    DO j = 1, 5, 1
+ELSEIF(boundary_flag(1) == 1) THEN                 
+   DO j = 1, 3
       DO i = imin1, imax1
-         u1(:,length_step_z_min_part_1-j,i) = bfac_z(i) * u1(:,length_step_z_min_part_1-1+j,i)
+         prim1(nx_min_1-j,:,:,i) = bfac_x(i) * prim1(nx_min_1-1+j,:,:,i)
       END DO
    ENDDO
-ELSEIF(boundary_flag(3) == 2) THEN
-   DO j = 1, 5, 1              
-      u1(:,length_step_z_min_part_1-j,:) = u1(:,length_step_z_min_part_1,:)
+ELSEIF(boundary_flag(1) == 2) THEN
+   DO j = 1, 3    
+      prim1(nx_min_1-j,:,:,:) = prim1(nx_min_1,:,:,:)
    ENDDO             
 ENDIF
 
-! Do the fourth (z-outer) boundary
+! Do the outer boundary
+IF(boundary_flag(2) == 0) THEN
+   DO j = 1, 3
+      prim1(nx_part_1+j,:,:,:) = prim1(nx_min_1-1+j,:,:,:)
+   ENDDO
+ELSEIF(boundary_flag(2) == 1) THEN
+   DO j = 1, 3
+      DO i = imin1, imax1
+         prim1(nx_part_1+j,:,:,i) = bfac_x(i) * prim1(nx_part_1+1-j,:,:,i)
+      END DO
+   ENDDO
+ELSEIF(boundary_flag(2) == 2) THEN
+   DO j = 1, 3
+      prim1(nx_part_1+j,:,:,:) = prim1(nx_part_1,:,:,:)
+   ENDDO
+ENDIF
+
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+! y-boundary 
+
+! Do the inner boundary
+IF(boundary_flag(3) == 0) THEN
+   DO j = 1, 3
+      prim1(:,ny_min_1-j,:,:) = prim1(:,ny_part_1+1-j,:,:)                     
+   ENDDO
+ELSEIF(boundary_flag(3) == 1) THEN                 
+   DO j = 1, 3
+      DO i = imin1, imax1
+         prim1(:,ny_min_1-j,:,i) = bfac_y(i) * prim1(:,ny_min_1-1+j,:,i)
+      END DO
+   ENDDO
+ELSEIF(boundary_flag(3) == 2) THEN
+   DO j = 1, 3    
+      prim1(:,ny_min_1-j,:,:) = prim1(:,ny_min_1,:,:)
+   ENDDO             
+ENDIF
+
+! Do the outer boundary
 IF(boundary_flag(4) == 0) THEN
-   DO j = 1, 5, 1
-      u1(:,length_step_z_part_1+j,:) = u1(:,length_step_z_min_part_1-1+j,:)
+   DO j = 1, 3
+      prim1(:,ny_part_1+j,:,:) = prim1(:,ny_min_1-1+j,:,:)
    ENDDO
 ELSEIF(boundary_flag(4) == 1) THEN
-   DO j = 1, 5, 1
+   DO j = 1, 3
       DO i = imin1, imax1
-         u1(:,length_step_z_part_1+j,i) = bfac_z(i) * u1(:,length_step_z_part_1+1-j,i)
+         prim1(:,ny_part_1+j,:,i) = bfac_y(i) * prim1(:,ny_part_1+1-j,:,i)
       END DO
    ENDDO
 ELSEIF(boundary_flag(4) == 2) THEN
-   DO j = 1, 5, 1
-      u1(:,length_step_z_part_1+j,:) = u1(:,length_step_z_part_1,:)
+   DO j = 1, 3
+      prim1(:,ny_part_1+j,:,:) = prim1(:,ny_part_1,:,:)
    ENDDO
 ENDIF
+
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+! z-boundary 
+
+! Do the inner boundary
+IF(boundary_flag(5) == 0) THEN
+   DO j = 1, 3
+      prim1(:,:,nz_min_1-j,:) = prim1(:,:,nz_part_1+1-j,:)                     
+   ENDDO
+ELSEIF(boundary_flag(5) == 1) THEN                 
+   DO j = 1, 3
+      DO i = imin1, imax1
+         prim1(:,:,nz_min_1-j,i) = bfac_z(i) * prim1(:,:,nz_min_1-1+j,i)
+      END DO
+   ENDDO
+ELSEIF(boundary_flag(5) == 2) THEN
+   DO j = 1, 3    
+      prim1(:,:,nz_min_1-j,:) = prim1(:,:,nz_min_1,:)
+   ENDDO             
+ENDIF
+
+! Do the outer boundary
+IF(boundary_flag(6) == 0) THEN
+   DO j = 1, 3
+      prim1(:,:,nz_part_1+j,:) = prim1(:,:,nz_min_1-1+j,:)
+   ENDDO
+ELSEIF(boundary_flag(6) == 1) THEN
+   DO j = 1, 3
+      DO i = imin1, imax1
+         prim1(:,:,nz_part_1+j,i) = bfac_z(i) * prim1(:,:,nz_part_1+1-j,i)
+      END DO
+   ENDDO
+ELSEIF(boundary_flag(6) == 2) THEN
+   DO j = 1, 3
+      prim1(:,:,nz_part_1+j,:) = prim1(:,:,nz_part_1,:)
+   ENDDO
+ENDIF
+
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 END SUBROUTINE
 
@@ -530,180 +616,252 @@ END SUBROUTINE
 !
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-SUBROUTINE boundary2D_NM
+SUBROUTINE BOUNDARYU_NM
 USE DEFINITION
-USE helmeos_module
-USE Levelset_module
-USE Turb_module
 IMPLICIT NONE
 
 ! Dummy variables
-INTEGER :: i, j, k
+INTEGER :: i,j
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+! x-boundary 
 
-! Do the first (r-inner) boundary
+! Do the inner boundary
 IF(boundary_flag(1) == 0) THEN
-   DO j = 1, 5, 1
-      u2(1-j,:,:) = u2(length_step_r_part_2+1-j,:,:)
+   DO j = 1, 3
+      cons2(nx_min_2-j,:,:,:) = cons2(nx_part_2+1-j,:,:,:)                     
    ENDDO
-ELSEIF(boundary_flag(1) == 1) THEN
-   DO j = 1, 5, 1
+ELSEIF(boundary_flag(1) == 1) THEN                 
+   DO j = 1, 3
       DO i = imin2, imax2
-         u2(1-j,:,i) = bfac_r(i) * u2(j,:,i)
+         cons2(nx_min_2-j,:,:,i) = bfac_x(i) * cons2(nx_min_2-1+j,:,:,i)
       END DO
    ENDDO
 ELSEIF(boundary_flag(1) == 2) THEN
-   DO j = 1, 5, 1
-      u2(1-j,:,:) = u2(1,:,:)
-   ENDDO
+   DO j = 1, 3    
+      cons2(nx_min_2-j,:,:,:) = cons2(nx_min_2,:,:,:)
+   ENDDO             
 ENDIF
 
-! Do the second (r-outer) boundary
+! Do the outer boundary
 IF(boundary_flag(2) == 0) THEN
-   DO j = 1, 5, 1
-      u2(length_step_r_part_2+j,:,:) = u2(j,:,:)
+   DO j = 1, 3
+      cons2(nx_part_2+j,:,:,:) = cons2(nx_min_2-1+j,:,:,:)
    ENDDO
 ELSEIF(boundary_flag(2) == 1) THEN
-   DO j = 1, 5, 1
+   DO j = 1, 3
       DO i = imin2, imax2
-         u2(length_step_r_part_2+j,:,i) = bfac_r(i) * u2(length_step_r_part_2+1-j,:,i)
+         cons2(nx_part_2+j,:,:,i) = bfac_x(i) * cons2(nx_part_2+1-j,:,:,i)
       END DO
    ENDDO
 ELSEIF(boundary_flag(2) == 2) THEN
-   DO j = 1, 5, 1
-      u2(length_step_r_part_2+j,:,:) = u2(length_step_r_part_2,:,:)                  
+   DO j = 1, 3
+      cons2(nx_part_2+j,:,:,:) = cons2(nx_part_2,:,:,:)
    ENDDO
 ENDIF
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+! y-boundary 
 
-! Do the third (z-inner) boundary
+! Do the inner boundary
 IF(boundary_flag(3) == 0) THEN
-   DO j = 1, 5, 1
-      u2(:,length_step_z_min_part_2-j,:) = u2(:,length_step_z_part_2+1-j,:)                     
+   DO j = 1, 3
+      cons2(:,ny_min_2-j,:,:) = cons2(:,ny_part_2+1-j,:,:)                     
    ENDDO
 ELSEIF(boundary_flag(3) == 1) THEN                 
-   DO j = 1, 5, 1
+   DO j = 1, 3
       DO i = imin2, imax2
-         u2(:,length_step_z_min_part_2-j,i) = bfac_z(i) * u2(:,length_step_z_min_part_2-1+j,i)
+         cons2(:,ny_min_2-j,:,i) = bfac_y(i) * cons2(:,ny_min_2-1+j,:,i)
       END DO
    ENDDO
 ELSEIF(boundary_flag(3) == 2) THEN
-   DO j = 1, 5, 1              
-      u2(:,length_step_z_min_part_2-j,:) = u2(:,length_step_z_min_part_2,:)
+   DO j = 1, 3    
+      cons2(:,ny_min_2-j,:,:) = cons2(:,ny_min_2,:,:)
    ENDDO             
 ENDIF
 
-! Do the fourth (z-outer) boundary
+! Do the outer boundary
 IF(boundary_flag(4) == 0) THEN
-   DO j = 1, 5, 1
-      u2(:,length_step_z_part_2+j,:) = u2(:,length_step_z_min_part_2-1+j,:)
+   DO j = 1, 3
+      cons2(:,ny_part_2+j,:,:) = cons2(:,ny_min_2-1+j,:,:)
    ENDDO
 ELSEIF(boundary_flag(4) == 1) THEN
-   DO j = 1, 5, 1
+   DO j = 1, 3
       DO i = imin2, imax2
-         u2(:,length_step_z_part_2+j,i) = bfac_z(i) * u2(:,length_step_z_part_2+1-j,i)
+         cons2(:,ny_part_2+j,:,i) = bfac_y(i) * cons2(:,ny_part_2+1-j,:,i)
       END DO
    ENDDO
 ELSEIF(boundary_flag(4) == 2) THEN
-   DO j = 1, 5, 1
-      u2(:,length_step_z_part_2+j,:) = u2(:,length_step_z_part_2,:)
+   DO j = 1, 3
+      cons2(:,ny_part_2+j,:,:) = cons2(:,ny_part_2,:,:)
    ENDDO
 ENDIF
+
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+! z-boundary 
+
+! Do the inner boundary
+IF(boundary_flag(5) == 0) THEN
+   DO j = 1, 3
+      cons2(:,:,nz_min_2-j,:) = cons2(:,:,nz_part_2+1-j,:)                     
+   ENDDO
+ELSEIF(boundary_flag(5) == 1) THEN                 
+   DO j = 1, 3
+      DO i = imin2, imax2
+         cons2(:,:,nz_min_2-j,i) = bfac_z(i) * cons2(:,:,nz_min_2-1+j,i)
+      END DO
+   ENDDO
+ELSEIF(boundary_flag(5) == 2) THEN
+   DO j = 1, 3    
+      cons2(:,:,nz_min_2-j,:) = cons2(:,:,nz_min_2,:)
+   ENDDO             
+ENDIF
+
+! Do the outer boundary
+IF(boundary_flag(6) == 0) THEN
+   DO j = 1, 3
+      cons2(:,:,nz_part_2+j,:) = cons2(:,:,nz_min_2-1+j,:)
+   ENDDO
+ELSEIF(boundary_flag(6) == 1) THEN
+   DO j = 1, 3
+      DO i = imin2, imax2
+         cons2(:,:,nz_part_2+j,i) = bfac_z(i) * cons2(:,:,nz_part_2+1-j,i)
+      END DO
+   ENDDO
+ELSEIF(boundary_flag(6) == 2) THEN
+   DO j = 1, 3
+      cons2(:,:,nz_part_2+j,:) = cons2(:,:,nz_part_2,:)
+   ENDDO
+ENDIF
+
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 END SUBROUTINE
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !
-! This subroutine creates the suitable boundary for the chemical isotopes
-!
-! The subroutine automatically extends the isotopes
-! assuming all isotopes behave like scalars
-! Notice that this subroutines worked for a reduced
-! size array, (1:length_step_r_part, 1:length_step_z_part)
-! For full array extension, switch the checkstep_flag = 0
-! For hybrid boundaries, such as the quadrant star
-! Specific modifications are needed
-!
-! Written by Leung Shing Chi in 2016
-! Updated by Leung Shing Chi in 2017
+! To copy values to boundary ghost cell, for normal matter primitive variables
 !
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-SUBROUTINE BOUNDARY2D_X()
-USE definition
-USE helmeos_module
+SUBROUTINE BOUNDARYP_NM
+USE DEFINITION
 IMPLICIT NONE
 
-!Dummy variables
-integer :: i, j, k
+! Dummy variables
+INTEGER :: i,j
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+! x-boundary 
 
+! Do the inner boundary
 IF(boundary_flag(1) == 0) THEN
-   DO j = 1, 5, 1
-      xiso(1-j,:,:) = xiso(length_step_r_part_2+1-j,:,:)
+   DO j = 1, 3
+      prim2(nx_min_2-j,:,:,:) = prim2(nx_part_2+1-j,:,:,:)                     
    ENDDO
-ELSEIF(boundary_flag(1) == 1) THEN
-   DO j = 1, 5, 1
-      xiso(1-j,:,:) = xiso(j,:,:)
+ELSEIF(boundary_flag(1) == 1) THEN                 
+   DO j = 1, 3
+      DO i = imin2, imax2
+         prim2(nx_min_2-j,:,:,i) = bfac_x(i) * prim2(nx_min_2-1+j,:,:,i)
+      END DO
    ENDDO
 ELSEIF(boundary_flag(1) == 2) THEN
-   DO j = 1, 5, 1
-      xiso(1-j,:,:) = xiso(1,:,:)
+   DO j = 1, 3    
+      prim2(nx_min_2-j,:,:,:) = prim2(nx_min_2,:,:,:)
+   ENDDO             
+ENDIF
+
+! Do the outer boundary
+IF(boundary_flag(2) == 0) THEN
+   DO j = 1, 3
+      prim2(nx_part_2+j,:,:,:) = prim2(nx_min_2-1+j,:,:,:)
+   ENDDO
+ELSEIF(boundary_flag(2) == 1) THEN
+   DO j = 1, 3
+      DO i = imin2, imax2
+         prim2(nx_part_2+j,:,:,i) = bfac_x(i) * prim2(nx_part_2+1-j,:,:,i)
+      END DO
+   ENDDO
+ELSEIF(boundary_flag(2) == 2) THEN
+   DO j = 1, 3
+      prim2(nx_part_2+j,:,:,:) = prim2(nx_part_2,:,:,:)
    ENDDO
 ENDIF
 
-! Do the second (r-outer) boundary
-IF(boundary_flag(2) == 0) THEN
-   DO j = 1, 5, 1
-      xiso(length_step_r_part_2+j,:,:) = xiso(j,:,:)
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+! y-boundary 
+
+! Do the inner boundary
+IF(boundary_flag(3) == 0) THEN
+   DO j = 1, 3
+      prim2(:,ny_min_2-j,:,:) = prim2(:,ny_part_2+1-j,:,:)                     
    ENDDO
-ELSEIF(boundary_flag(2) == 1) THEN
-   DO j = 1, 5, 1
-      xiso(length_step_r_part_2+j,:,:) = xiso(length_step_r_part_2+1-j,:,:)
+ELSEIF(boundary_flag(3) == 1) THEN                 
+   DO j = 1, 3
+      DO i = imin2, imax2
+         prim2(:,ny_min_2-j,:,i) = bfac_y(i) * prim2(:,ny_min_2-1+j,:,i)
+      END DO
    ENDDO
-ELSEIF(boundary_flag(2) == 2) THEN
-   DO j = 1, 5, 1
-      xiso(length_step_r_part_2+j,:,:) = xiso(length_step_r_part_2,:,:)                  
+ELSEIF(boundary_flag(3) == 2) THEN
+   DO j = 1, 3    
+      prim2(:,ny_min_2-j,:,:) = prim2(:,ny_min_2,:,:)
+   ENDDO             
+ENDIF
+
+! Do the outer boundary
+IF(boundary_flag(4) == 0) THEN
+   DO j = 1, 3
+      prim2(:,ny_part_2+j,:,:) = prim2(:,ny_min_2-1+j,:,:)
+   ENDDO
+ELSEIF(boundary_flag(4) == 1) THEN
+   DO j = 1, 3
+      DO i = imin2, imax2
+         prim2(:,ny_part_2+j,:,i) = bfac_y(i) * prim2(:,ny_part_2+1-j,:,i)
+      END DO
+   ENDDO
+ELSEIF(boundary_flag(4) == 2) THEN
+   DO j = 1, 3
+      prim2(:,ny_part_2+j,:,:) = prim2(:,ny_part_2,:,:)
+   ENDDO
+ENDIF
+
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+! z-boundary 
+
+! Do the inner boundary
+IF(boundary_flag(5) == 0) THEN
+   DO j = 1, 3
+      prim2(:,:,nz_min_2-j,:) = prim2(:,:,nz_part_2+1-j,:)                     
+   ENDDO
+ELSEIF(boundary_flag(5) == 1) THEN                 
+   DO j = 1, 3
+      DO i = imin2, imax2
+         prim2(:,:,nz_min_2-j,i) = bfac_z(i) * prim2(:,:,nz_min_2-1+j,i)
+      END DO
+   ENDDO
+ELSEIF(boundary_flag(5) == 2) THEN
+   DO j = 1, 3    
+      prim2(:,:,nz_min_2-j,:) = prim2(:,:,nz_min_2,:)
+   ENDDO             
+ENDIF
+
+! Do the outer boundary
+IF(boundary_flag(6) == 0) THEN
+   DO j = 1, 3
+      prim2(:,:,nz_part_2+j,:) = prim2(:,:,nz_min_2-1+j,:)
+   ENDDO
+ELSEIF(boundary_flag(6) == 1) THEN
+   DO j = 1, 3
+      DO i = imin2, imax2
+         prim2(:,:,nz_part_2+j,i) = bfac_z(i) * prim2(:,:,nz_part_2+1-j,i)
+      END DO
+   ENDDO
+ELSEIF(boundary_flag(6) == 2) THEN
+   DO j = 1, 3
+      prim2(:,:,nz_part_2+j,:) = prim2(:,:,nz_part_2,:)
    ENDDO
 ENDIF
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-! Do the third (z-inner) boundary
-IF(boundary_flag(3) == 0) THEN
-   DO j = 1, 5, 1
-      xiso(:,length_step_z_min_part_2-j,:) = xiso(:,length_step_z_part_2+1-j,:)                     
-   ENDDO
-ELSEIF(boundary_flag(3) == 1) THEN                 
-   DO j = 1, 5, 1
-       xiso(:,length_step_z_min_part_2-j,:) = xiso(:,length_step_z_min_part_2-1+j,:)
-   ENDDO
-ELSEIF(boundary_flag(3) == 2) THEN
-   DO j = 1, 5, 1              
-      xiso(:,length_step_z_min_part_2-j,:) = xiso(:,length_step_z_min_part_2,:)
-   ENDDO             
-
-ENDIF
-
-! Do the fourth (z-outer) boundary
-IF(boundary_flag(4) == 0) THEN
-   DO j = 1, 5, 1
-      xiso(:,length_step_z_part_2+j,:) = xiso(:,length_step_z_min_part_2-1+j,:)
-   ENDDO
-ELSEIF(boundary_flag(4) == 1) THEN
-   DO j = 1, 5, 1
-      xiso(:,length_step_z_part_2+j,:) = xiso(:,length_step_z_part_2+1-j,:)
-   ENDDO
-ELSEIF(boundary_flag(4) == 2) THEN
-
-   DO j = 1, 5, 1
-      xiso(:,length_step_z_part_2+j,:) = xiso(:,length_step_z_part_2,:)
-   ENDDO
-ENDIF
-
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
-END SUBROUTINE boundary2D_X
+END SUBROUTINE

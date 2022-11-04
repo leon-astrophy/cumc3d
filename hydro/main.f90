@@ -40,6 +40,38 @@ WRITE(*,*)
 CALL Initial
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+! Main rungekutta loop !
+
+! Initialise !
+n_iter = 0
+global_time = 0.0D0
+
+! Print out !
+WRITE (*,*) 'We now start the time evolution'
+WRITE (*,*)
+WRITE (*,*) '------------------------------------'
+WRITE (*,*) 'iteration, timestep, simulation time'
+WRITE (*,*) '------------------------------------'
+
+! Loop !
+DO while (global_time < total_time)
+
+    ! Find time step !
+    CALL finddt
+
+    ! Rungekutta step !
+    CALL Rungekutta(n_iter)
+
+    ! Update !
+    n_iter = n_iter + 1
+    global_time = global_time + dt
+    
+    ! Print out !
+    WRITE (*,*) n_iter, dt, global_time
+
+END DO
+
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 ! Print out message 
 
 WRITE(*,*) '----------------'

@@ -10,7 +10,7 @@
 !
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-SUBROUTINE GetGridNM
+SUBROUTINE GetGrid_NM
 USE definition
 IMPLICIT NONE
 
@@ -71,23 +71,23 @@ ENDDO
 IF(fullx_flag) THEN
 	n_mid = nx_2/2
    	DO j = -2, nx_2 + 3
-        x2(j) = (DBLE(k - n_mid) - 0.5D0) * dh_x
-		xF2(j) = DBLE(k - n_mid)* dh_x
+        x2(j) = (DBLE(j - n_mid) - 0.5D0) * dh_x
+		xF2(j) = DBLE(j - n_mid)* dh_x
       	dr2(j) = dh_x
    	ENDDO
 END IF
 IF(fully_flag) THEN
 	n_mid = ny_2/2
    	DO j = -2, ny_2 + 3
-        y2(j) = (DBLE(k - n_mid) - 0.5D0) * dh_y
-		yF2(j) = DBLE(k - n_mid)* dh_y
+        y2(j) = (DBLE(j - n_mid) - 0.5D0) * dh_y
+		yF2(j) = DBLE(j - n_mid)* dh_y
    	ENDDO
 END IF
 IF(fullz_flag) THEN
 	n_mid = nz_2/2
    	DO j = -2, nz_2 + 3
-        z2(j) = (DBLE(k - n_mid) - 0.5D0) * dh_z
-		zF2(j) = DBLE(k - n_mid)* dh_z
+        z2(j) = (DBLE(j - n_mid) - 0.5D0) * dh_z
+		zF2(j) = DBLE(j - n_mid)* dh_z
    	ENDDO
 END IF
 
@@ -104,17 +104,17 @@ ELSEIF(coordinate_flag == 1) THEN
    	DO j = -2, nx_2 + 3
 		DO k = -2, ny_2 + 3
 			rad2(j,k,:) = SQRT(x2(j)**2 + y2(k)**2)
- 			cos2(j,k,:) = z2(k)/rad2(j,k,:)
-			sin2(j,k,:) = r2(k)/rad2(j,k,:)
+ 			cos2(j,k,:) = y2(k)/rad2(j,k,:)
+			sin2(j,k,:) = x2(k)/rad2(j,k,:)
 		END DO
    	END DO
 ELSE
    	DO j = -2, nx_2 + 3
 		DO k = -2, ny_2 + 3
 			DO l = -2, nz_2 + 3
-				rad2(j,k,l) = SQRT(x2(j)**2 + y2(k)**2 + z2(k)**2)
+				rad2(j,k,l) = SQRT(x2(j)**2 + y2(k)**2 + z2(l)**2)
  				cos2(j,k,l) = z2(k)/rad2(j,k,l)
-				sin2(j,k,l) = r2(k)/rad2(j,k,l)
+				sin2(j,k,l) = SQRT(x2(j)**2 + y2(k)**2)/rad2(j,k,l)
 			END DO
 		END DO
    	END DO
@@ -155,7 +155,15 @@ IF(NOT(fullz_flag)) THEN
 END IF
 
 ! Dimensionless volume !
-volbar2(:,:) = vol2(:,:)/rmax2**3
+volbar2(:,:,:) = vol2(:,:,:)/rmax2**3
+
+! Set minimum and maximum domain !
+nx_min_2 = 1
+nx_part_2 = nx_2
+ny_min_2 = 1
+ny_part_2 = ny_2
+nz_min_2 = 1
+nz_part_2 = nz_2
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
@@ -165,141 +173,160 @@ END SUBROUTINE
 ! Do everything the same, but for DM !
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-SUBROUTINE GetGridDM
+SUBROUTINE GetGrid_DM
 USE definition
 IMPLICIT NONE
 
-! Dummy variables
-INTEGER :: j, k, x
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-! Real variables !
-REAL (DP) :: dxr, dxz
+! Dummy variables
+INTEGER :: j, k, l, n_mid
+
+! Real !
+REAL (DP) :: dh_x, dh_y, dh_z
+
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 ! Assign !
-IF(movinggriddm_flag == 1) THEN
-	dxr = dx1
-	dxz = dx1
+IF(movinggridnm_flag) THEN
+	dh_x = delta1
+	dh_y = delta1
+	dh_z = delta1
 ELSE
-	dxr = dx1_r
-	dxz = dx1_z
+	dh_x = dx1
+	dh_y = dy1
+	dh_z = dz1
 END IF
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-! For DM motherboard !
+! Grid position of motherboard
+
+! Get the x-position
+IF(fornax_flag) THEN
+    DO j = -2, nx_1 + 3
+		xF1(j) = A_fornax * xt * dsinh(dble(j)/xt)
+    END DO
+    DO j = -2, nx_1 + 3
+        x1(j) = 0.5D0*(xF1(j) + xF1(j-1))
+        dr1(j) = xF1(j) - xF1(j-1)
+    END DO
+ELSE
+    DO j = -2, nx_1 + 3
+        x1(j) = (DBLE(j) - 0.5D0) * dh_x
+        xF1(j) = DBLE(j) * dh_x
+        dr1(j) = dh_x
+    ENDDO
+END IF
+
+! Get the y-position
+DO j = -2, ny_1 + 3
+    y1(j) = (DBLE(j) - 0.5D0) * dh_y
+    yF1(j) = DBLE(j)* dh_y
+ENDDO
 
 ! Get the z-position
-IF(coordinate_flag == 0) THEN
-	DO k = -4, length_step_z_1 + 5, 1
-      	z1(k) = (DBLE(k) - 0.5D0) * dxz
-		zF1(k) = DBLE(k)* dxz
-   	ENDDO
-ELSEIF(coordinate_flag == 1) THEN
-   	IF(hemisphere_flag == 1) THEN
-      	x = length_step_z_1/2
-      	DO k = -4, length_step_z_1 + 5, 1
-         	z1(k) = (DBLE(k - x) - 0.5D0) * dxz
-			zF1(k) = DBLE(k - x)* dxz
-      	ENDDO
-   	ELSE
-		DO k = -4, length_step_z_1 + 5, 1
-         	z1(k) = (DBLE(k) - 0.5D0) * dxz
-			zF1(k) = DBLE(k)* dxz
-      	ENDDO
-   	ENDIF
-ELSEIF(coordinate_flag == 2) THEN
-	DO k = -4, length_step_z_1 + 5, 1
-      	z1(k) = (DBLE(k) - 0.5D0) * dxz
-		zF1(k) = DBLE(k)* dxz
-   	ENDDO
-ENDIF
+DO j = -2, nz_1 + 3
+    z1(j) = (DBLE(j) - 0.5D0) * dh_z
+    zF1(j) = DBLE(j)* dh_z
+ENDDO
 
-! Get the r-position
-IF(coordinate_flag == 0) THEN
-   	DO j = -4, length_step_r_1 + 5, 1
-      	r1(j) = (DBLE(j) - 0.5D0) * dxr
-		rF1(j) = DBLE(j) * dxr
-		dr1(j) = dxr
+! Special treatment for full box simulation !
+IF(fullx_flag) THEN
+	n_mid = nx_1/2
+   	DO j = -2, nx_1 + 3
+        x1(j) = (DBLE(j - n_mid) - 0.5D0) * dh_x
+		xF1(j) = DBLE(j - n_mid)* dh_x
+      	dr1(j) = dh_x
    	ENDDO
-ELSEIF(coordinate_flag == 1) THEN
-  	DO j = -4, length_step_r_1 + 5, 1
-      	r1(j) = (DBLE(j) - 0.5D0) * dxr
-        rF1(j) = DBLE(j) * dxr
-		dr1(j) = dxr
+END IF
+IF(fully_flag) THEN
+	n_mid = ny_1/2
+   	DO j = -2, ny_1 + 3
+        y1(j) = (DBLE(j - n_mid) - 0.5D0) * dh_y
+		yF1(j) = DBLE(j - n_mid)* dh_y
    	ENDDO
-ELSEIF(coordinate_flag == 2) THEN
-   	IF(fornax_flag == 1) THEN
-      	DO j = -4, length_step_r_1 + 5, 1
-			rF1(j) = A_fornax * xt * dsinh(dble(j)/xt)
-      	END DO
-      	DO j = -4, length_step_r_1 + 5
-        	r1(j) = 0.5D0*(rF1(j) + rF1(j-1))
-        	dr1(j) = rF1(j) - rF1(j-1)
-      	END DO
-   	ELSE
-      	DO j = -4, length_step_r_1 + 5, 1
-         	r1(j) = (DBLE(j) - 0.5D0) * dxr
-         	rF1(j) = DBLE(j) * dxr
-         	dr1(j) = dxr
-      	ENDDO
-   	END IF
-ENDIF
+END IF
+IF(fullz_flag) THEN
+	n_mid = nz_1/2
+   	DO j = -2, nz_1 + 3
+        z1(j) = (DBLE(j - n_mid) - 0.5D0) * dh_z
+		zF1(j) = DBLE(j - n_mid)* dh_z
+   	ENDDO
+END IF
 
 ! Radial distances !
 IF(coordinate_flag == 2) THEN
-   	DO j = -4, length_step_r_1 + 5, 1
-		DO k = -4, length_step_z_1 + 5, 1
-			rad1(j,k) = r1(j)
- 			cos1(j,k) = DCOS(z1(k))
-			sin1(j,k) = DSIN(z1(k))
+   	DO j = -2, nx_1 + 3
+		rad1(j,:,:) = x1(j)
+	END DO
+	DO k = -2, ny_1 + 3
+ 		cos1(:,k,:) = DCOS(y1(k))
+		sin1(:,k,:) = DSIN(y1(k))
+   	END DO
+ELSEIF(coordinate_flag == 1) THEN
+   	DO j = -2, nx_1 + 3
+		DO k = -2, ny_1 + 3
+			rad1(j,k,:) = SQRT(x1(j)**2 + y1(k)**2)
+ 			cos1(j,k,:) = y1(k)/rad1(j,k,:)
+			sin1(j,k,:) = x1(k)/rad1(j,k,:)
 		END DO
    	END DO
 ELSE
-  	DO j = -4, length_step_r_1 + 5, 1
-		DO k = -4, length_step_z_1 + 5, 1
-			rad1(j,k) = SQRT(r1(j)**2 + z1(k)**2)
-			cos1(j,k) = z1(k)/rad1(j,k)
-			sin1(j,k) = r1(k)/rad1(j,k)
+   	DO j = -2, nx_1 + 3
+		DO k = -2, ny_1 + 3
+			DO l = -2, nz_1 + 3
+				rad1(j,k,l) = SQRT(x1(j)**2 + y1(k)**2 + z1(l)**2)
+ 				cos1(j,k,l) = z1(k)/rad1(j,k,l)
+				sin1(j,k,l) = SQRT(x1(j)**2 + y1(k)**2)/rad1(j,k,l)
+			END DO
 		END DO
-  	END DO
+   	END DO
 END IF
 
 ! Get maxmimum distance !
-rmax1 = max(maxval(r1), maxval(z1))
+rmax1 = max(maxval(x1), maxval(y1) , maxval(z1))
 
 ! Dimensionless distances !
-radbar1(:,:) = rad1(:,:)/rmax1
+radbar1(:,:,:) = rad1(:,:,:)/rmax1
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-! For DM !
 
+! Get the volume, assuming full box simulation ! 
 IF(coordinate_flag == 0) THEN
-   	DO j = -4, length_step_r_1 + 5, 1
-      	vol1(j,:) = dxr * dxz
-   	ENDDO
+    vol1(:,:,:) = dh_x * dh_y * dh_z
 ELSEIF(coordinate_flag == 1) THEN
-   	IF(hemisphere_flag == 1) THEN
-      	! You need to change this volume if we use
-      	! stricktly Cartesian coordinate
-      	DO j = -4, length_step_r_1 + 5, 1
-         	vol1(j,:) = pi * (rF1 (j)**2 - rF1 (j-1)**2) * dxz
-      	ENDDO
-   	ELSEIF(hemisphere_flag == 0) THEN
-      	DO j = -4, length_step_r_1 + 5, 1
-         	vol1(j,:) = 2.0D0 * pi * (rF1 (j)**2 - rF1 (j-1)**2) * dxz
-      	ENDDO
-   	ELSE
-      	STOP 'Check hemisphere flag, stopped at GetGrid'
-   	ENDIF
+   	DO j = -2, nx_1 + 3
+    	vol1(j,:,:) = 0.5D0 * (xF1 (j)**2 - xF1 (j-1)**2) * dh_y * dh_z
+    ENDDO
 ELSEIF(coordinate_flag == 2) THEN
-    DO j = -4, length_step_r_1 + 5, 1	
-	 	DO k = -4, length_step_z_1 + 5, 1
-        	vol1(j,k) = (4.0D0/3.0D0) * pi * (rF1 (j)**3 - rF1 (j-1)**3) * ABS(COS(zF1(k)) - COS(zF1(k-1)))
+    DO j = -2, nx_1 + 3
+	 	DO k = -2, ny_1 + 3
+           vol1(j,k,:) = (1.0D0/3.0D0) * (xF1 (j)**3 - xF1 (j-1)**3) * ABS(COS(yF1(k)) - COS(yF1(k-1))) * dh_z
 	 	END DO
     ENDDO
 END IF
 
+! Special treatment for full box simulation !
+IF(NOT(fullx_flag)) THEN
+	vol1(:,:,:) = vol1(:,:,:)*2.0D0
+END IF
+IF(NOT(fully_flag)) THEN
+	vol1(:,:,:) = vol1(:,:,:)*2.0D0
+END IF
+IF(NOT(fullz_flag)) THEN
+	vol1(:,:,:) = vol1(:,:,:)*2.0D0
+END IF
+
 ! Dimensionless volume !
-volbar1(:,:) = vol1(:,:)/rmax1**3
+volbar1(:,:,:) = vol1(:,:,:)/rmax1**3
+
+! Set minimum and maximum domain !
+nx_min_1 = 1
+nx_part_1 = nx_1
+ny_min_1 = 1
+ny_part_1 = ny_1
+nz_min_1 = 1
+nz_part_1 = nz_1
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
