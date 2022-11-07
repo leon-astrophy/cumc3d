@@ -81,9 +81,9 @@ IMPLICIT NONE
 
 ! Left and right fluxes, conserved quantity !
 IF(RUNDM_flag) THEN
-	ALLOCATE(alpha1_x(-2:ny_1+3,-2:nz_1+3,imin1:imax1))
-	ALLOCATE(alpha1_y(-2:nx_1+3,-2:nz_1+3,imin1:imax1))
-	ALLOCATE(alpha1_z(-2:nx_1+3,-2:ny_1+3,imin1:imax1))
+	ALLOCATE(alpha1_x(imin1:imax1,-2:ny_1+3,-2:nz_1+3))
+	ALLOCATE(alpha1_y(imin1:imax1,-2:ny_1+3,-2:nz_1+3))
+	ALLOCATE(alpha1_z(imin1:imax1,-2:ny_1+3,-2:nz_1+3))
 
 	IF(movinggriddm_flag) THEN
 		ALLOCATE (vf1xL(-2:nx_1+3))
@@ -94,24 +94,24 @@ IF(RUNDM_flag) THEN
 		ALLOCATE (vf1zR(-2:nz_1+3))
 	END IF
 
-	ALLOCATE(p1L(-2:nx_1+3,-2:ny_1+3,-2:nz_1+3,1:n_dim))
-	ALLOCATE(p1R(-2:nx_1+3,-2:ny_1+3,-2:nz_1+3,1:n_dim))
-	ALLOCATE(eps1L(-2:nx_1+3,-2:ny_1+3,-2:nz_1+3,1:n_dim))
-	ALLOCATE(eps1R(-2:nx_1+3,-2:ny_1+3,-2:nz_1+3,1:n_dim))
-	ALLOCATE(cs1L(-2:nx_1+3,-2:ny_1+3,-2:nz_1+3,1:n_dim))
-	ALLOCATE(cs1R(-2:nx_1+3,-2:ny_1+3,-2:nz_1+3,1:n_dim))
-	ALLOCATE(fluxL1(-2:nx_1+3,-2:ny_1+3,-2:nz_1+3,imin1:imax1,1:n_dim))
-	ALLOCATE(fluxR1(-2:nx_1+3,-2:ny_1+3,-2:nz_1+3,imin1:imax1,1:n_dim))
-	ALLOCATE(uL1(-2:nx_1+3,-2:ny_1+3,-2:nz_1+3,imin1:imax1,1:n_dim))
-	ALLOCATE(uR1(-2:nx_1+3,-2:ny_1+3,-2:nz_1+3,imin1:imax1,1:n_dim))
-	ALLOCATE(primL1(-2:nx_1+3,-2:ny_1+3,-2:nz_1+3,imin1:imax1,1:n_dim))
-	ALLOCATE(primR1(-2:nx_1+3,-2:ny_1+3,-2:nz_1+3,imin1:imax1,1:n_dim))
+	ALLOCATE(p1L(1:n_dim,-2:nx_1+3,-2:ny_1+3,-2:nz_1+3))
+	ALLOCATE(p1R(1:n_dim,-2:nx_1+3,-2:ny_1+3,-2:nz_1+3))
+	ALLOCATE(eps1L(1:n_dim,-2:nx_1+3,-2:ny_1+3,-2:nz_1+3))
+	ALLOCATE(eps1R(1:n_dim,-2:nx_1+3,-2:ny_1+3,-2:nz_1+3))
+	ALLOCATE(cs1L(1:n_dim,-2:nx_1+3,-2:ny_1+3,-2:nz_1+3))
+	ALLOCATE(cs1R(1:n_dim,-2:nx_1+3,-2:ny_1+3,-2:nz_1+3))
+	ALLOCATE(fluxL1(imin1:imax1,1:n_dim,-2:nx_1+3,-2:ny_1+3,-2:nz_1+3))
+	ALLOCATE(fluxR1(imin1:imax1,1:n_dim,-2:nx_1+3,-2:ny_1+3,-2:nz_1+3))
+	ALLOCATE(uL1(imin1:imax1,1:n_dim,-2:nx_1+3,-2:ny_1+3,-2:nz_1+3))
+	ALLOCATE(uR1(imin1:imax1,1:n_dim,-2:nx_1+3,-2:ny_1+3,-2:nz_1+3))
+	ALLOCATE(primL1(imin1:imax1,1:n_dim,-2:nx_1+3,-2:ny_1+3,-2:nz_1+3))
+	ALLOCATE(primR1(imin1:imax1,1:n_dim,-2:nx_1+3,-2:ny_1+3,-2:nz_1+3))
 END IF
 
 ! NM !
-ALLOCATE(alpha2_x(-2:ny_2+3,-2:nz_2+3,imin2:imax2))
-ALLOCATE(alpha2_y(-2:nx_2+3,-2:nz_2+3,imin2:imax2))
-ALLOCATE(alpha2_z(-2:nx_2+3,-2:ny_2+3,imin2:imax2))
+ALLOCATE(alpha2_x(imin2:imax2,-2:ny_2+3,-2:nz_2+3))
+ALLOCATE(alpha2_y(imin2:imax2,-2:ny_2+3,-2:nz_2+3))
+ALLOCATE(alpha2_z(imin2:imax2,-2:ny_2+3,-2:nz_2+3))
 
 ! Moving grid !
 IF(movinggridnm_flag) THEN
@@ -123,16 +123,16 @@ IF(movinggridnm_flag) THEN
 	ALLOCATE (vf2zR(-2:nz_2+3))
 END IF
 
-ALLOCATE(eps2L(-2:nx_2+3,-2:ny_2+3,-2:nz_2+3,1:n_dim))
-ALLOCATE(eps2R(-2:nx_2+3,-2:ny_2+3,-2:nz_2+3,1:n_dim))
-ALLOCATE(cs2L(-2:nx_2+3,-2:ny_2+3,-2:nz_2+3,1:n_dim))
-ALLOCATE(cs2R(-2:nx_2+3,-2:ny_2+3,-2:nz_2+3,1:n_dim))
-ALLOCATE(fluxL2(-2:nx_2+3,-2:ny_2+3,-2:nz_2+3,imin2:imax2,1:n_dim))
-ALLOCATE(fluxR2(-2:nx_2+3,-2:ny_2+3,-2:nz_2+3,imin2:imax2,1:n_dim))
-ALLOCATE(uL2(-2:nx_2+3,-2:ny_2+3,-2:nz_2+3,imin2:imax2,1:n_dim))
-ALLOCATE(uR2(-2:nx_2+3,-2:ny_2+3,-2:nz_2+3,imin2:imax2,1:n_dim))
-ALLOCATE(primL2(-2:nx_2+3,-2:ny_2+3,-2:nz_2+3,imin2:imax2,1:n_dim))
-ALLOCATE(primR2(-2:nx_2+3,-2:ny_2+3,-2:nz_2+3,imin2:imax2,1:n_dim))
+ALLOCATE(eps2L(1:n_dim,-2:nx_2+3,-2:ny_2+3,-2:nz_2+3))
+ALLOCATE(eps2R(1:n_dim,-2:nx_2+3,-2:ny_2+3,-2:nz_2+3))
+ALLOCATE(cs2L(1:n_dim,-2:nx_2+3,-2:ny_2+3,-2:nz_2+3))
+ALLOCATE(cs2R(1:n_dim,-2:nx_2+3,-2:ny_2+3,-2:nz_2+3))
+ALLOCATE(fluxL2(imin2:imax2,1:n_dim,-2:nx_2+3,-2:ny_2+3,-2:nz_2+3))
+ALLOCATE(fluxR2(imin2:imax2,1:n_dim,-2:nx_2+3,-2:ny_2+3,-2:nz_2+3))
+ALLOCATE(uL2(imin2:imax2,1:n_dim,-2:nx_2+3,-2:ny_2+3,-2:nz_2+3))
+ALLOCATE(uR2(imin2:imax2,1:n_dim,-2:nx_2+3,-2:ny_2+3,-2:nz_2+3))
+ALLOCATE(primL2(imin2:imax2,1:n_dim,-2:nx_2+3,-2:ny_2+3,-2:nz_2+3))
+ALLOCATE(primR2(imin2:imax2,1:n_dim,-2:nx_2+3,-2:ny_2+3,-2:nz_2+3))
 
 END SUBROUTINE
 
@@ -150,12 +150,12 @@ INTEGER :: i, j, k, l, p
 
 ! For DM !
 DO CONCURRENT(j = nx_min_1 - 1:nx_part_1, k = ny_min_1 - 1:ny_part_1, l = nz_min_1 - 1:nz_part_1, i = imin1:imax1)
-	flux_1(j,k,l,i,x_dir) = 0.5D0 * (fluxL1 (j,k,l,i,x_dir) + fluxR1 (j,k,l,i,x_dir) - alpha1_x(k,l,i) * (uR1 (j,k,l,i,x_dir) - uL1 (j,k,l,i,x_dir)))
+	flux_1(i,x_dir,j,k,l) = 0.5D0 * (fluxL1 (i,x_dir,j,k,l) + fluxR1 (i,x_dir,j,k,l) - alpha1_x(i,k,l) * (uR1 i,x_dir,j,k,l) - uL1 (i,x_dir,j,k,l)))
 	IF(n_dim > 1) THEN
-		flux_1(j,k,l,i,y_dir) = 0.5D0 * (fluxL1 (j,k,l,i,y_dir) + fluxR1 (j,k,l,i,y_dir) - alpha1_y(j,l,i) * (uR1 (j,k,l,i,y_dir) - uL1 (j,k,l,i,y_dir)))
+		flux_1(i,y_dir,j,k,l) = 0.5D0 * (fluxL1 (i,y_dir,j,k,l) + fluxR1 (i,y_dir,j,k,l) - alpha1_y(i,j,l) * (uR1 (i,y_dir,j,k,l) - uL1 (i,y_dir,j,k,l)))
 	END IF
 	IF(n_dim > 2) THEN
-		flux_1(j,k,l,i,z_dir) = 0.5D0 * (fluxL1 (j,k,l,i,z_dir) + fluxR1 (j,k,l,i,z_dir) - alpha1_z(j,k,i) * (uR1 (j,k,l,i,z_dir) - uL1 (j,k,l,i,z_dir)))
+		flux_1(i,z_dir,j,k,l) = 0.5D0 * (fluxL1 (i,z_dir,j,k,l) + fluxR1 (i,z_dir,j,k,l) - alpha1_z(i,j,k) * (uR1 (i,z_dir,j,k,l) - uL1 (i,z_dir,j,k,l)))
 	END IF
 END DO
 
@@ -177,12 +177,12 @@ INTEGER :: i, j, k, l, p
 
 ! For DM !
 DO CONCURRENT(j = nx_min_2 - 1:nx_part_2, k = ny_min_1 - 2:ny_part_2, l = nz_min_2 - 1:nz_part_2, i = imin2:imax2)
-	flux_2(j,k,l,i,x_dir) = 0.5D0 * (fluxL2 (j,k,l,i,x_dir) + fluxR2 (j,k,l,i,x_dir) - alpha2_x(k,l,i) * (uR2 (j,k,l,i,x_dir) - uL2 (j,k,l,i,x_dir)))
+	flux_2(i,x_dir,j,k,l) = 0.5D0 * (fluxL2 (i,x_dir,j,k,l) + fluxR2 (i,x_dir,j,k,l) - alpha2_x(i,k,l) * (uR2 i,x_dir,j,k,l) - uL2 (i,x_dir,j,k,l)))
 	IF(n_dim > 1) THEN
-		flux_2(j,k,l,i,y_dir) = 0.5D0 * (fluxL2 (j,k,l,i,y_dir) + fluxR2 (j,k,l,i,y_dir) - alpha2_y(j,l,i) * (uR2 (j,k,l,i,y_dir) - uL2 (j,k,l,i,y_dir)))
+		flux_2(i,y_dir,j,k,l) = 0.5D0 * (fluxL2 (i,y_dir,j,k,l) + fluxR2 (i,y_dir,j,k,l) - alpha2_y(i,j,l) * (uR2 (i,y_dir,j,k,l) - uL2 (i,y_dir,j,k,l)))
 	END IF
 	IF(n_dim > 2) THEN
-		flux_2(j,k,l,i,z_dir) = 0.5D0 * (fluxL2 (j,k,l,i,z_dir) + fluxR2 (j,k,l,i,z_dir) - alpha2_z(j,k,i) * (uR2 (j,k,l,i,z_dir) - uL2 (j,k,l,i,z_dir)))
+		flux_2(i,z_dir,j,k,l) = 0.5D0 * (fluxL2 (i,z_dir,j,k,l) + fluxR2 (i,z_dir,j,k,l) - alpha2_z(i,j,k) * (uR2 (i,z_dir,j,k,l) - uL2 (i,z_dir,j,k,l)))
 	END IF
 END DO
 
