@@ -154,34 +154,34 @@ END IF
 
 ! Allocate arrays for NM !
 ALLOCATE(prim2_a(imin2:imax2))
-ALLOCATE(l2(-2:nx_2+3,-2:ny_2+3,-2:nz_2+3,imin2:imax2))
-ALLOCATE(u2_nm(-2:nx_2+3,-2:ny_2+3,-2:nz_2+3,imin2:imax2))
-ALLOCATE(u3_nm(-2:nx_2+3,-2:ny_2+3,-2:nz_2+3,imin2:imax2))
-ALLOCATE(l3_nm(-2:nx_2+3,-2:ny_2+3,-2:nz_2+3,imin2:imax2))
-ALLOCATE(u_old2(-2:nx_2+3,-2:ny_2+3,-2:nz_2+3,imin2:imax2))
-ALLOCATE(prim2(-2:nx_2+3,-2:ny_2+3,-2:nz_2+3,imin2:imax2))
-ALLOCATE(cons2(-2:nx_2+3,-2:ny_2+3,-2:nz_2+3,imin2:imax2))
+ALLOCATE(l2(imin2:imax2,-2:nx_2+3,-2:ny_2+3,-2:nz_2+3))
+ALLOCATE(u2_nm(imin2:imax2,-2:nx_2+3,-2:ny_2+3,-2:nz_2+3))
+ALLOCATE(u3_nm(imin2:imax2,-2:nx_2+3,-2:ny_2+3,-2:nz_2+3))
+ALLOCATE(l3_nm(imin2:imax2,-2:nx_2+3,-2:ny_2+3,-2:nz_2+3))
+ALLOCATE(u_old2(imin2:imax2,-2:nx_2+3,-2:ny_2+3,-2:nz_2+3))
+ALLOCATE(prim2(imin2:imax2,-2:nx_2+3,-2:ny_2+3,-2:nz_2+3))
+ALLOCATE(cons2(imin2:imax2,-2:nx_2+3,-2:ny_2+3,-2:nz_2+3))
 
 ! Allocate flux arrays for NM !
-ALLOCATE(sa2(-2:nx_2+3,-2:ny_2+3,-2:nz_2+3,imin2:imax2))
-ALLOCATE(sb2(-2:nx_2+3,-2:ny_2+3,-2:nz_2+3,imin2:imax2))
-ALLOCATE(dflux_2(-2:nx_2+3,-2:ny_2+3,-2:nz_2+3,imin2:imax2,1:n_dim))
-ALLOCATE(flux_2(-2:nx_2+3,-2:ny_2+3,-2:nz_2+3,imin2:imax2,1:n_dim))
+ALLOCATE(sa2(imin2:imax2,-2:nx_2+3,-2:ny_2+3,-2:nz_2+3))
+ALLOCATE(sb2(imin2:imax2,-2:nx_2+3,-2:ny_2+3,-2:nz_2+3))
+ALLOCATE(dflux_2(imin2:imax2,1:n_dim,-2:nx_2+3,-2:ny_2+3,-2:nz_2+3))
+ALLOCATE(flux_2(imin2:imax2,1:n_dim,-2:nx_2+3,-2:ny_2+3,-2:nz_2+3))
 
 ! For DM !
 IF(RUNDM_flag) THEN
     ALLOCATE(prim1_a(imin1:imax1))
-    ALLOCATE(l1(-2:nx_1+3,-2:ny_1+3,-2:nz_1+3,imin1:imax1))
-    ALLOCATE(u2_dm(-2:nx_1+3,-2:ny_1+3,-2:nz_1+3,imin1:imax1))
-    ALLOCATE(u3_dm(-2:nx_1+3,-2:ny_1+3,-2:nz_1+3,imin1:imax1))
-    ALLOCATE(l3_dm(-2:nx_1+3,-2:ny_1+3,-2:nz_1+3,imin1:imax1))
-    ALLOCATE(u_old1(-2:nx_1+3,-2:ny_1+3,-2:nz_1+3,imin1:imax1))
-    ALLOCATE(prim1(-2:nx_1+3,-2:ny_1+3,-2:nz_1+3,imin1:imax1))
-    ALLOCATE(cons1(-2:nx_1+3,-2:ny_1+3,-2:nz_1+3,imin1:imax1))
-    ALLOCATE(sa1(-2:nx_1+3,-2:ny_1+3,-2:nz_1+3,imin1:imax1))
-	ALLOCATE(sb1(-2:nx_1+3,-2:ny_1+3,-2:nz_1+3,imin1:imax1))
-	ALLOCATE(flux_1(-2:nx_1+3,-2:ny_1+3,-2:nz_1+3,imin1:imax1,1:n_dim))
-	ALLOCATE(dflux_1(-2:nx_1+3,-2:ny_1+3,-2:nz_1+3,imin1:imax1,1:n_dim))
+    ALLOCATE(l1(min1:imax1,-2:nx_1+3,-2:ny_1+3,-2:nz_1+3))
+    ALLOCATE(u2_dm(min1:imax1,-2:nx_1+3,-2:ny_1+3,-2:nz_1+3))
+    ALLOCATE(u3_dm(min1:imax1,-2:nx_1+3,-2:ny_1+3,-2:nz_1+3))
+    ALLOCATE(l3_dm(min1:imax1,-2:nx_1+3,-2:ny_1+3,-2:nz_1+3))
+    ALLOCATE(u_old1(min1:imax1,-2:nx_1+3,-2:ny_1+3,-2:nz_1+3))
+    ALLOCATE(prim1(min1:imax1,-2:nx_1+3,-2:ny_1+3,-2:nz_1+3))
+    ALLOCATE(cons1(min1:imax1,-2:nx_1+3,-2:ny_1+3,-2:nz_1+3))
+    ALLOCATE(sa1(min1:imax1,-2:nx_1+3,-2:ny_1+3,-2:nz_1+3))
+	ALLOCATE(sb1(min1:imax1,-2:nx_1+3,-2:ny_1+3,-2:nz_1+3))
+	ALLOCATE(flux_1(imin1:imax1,1:n_dim,2:nx_1+3,-2:ny_1+3,-2:nz_1+3))
+	ALLOCATE(dflux_1(imin1:imax1,1:n_dim,2:nx_1+3,-2:ny_1+3,-2:nz_1+3))
 END IF
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -205,14 +205,14 @@ IMPLICIT NONE
 
 ! Legendre polynominal and mutlipole moments !
 IF(coordinate_flag == 2) THEN
-	ALLOCATE (inner_2(-2:nx_2+3,0:2*lmax))
-	ALLOCATE (outer_2(-2:nx_2+3,0:2*lmax))
-	ALLOCATE (rsolid_2(-2:nx_2+3,-2:ny_2+3,-2:nz_2+3,0:2*lmax))
-	ALLOCATE (isolid_2(-2:nx_2+3,-2:ny_2+3,-2:nz_2+3,0:2*lmax))
+	ALLOCATE (inner_2(0:2*lmax,-2:nx_2+3))
+	ALLOCATE (outer_2(0:2*lmax,-2:nx_2+3))
+	ALLOCATE (rsolid_2(0:2*lmax,-2:nx_2+3,-2:ny_2+3,-2:nz_2+3))
+	ALLOCATE (isolid_2(0:2*lmax,-2:nx_2+3,-2:ny_2+3,-2:nz_2+3))
 ELSE
     ALLOCATE (qpole2(0:2*lmax))
 END IF
-ALLOCATE (legendre2(-2:nx_2+3,-2:ny_2+3,-2:nz_2+3,0:2*lmax))
+ALLOCATE (legendre2(0:2*lmax,2:nx_2+3,-2:ny_2+3,-2:nz_2+3))
 
 ! For Grid variables !
 ALLOCATE (dr2(-2:nx_2+3))
@@ -239,18 +239,18 @@ ALLOCATE (dpdeps2(-2:nx_2+3,-2:ny_2+3,-2:nz_2+3))
 
 ! Temperature !
 IF(have_temp) THEN
-	ALLOCATE (temp2(-1:nx_2+2,-1:ny_2+2,-1:nz_2+2))
+	ALLOCATE (temp2(-2:nx_2+3,-2:ny_2+3,-2:nz_2+3))
 END IF
 
 ! Potentials !
 ALLOCATE (phi2(-2:nx_2+3,-2:ny_2+3,-2:nz_2+3))
 ALLOCATE (phi2_dm(-2:nx_2+3,-2:ny_2+3,-2:nz_2+3))
 ALLOCATE (phi2_nm(-2:nx_2+3,-2:ny_2+3,-2:nz_2+3))
-ALLOCATE (dphi_2(-2:nx_2+3,-2:ny_2+3,-2:nz_2+3,1:n_dim))
+ALLOCATE (dphi_2(1:n_dim,2:nx_2+3,-2:ny_2+3,-2:nz_2+3))
 
 ! Extra Hydrodynamic variables !
 IF (dual_energy) THEN
-    ALLOCATE (dp_2(-2:nx_2+3,-2:ny_2+3,-2:nz_2+3,1:n_dim))
+    ALLOCATE (dp_2(1:n_dim,2:nx_2+3,-2:ny_2+3,-2:nz_2+3))
 END IF
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -260,14 +260,14 @@ IF (DM_flag) THEN
 
 	! Legendre polynominal and mutlipole moments !
 	IF(coordinate_flag == 2) THEN
-		ALLOCATE (rsolid_1(-2:nx_1+3,-2:ny_1+3,-2:nz_1+3,0:2*lmax))
-		ALLOCATE (isolid_1(-2:nx_1+3,-2:ny_1+3,-2:nz_1+3,0:2*lmax))
-		ALLOCATE (inner_1(-2:nx_1+3,0:2*lmax))
-		ALLOCATE (outer_1(-2:nx_1+3,0:2*lmax))
+		ALLOCATE (rsolid_1(0:2*lmax,2:nx_1+3,-2:ny_1+3,-2:nz_1+3))
+		ALLOCATE (isolid_1(0:2*lmax,2:nx_1+3,-2:ny_1+3,-2:nz_1+3))
+		ALLOCATE (inner_1(0:2*lmax,-2:nx_1+3))
+		ALLOCATE (outer_1(0:2*lmax,-2:nx_1+3))
 	ELSE
         ALLOCATE (qpole1(0:2*lmax))
     END IF
-    ALLOCATE (legendre1(-2:nx_1+3,-2:ny_1+3,-2:nz_1+3,0:2*lmax))
+    ALLOCATE (legendre1(0:2*lmax,-2:nx_1+3,-2:ny_1+3,-2:nz_1+3))
 
 	! For Grid variables !
 	ALLOCATE (dr1(-2:nx_1+3))
@@ -294,7 +294,7 @@ IF (DM_flag) THEN
 	ALLOCATE (phi1(-2:nx_1+3,-2:ny_1+3,-2:nz_1+3))
 	ALLOCATE (phi1_dm(-2:nx_1+3,-2:ny_1+3,-2:nz_1+3))
 	ALLOCATE (phi1_nm(-2:nx_1+3,-2:ny_1+3,-2:nz_1+3))
-	ALLOCATE (dphi_1(-2:nx_1+3,-2:ny_1+3,-2:nz_1+3,1:n_dim))
+	ALLOCATE (dphi_1(1:n_dim,2:nx_1+3,-2:ny_1+3,-2:nz_1+3))
 
 END IF
 
