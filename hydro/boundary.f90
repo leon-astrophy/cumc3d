@@ -381,30 +381,30 @@ INTEGER :: i, j, k, l
 ! Do the inner boundary
 IF(boundary_flag(1) == 0) THEN
    DO CONCURRENT(j = 1:3, k = ny_min_1:ny_part_1, l = nz_min_1:nz_part_1, i = imin1:imax1)
-      cons1(nx_min_1-j,k,l,i) = cons1(nx_part_1+1-j,k,l,i)                     
+      cons1(i,nx_min_1-j,k,l) = cons1(i,nx_part_1+1-j,k,l)                     
    ENDDO
 ELSEIF(boundary_flag(1) == 1) THEN                 
    DO CONCURRENT(j = 1:3, k = ny_min_1:ny_part_1, l = nz_min_1:nz_part_1, i = imin1:imax1)
-      cons1(nx_min_1-j,k,l,i) = bfac_x(i) * cons1(nx_min_1-1+j,k,l,i)
+      cons1(i,nx_min_1-j,k,l) = bfac_x(i) * cons1(i,nx_min_1-1+j,k,l)
    ENDDO
 ELSEIF(boundary_flag(1) == 2) THEN
    DO CONCURRENT(j = 1:3, k = ny_min_1:ny_part_1, l = nz_min_1:nz_part_1, i = imin1:imax1)
-      cons1(nx_min_1-j,k,l,i) = cons1(nx_min_1,k,l,i)
+      cons1(i,nx_min_1-j,k,l) = cons1(i,nx_min_1,k,l)
    ENDDO             
 ENDIF
 
 ! Do the outer boundary
 IF(boundary_flag(2) == 0) THEN
    DO CONCURRENT(j = 1:3, k = ny_min_1:ny_part_1, l = nz_min_1:nz_part_1, i = imin1:imax1)
-      cons1(nx_part_1+j,k,l,i) = cons1(nx_min_1-1+j,k,l,i)
+      cons1(i,nx_part_1+j,k,l) = cons1(i,nx_min_1-1+j,k,l)
    ENDDO
 ELSEIF(boundary_flag(2) == 1) THEN
    DO CONCURRENT(j = 1:3, k = ny_min_1:ny_part_1, l = nz_min_1:nz_part_1, i = imin1:imax1)
-         cons1(nx_part_1+j,k,l,i) = bfac_x(i) * cons1(nx_part_1+1-j,k,l,i)
+         cons1(i,nx_part_1+j,k,l) = bfac_x(i) * cons1(i,nx_part_1+1-j,k,l)
    ENDDO
 ELSEIF(boundary_flag(2) == 2) THEN
    DO CONCURRENT(j = 1:3, k = ny_min_1:ny_part_1, l = nz_min_1:nz_part_1, i = imin1:imax1)
-      cons1(nx_part_1+j,k,l,i) = cons1(nx_part_1,k,l,i)
+      cons1(i,nx_part_1+j,k,l) = cons1(i,nx_part_1,k,l)
    ENDDO
 ENDIF
 
@@ -415,30 +415,30 @@ ENDIF
 IF(n_dim > 1) THEN
    IF(boundary_flag(3) == 0) THEN
       DO CONCURRENT(j = nx_min_1:nx_part_1, k = 1:3, l = nz_min_1:nz_part_1, i = imin1:imax1)
-         cons1(j,ny_min_1-k,l,i) = cons1(j,ny_part_1+1-k,l,i)                    
+         cons1(i,j,ny_min_1-k,l) = cons1(i,j,ny_part_1+1-k,l)                    
       ENDDO
    ELSEIF(boundary_flag(3) == 1) THEN                 
       DO CONCURRENT(j = nx_min_1:nx_part_1, k = 1:3, l = nz_min_1:nz_part_1, i = imin1:imax1)
-         cons1(j,ny_min_1-k,l,i) = bfac_y(i) * cons1(j,ny_min_1-1+k,l,i)
+         cons1(i,j,ny_min_1-k,l) = bfac_y(i) * cons1(i,j,ny_min_1-1+k,l)
       ENDDO
    ELSEIF(boundary_flag(3) == 2) THEN
       DO CONCURRENT(j = nx_min_1:nx_part_1, k = 1:3, l = nz_min_1:nz_part_1, i = imin1:imax1)
-         cons1(j,ny_min_1-k,l,i) = cons1(j,ny_min_1,l,i)
+         cons1(i,j,ny_min_1-k,l) = cons1(i,j,ny_min_1,l)
       ENDDO             
    ENDIF
 
    ! Do the outer boundary
    IF(boundary_flag(4) == 0) THEN
       DO CONCURRENT(j = nx_min_1:nx_part_1, k = 1:3, l = nz_min_1:nz_part_1, i = imin1:imax1)
-         cons1(j,ny_part_1+k,l,i) = cons1(j,ny_min_1-1+k,l,i)
+         cons1(i,j,ny_part_1+k,l) = cons1(i,j,ny_min_1-1+k,l)
       ENDDO
    ELSEIF(boundary_flag(4) == 1) THEN
      DO CONCURRENT(j = nx_min_1:nx_part_1, k = 1:3, l = nz_min_1:nz_part_1, i = imin1:imax1)
-         cons1(j,ny_part_1+k,l,i) = bfac_y(i) * cons1(j,ny_part_1+1-k,l,i)
+         cons1(i,j,ny_part_1+k,l) = bfac_y(i) * cons1(i,j,ny_part_1+1-k,l)
       ENDDO
    ELSEIF(boundary_flag(4) == 2) THEN
       DO CONCURRENT(j = nx_min_1:nx_part_1, k = 1:3, l = nz_min_1:nz_part_1, i = imin1:imax1)
-         cons1(j,ny_part_1+k,l,i) = cons1(j,ny_part_1,l,i)
+         cons1(i,j,ny_part_1+k,l) = cons1(i,j,ny_part_1,l)
       ENDDO
    ENDIF
 END IF
@@ -450,30 +450,30 @@ END IF
 IF(n_dim > 2) THEN
    IF(boundary_flag(5) == 0) THEN
       DO CONCURRENT(j = nx_min_1:nx_part_1, k = ny_min_1:ny_part_1, l = 1:3, i = imin1:imax1)
-         cons1(j,k,nz_min_1-l,i) = cons1(j,k,nz_part_1+1-l,i)                     
+         cons1(i,j,k,nz_min_1-l) = cons1(i,j,k,nz_part_1+1-l)                     
       ENDDO
    ELSEIF(boundary_flag(5) == 1) THEN                 
       DO CONCURRENT(j = nx_min_1:nx_part_1, k = ny_min_1:ny_part_1, l = 1:3, i = imin1:imax1)
-         cons1(j,k,nz_min_1-l,i) = bfac_z(i) * cons1(j,k,nz_min_1-1+l,i)
+         cons1(i,j,k,nz_min_1-l) = bfac_z(i) * cons1(i,j,k,nz_min_1-1+l)
       ENDDO
    ELSEIF(boundary_flag(5) == 2) THEN
       DO CONCURRENT(j = nx_min_1:nx_part_1, k = ny_min_1:ny_part_1, l = 1:3, i = imin1:imax1)
-         cons1(j,k,nz_min_1-l,i) = cons1(j,k,nz_min_1,i)
+         cons1(i,j,k,nz_min_1-l) = cons1(i,j,k,nz_min_1)
       ENDDO             
    ENDIF
 
    ! Do the outer boundary
    IF(boundary_flag(6) == 0) THEN
       DO CONCURRENT(j = nx_min_1:nx_part_1, k = ny_min_1:ny_part_1, l = 1:3, i = imin1:imax1)
-         cons1(j,k,nz_part_1+l,i) = cons1(j,k,nz_min_2-1+l,i)
+         cons1(i,j,k,nz_part_1+l) = cons1(i,j,k,nz_min_2-1+l)
       ENDDO
    ELSEIF(boundary_flag(6) == 1) THEN
       DO CONCURRENT(j = nx_min_1:nx_part_1, k = ny_min_1:ny_part_1, l = 1:3, i = imin1:imax1)
-         cons1(j,k,nz_part_1+l,i) = bfac_z(i) * cons1(j,k,nz_part_1+1-l,i)
+         cons1(i,j,k,nz_part_1+l) = bfac_z(i) * cons1(i,j,k,nz_part_1+1-l)
       ENDDO
    ELSEIF(boundary_flag(6) == 2) THEN
       DO CONCURRENT(j = nx_min_1:nx_part_1, k = ny_min_1:ny_part_1, l = 1:3, i = imin1:imax1)
-         cons1(j,k,nz_part_1+l,i) = cons1(j,k,nz_part_1,i)
+         cons1(i,j,k,nz_part_1+l) = cons1(i,j,k,nz_part_1)
       ENDDO
    ENDIF
 END IF
@@ -501,30 +501,30 @@ INTEGER :: i, j, k, l
 ! Do the inner boundary
 IF(boundary_flag(1) == 0) THEN
    DO CONCURRENT(j = 1:3, k = ny_min_1:ny_part_1, l = nz_min_1:nz_part_1, i = imin1:imax1)
-      prim1(nx_min_1-j,k,l,i) = prim1(nx_part_1+1-j,k,l,i)                     
+      prim1(i,nx_min_1-j,k,l) = prim1(i,nx_part_1+1-j,k,l)                     
    ENDDO
 ELSEIF(boundary_flag(1) == 1) THEN                 
    DO CONCURRENT(j = 1:3, k = ny_min_1:ny_part_1, l = nz_min_1:nz_part_1, i = imin1:imax1)
-      prim1(nx_min_1-j,k,l,i) = bfac_x(i) * prim1(nx_min_1-1+j,k,l,i)
+      prim1(i,nx_min_1-j,k,l) = bfac_x(i) * prim1(i,nx_min_1-1+j,k,l)
    ENDDO
 ELSEIF(boundary_flag(1) == 2) THEN
    DO CONCURRENT(j = 1:3, k = ny_min_1:ny_part_1, l = nz_min_1:nz_part_1, i = imin1:imax1)
-      prim1(nx_min_1-j,k,l,i) = prim1(nx_min_1,k,l,i)
+      prim1(i,nx_min_1-j,k,l) = prim1(i,nx_min_1,k,l)
    ENDDO             
 ENDIF
 
 ! Do the outer boundary
 IF(boundary_flag(2) == 0) THEN
    DO CONCURRENT(j = 1:3, k = ny_min_1:ny_part_1, l = nz_min_1:nz_part_1, i = imin1:imax1)
-      prim1(nx_part_1+j,k,l,i) = prim1(nx_min_1-1+j,k,l,i)
+      prim1(i,nx_part_1+j,k,l) = prim1(i,nx_min_1-1+j,k,l)
    ENDDO
 ELSEIF(boundary_flag(2) == 1) THEN
    DO CONCURRENT(j = 1:3, k = ny_min_1:ny_part_1, l = nz_min_1:nz_part_1, i = imin1:imax1)
-         prim1(nx_part_1+j,k,l,i) = bfac_x(i) * prim1(nx_part_1+1-j,k,l,i)
+         prim1(i,nx_part_1+j,k,l) = bfac_x(i) * prim1(i,nx_part_1+1-j,k,l)
    ENDDO
 ELSEIF(boundary_flag(2) == 2) THEN
    DO CONCURRENT(j = 1:3, k = ny_min_1:ny_part_1, l = nz_min_1:nz_part_1, i = imin1:imax1)
-      prim1(nx_part_1+j,k,l,i) = prim1(nx_part_1,k,l,i)
+      prim1(i,nx_part_1+j,k,l) = prim1(i,nx_part_1,k,l)
    ENDDO
 ENDIF
 
@@ -535,30 +535,30 @@ ENDIF
 IF(n_dim > 1) THEN
    IF(boundary_flag(3) == 0) THEN
       DO CONCURRENT(j = nx_min_1:nx_part_1, k = 1:3, l = nz_min_1:nz_part_1, i = imin1:imax1)
-         prim1(j,ny_min_1-k,l,i) = prim1(j,ny_part_1+1-k,l,i)                    
+         prim1(i,j,ny_min_1-k,l) = prim1(i,j,ny_part_1+1-k,l)                    
       ENDDO
    ELSEIF(boundary_flag(3) == 1) THEN                 
       DO CONCURRENT(j = nx_min_1:nx_part_1, k = 1:3, l = nz_min_1:nz_part_1, i = imin1:imax1)
-         prim1(j,ny_min_1-k,l,i) = bfac_y(i) * prim1(j,ny_min_1-1+k,l,i)
+         prim1(i,j,ny_min_1-k,l) = bfac_y(i) * prim1(i,j,ny_min_1-1+k,l)
       ENDDO
    ELSEIF(boundary_flag(3) == 2) THEN
       DO CONCURRENT(j = nx_min_1:nx_part_1, k = 1:3, l = nz_min_1:nz_part_1, i = imin1:imax1)
-         prim1(j,ny_min_1-k,l,i) = prim1(j,ny_min_1,l,i)
+         prim1(i,j,ny_min_1-k,l) = prim1(i,j,ny_min_1,l)
       ENDDO             
    ENDIF
 
    ! Do the outer boundary
    IF(boundary_flag(4) == 0) THEN
       DO CONCURRENT(j = nx_min_1:nx_part_1, k = 1:3, l = nz_min_1:nz_part_1, i = imin1:imax1)
-         prim1(j,ny_part_1+k,l,i) = prim1(j,ny_min_1-1+k,l,i)
+         prim1(i,j,ny_part_1+k,l) = prim1(i,j,ny_min_1-1+k,l)
       ENDDO
    ELSEIF(boundary_flag(4) == 1) THEN
      DO CONCURRENT(j = nx_min_1:nx_part_1, k = 1:3, l = nz_min_1:nz_part_1, i = imin1:imax1)
-         prim1(j,ny_part_1+k,l,i) = bfac_y(i) * prim1(j,ny_part_1+1-k,l,i)
+         prim1(i,j,ny_part_1+k,l) = bfac_y(i) * prim1(i,j,ny_part_1+1-k,l)
       ENDDO
    ELSEIF(boundary_flag(4) == 2) THEN
       DO CONCURRENT(j = nx_min_1:nx_part_1, k = 1:3, l = nz_min_1:nz_part_1, i = imin1:imax1)
-         prim1(j,ny_part_1+k,l,i) = prim1(j,ny_part_1,l,i)
+         prim1(i,j,ny_part_1+k,l) = prim1(i,j,ny_part_1,l)
       ENDDO
    ENDIF
 END IF
@@ -570,30 +570,30 @@ END IF
 IF(n_dim > 2) THEN
    IF(boundary_flag(5) == 0) THEN
       DO CONCURRENT(j = nx_min_1:nx_part_1, k = ny_min_1:ny_part_1, l = 1:3, i = imin1:imax1)
-         prim1(j,k,nz_min_1-l,i) = prim1(j,k,nz_part_1+1-l,i)                     
+         prim1(i,j,k,nz_min_1-l) = prim1(i,j,k,nz_part_1+1-l)                     
       ENDDO
    ELSEIF(boundary_flag(5) == 1) THEN                 
       DO CONCURRENT(j = nx_min_1:nx_part_1, k = ny_min_1:ny_part_1, l = 1:3, i = imin1:imax1)
-         prim1(j,k,nz_min_1-l,i) = bfac_z(i) * prim1(j,k,nz_min_1-1+l,i)
+         prim1(i,j,k,nz_min_1-l) = bfac_z(i) * prim1(i,j,k,nz_min_1-1+l)
       ENDDO
    ELSEIF(boundary_flag(5) == 2) THEN
       DO CONCURRENT(j = nx_min_1:nx_part_1, k = ny_min_1:ny_part_1, l = 1:3, i = imin1:imax1)
-         prim1(j,k,nz_min_1-l,i) = prim1(j,k,nz_min_1,i)
+         prim1(i,j,k,nz_min_1-l) = prim1(i,j,k,nz_min_1)
       ENDDO             
    ENDIF
 
    ! Do the outer boundary
    IF(boundary_flag(6) == 0) THEN
       DO CONCURRENT(j = nx_min_1:nx_part_1, k = ny_min_1:ny_part_1, l = 1:3, i = imin1:imax1)
-         prim1(j,k,nz_part_1+l,i) = prim1(j,k,nz_min_2-1+l,i)
+         prim1(i,j,k,nz_part_1+l) = prim1(i,j,k,nz_min_2-1+l)
       ENDDO
    ELSEIF(boundary_flag(6) == 1) THEN
       DO CONCURRENT(j = nx_min_1:nx_part_1, k = ny_min_1:ny_part_1, l = 1:3, i = imin1:imax1)
-         prim1(j,k,nz_part_1+l,i) = bfac_z(i) * prim1(j,k,nz_part_1+1-l,i)
+         prim1(i,j,k,nz_part_1+l) = bfac_z(i) * prim1(i,j,k,nz_part_1+1-l)
       ENDDO
    ELSEIF(boundary_flag(6) == 2) THEN
       DO CONCURRENT(j = nx_min_1:nx_part_1, k = ny_min_1:ny_part_1, l = 1:3, i = imin1:imax1)
-         prim1(j,k,nz_part_1+l,i) = prim1(j,k,nz_part_1,i)
+         prim1(i,j,k,nz_part_1+l) = prim1(i,j,k,nz_part_1)
       ENDDO
    ENDIF
 END IF
@@ -621,30 +621,30 @@ INTEGER :: i, j, k, l
 ! Do the inner boundary
 IF(boundary_flag(1) == 0) THEN
    DO CONCURRENT(j = 1:3, k = ny_min_2:ny_part_2, l = nz_min_2:nz_part_2, i = imin2:imax2)
-      cons2(nx_min_2-j,k,l,i) = cons2(nx_part_2+1-j,k,l,i)                     
+      cons2(i,nx_min_2-j,k,l) = cons2(i,nx_part_2+1-j,k,l)                     
    ENDDO
 ELSEIF(boundary_flag(1) == 1) THEN                 
    DO CONCURRENT(j = 1:3, k = ny_min_2:ny_part_2, l = nz_min_2:nz_part_2, i = imin2:imax2)
-      cons2(nx_min_2-j,k,l,i) = bfac_x(i) * cons2(nx_min_2-1+j,k,l,i)
+      cons2(i,nx_min_2-j,k,l) = bfac_x(i) * cons2(i,nx_min_2-1+j,k,l)
    ENDDO
 ELSEIF(boundary_flag(1) == 2) THEN
    DO CONCURRENT(j = 1:3, k = ny_min_2:ny_part_2, l = nz_min_2:nz_part_2, i = imin2:imax2)
-      cons2(nx_min_2-j,k,l,i) = cons2(nx_min_2,k,l,i)
+      cons2(i,nx_min_2-j,k,l) = cons2(i,nx_min_2,k,l)
    ENDDO             
 ENDIF
 
 ! Do the outer boundary
 IF(boundary_flag(2) == 0) THEN
    DO CONCURRENT(j = 1:3, k = ny_min_2:ny_part_2, l = nz_min_2:nz_part_2, i = imin2:imax2)
-      cons2(nx_part_2+j,k,l,i) = cons2(nx_min_2-1+j,k,l,i)
+      cons2(i,nx_part_2+j,k,l) = cons2(i,nx_min_2-1+j,k,l)
    ENDDO
 ELSEIF(boundary_flag(2) == 1) THEN
    DO CONCURRENT(j = 1:3, k = ny_min_2:ny_part_2, l = nz_min_2:nz_part_2, i = imin2:imax2)
-         cons2(nx_part_2+j,k,l,i) = bfac_x(i) * cons2(nx_part_2+1-j,k,l,i)
+         cons2(i,nx_part_2+j,k,l) = bfac_x(i) * cons2(i,nx_part_2+1-j,k,l)
    ENDDO
 ELSEIF(boundary_flag(2) == 2) THEN
    DO CONCURRENT(j = 1:3, k = ny_min_2:ny_part_2, l = nz_min_2:nz_part_2, i = imin2:imax2)
-      cons2(nx_part_2+j,k,l,i) = cons2(nx_part_2,k,l,i)
+      cons2(i,nx_part_2+j,k,l) = cons2(i,nx_part_2,k,l)
    ENDDO
 ENDIF
 
@@ -655,30 +655,30 @@ ENDIF
 IF(n_dim > 1) THEN
    IF(boundary_flag(3) == 0) THEN
       DO CONCURRENT(j = nx_min_2:nx_part_2, k = 1:3, l = nz_min_2:nz_part_2, i = imin2:imax2)
-         cons2(j,ny_min_2-k,l,i) = cons2(j,ny_part_2+1-k,l,i)                    
+         cons2(i,j,ny_min_2-k,l) = cons2(i,j,ny_part_2+1-k,l)                    
       ENDDO
    ELSEIF(boundary_flag(3) == 1) THEN                 
       DO CONCURRENT(j = nx_min_2:nx_part_2, k = 1:3, l = nz_min_2:nz_part_2, i = imin2:imax2)
-         cons2(j,ny_min_2-k,l,i) = bfac_y(i) * cons2(j,ny_min_2-1+k,l,i)
+         cons2(i,j,ny_min_2-k,l) = bfac_y(i) * cons2(i,j,ny_min_2-1+k,l)
       ENDDO
    ELSEIF(boundary_flag(3) == 2) THEN
       DO CONCURRENT(j = nx_min_2:nx_part_2, k = 1:3, l = nz_min_2:nz_part_2, i = imin2:imax2)
-         cons2(j,ny_min_2-k,l,i) = cons2(j,ny_min_2,l,i)
+         cons2(i,j,ny_min_2-k,l) = cons2(i,j,ny_min_2,l)
       ENDDO             
    ENDIF
 
    ! Do the outer boundary
    IF(boundary_flag(4) == 0) THEN
       DO CONCURRENT(j = nx_min_2:nx_part_2, k = 1:3, l = nz_min_2:nz_part_2, i = imin2:imax2)
-         cons2(j,ny_part_2+k,l,i) = cons2(j,ny_min_2-1+k,l,i)
+         cons2(i,j,ny_part_2+k,l) = cons2(i,j,ny_min_2-1+k,l)
       ENDDO
    ELSEIF(boundary_flag(4) == 1) THEN
      DO CONCURRENT(j = nx_min_2:nx_part_2, k = 1:3, l = nz_min_2:nz_part_2, i = imin2:imax2)
-         cons2(j,ny_part_2+k,l,i) = bfac_y(i) * cons2(j,ny_part_2+1-k,l,i)
+         cons2(i,j,ny_part_2+k,l) = bfac_y(i) * cons2(i,j,ny_part_2+1-k,l)
       ENDDO
    ELSEIF(boundary_flag(4) == 2) THEN
       DO CONCURRENT(j = nx_min_2:nx_part_2, k = 1:3, l = nz_min_2:nz_part_2, i = imin2:imax2)
-         cons2(j,ny_part_2+k,l,i) = cons2(j,ny_part_2,l,i)
+         cons2(i,j,ny_part_2+k,l) = cons2(i,j,ny_part_2,l)
       ENDDO
    ENDIF
 END IF
@@ -690,30 +690,30 @@ END IF
 IF(n_dim > 2) THEN
    IF(boundary_flag(5) == 0) THEN
       DO CONCURRENT(j = nx_min_2:nx_part_2, k = ny_min_2:ny_part_2, l = 1:3, i = imin2:imax2)
-         cons2(j,k,nz_min_2-l,i) = cons2(j,k,nz_part_2+1-l,i)                     
+         cons2(i,j,k,nz_min_2-l) = cons2(i,j,k,nz_part_2+1-l)                     
       ENDDO
    ELSEIF(boundary_flag(5) == 1) THEN                 
       DO CONCURRENT(j = nx_min_2:nx_part_2, k = ny_min_2:ny_part_2, l = 1:3, i = imin2:imax2)
-         cons2(j,k,nz_min_2-l,i) = bfac_z(i) * cons2(j,k,nz_min_2-1+l,i)
+         cons2(i,j,k,nz_min_2-l) = bfac_z(i) * cons2(i,j,k,nz_min_2-1+l)
       ENDDO
    ELSEIF(boundary_flag(5) == 2) THEN
       DO CONCURRENT(j = nx_min_2:nx_part_2, k = ny_min_2:ny_part_2, l = 1:3, i = imin2:imax2)
-         cons2(j,k,nz_min_2-l,i) = cons2(j,k,nz_min_2,i)
+         cons2(i,j,k,nz_min_2-l) = cons2(i,j,k,nz_min_2)
       ENDDO             
    ENDIF
 
    ! Do the outer boundary
    IF(boundary_flag(6) == 0) THEN
       DO CONCURRENT(j = nx_min_2:nx_part_2, k = ny_min_2:ny_part_2, l = 1:3, i = imin2:imax2)
-         cons2(j,k,nz_part_2+l,i) = cons2(j,k,nz_min_2-1+l,i)
+         cons2(i,j,k,nz_part_2+l) = cons2(i,j,k,nz_min_2-1+l)
       ENDDO
    ELSEIF(boundary_flag(6) == 1) THEN
       DO CONCURRENT(j = nx_min_2:nx_part_2, k = ny_min_2:ny_part_2, l = 1:3, i = imin2:imax2)
-         cons2(j,k,nz_part_2+l,i) = bfac_z(i) * cons2(j,k,nz_part_2+1-l,i)
+         cons2(i,j,k,nz_part_2+l) = bfac_z(i) * cons2(i,j,k,nz_part_2+1-l)
       ENDDO
    ELSEIF(boundary_flag(6) == 2) THEN
       DO CONCURRENT(j = nx_min_2:nx_part_2, k = ny_min_2:ny_part_2, l = 1:3, i = imin2:imax2)
-         cons2(j,k,nz_part_2+l,i) = cons2(j,k,nz_part_2,i)
+         cons2(i,j,k,nz_part_2+l) = cons2(i,j,k,nz_part_2)
       ENDDO
    ENDIF
 END IF
@@ -741,30 +741,30 @@ INTEGER :: i, j, k, l
 ! Do the inner boundary
 IF(boundary_flag(1) == 0) THEN
    DO CONCURRENT(j = 1:3, k = ny_min_2:ny_part_2, l = nz_min_2:nz_part_2, i = imin2:imax2)
-      prim2(nx_min_2-j,k,l,i) = prim2(nx_part_2+1-j,k,l,i)                     
+      prim2(i,nx_min_2-j,k,l) = prim2(i,nx_part_2+1-j,k,l)                     
    ENDDO
 ELSEIF(boundary_flag(1) == 1) THEN                 
    DO CONCURRENT(j = 1:3, k = ny_min_2:ny_part_2, l = nz_min_2:nz_part_2, i = imin2:imax2)
-      prim2(nx_min_2-j,k,l,i) = bfac_x(i) * prim2(nx_min_2-1+j,k,l,i)
+      prim2(i,nx_min_2-j,k,l) = bfac_x(i) * prim2(i,nx_min_2-1+j,k,l)
    ENDDO
 ELSEIF(boundary_flag(1) == 2) THEN
    DO CONCURRENT(j = 1:3, k = ny_min_2:ny_part_2, l = nz_min_2:nz_part_2, i = imin2:imax2)
-      prim2(nx_min_2-j,k,l,i) = prim2(nx_min_2,k,l,i)
+      prim2(i,nx_min_2-j,k,l) = prim2(i,nx_min_2,k,l)
    ENDDO             
 ENDIF
 
 ! Do the outer boundary
 IF(boundary_flag(2) == 0) THEN
    DO CONCURRENT(j = 1:3, k = ny_min_2:ny_part_2, l = nz_min_2:nz_part_2, i = imin2:imax2)
-      prim2(nx_part_2+j,k,l,i) = prim2(nx_min_2-1+j,k,l,i)
+      prim2(i,nx_part_2+j,k,l) = prim2(i,nx_min_2-1+j,k,l)
    ENDDO
 ELSEIF(boundary_flag(2) == 1) THEN
    DO CONCURRENT(j = 1:3, k = ny_min_2:ny_part_2, l = nz_min_2:nz_part_2, i = imin2:imax2)
-         prim2(nx_part_2+j,k,l,i) = bfac_x(i) * prim2(nx_part_2+1-j,k,l,i)
+         prim2(i,nx_part_2+j,k,l) = bfac_x(i) * prim2(i,nx_part_2+1-j,k,l)
    ENDDO
 ELSEIF(boundary_flag(2) == 2) THEN
    DO CONCURRENT(j = 1:3, k = ny_min_2:ny_part_2, l = nz_min_2:nz_part_2, i = imin2:imax2)
-      prim2(nx_part_2+j,k,l,i) = prim2(nx_part_2,k,l,i)
+      prim2(i,nx_part_2+j,k,l) = prim2(i,nx_part_2,k,l)
    ENDDO
 ENDIF
 
@@ -775,30 +775,30 @@ ENDIF
 IF(n_dim > 1) THEN
    IF(boundary_flag(3) == 0) THEN
       DO CONCURRENT(j = nx_min_2:nx_part_2, k = 1:3, l = nz_min_2:nz_part_2, i = imin2:imax2)
-         prim2(j,ny_min_2-k,l,i) = prim2(j,ny_part_2+1-k,l,i)                    
+         prim2(i,j,ny_min_2-k,l) = prim2(i,j,ny_part_2+1-k,l)                    
       ENDDO
    ELSEIF(boundary_flag(3) == 1) THEN                 
       DO CONCURRENT(j = nx_min_2:nx_part_2, k = 1:3, l = nz_min_2:nz_part_2, i = imin2:imax2)
-         prim2(j,ny_min_2-k,l,i) = bfac_y(i) * prim2(j,ny_min_2-1+k,l,i)
+         prim2(i,j,ny_min_2-k,l) = bfac_y(i) * prim2(i,j,ny_min_2-1+k,l)
       ENDDO
    ELSEIF(boundary_flag(3) == 2) THEN
       DO CONCURRENT(j = nx_min_2:nx_part_2, k = 1:3, l = nz_min_2:nz_part_2, i = imin2:imax2)
-         prim2(j,ny_min_2-k,l,i) = prim2(j,ny_min_2,l,i)
+         prim2(i,j,ny_min_2-k,l) = prim2(i,j,ny_min_2,l)
       ENDDO             
    ENDIF
 
    ! Do the outer boundary
    IF(boundary_flag(4) == 0) THEN
       DO CONCURRENT(j = nx_min_2:nx_part_2, k = 1:3, l = nz_min_2:nz_part_2, i = imin2:imax2)
-         prim2(j,ny_part_2+k,l,i) = prim2(j,ny_min_2-1+k,l,i)
+         prim2(i,j,ny_part_2+k,l) = prim2(i,j,ny_min_2-1+k,l)
       ENDDO
    ELSEIF(boundary_flag(4) == 1) THEN
      DO CONCURRENT(j = nx_min_2:nx_part_2, k = 1:3, l = nz_min_2:nz_part_2, i = imin2:imax2)
-         prim2(j,ny_part_2+k,l,i) = bfac_y(i) * prim2(j,ny_part_2+1-k,l,i)
+         prim2(i,j,ny_part_2+k,l) = bfac_y(i) * prim2(i,j,ny_part_2+1-k,l)
       ENDDO
    ELSEIF(boundary_flag(4) == 2) THEN
       DO CONCURRENT(j = nx_min_2:nx_part_2, k = 1:3, l = nz_min_2:nz_part_2, i = imin2:imax2)
-         prim2(j,ny_part_2+k,l,i) = prim2(j,ny_part_2,l,i)
+         prim2(i,j,ny_part_2+k,l) = prim2(i,j,ny_part_2,l)
       ENDDO
    ENDIF
 END IF
@@ -810,30 +810,30 @@ END IF
 IF(n_dim > 2) THEN
    IF(boundary_flag(5) == 0) THEN
       DO CONCURRENT(j = nx_min_2:nx_part_2, k = ny_min_2:ny_part_2, l = 1:3, i = imin2:imax2)
-         prim2(j,k,nz_min_2-l,i) = prim2(j,k,nz_part_2+1-l,i)                     
+         prim2(i,j,k,nz_min_2-l) = prim2(i,j,k,nz_part_2+1-l)                     
       ENDDO
    ELSEIF(boundary_flag(5) == 1) THEN                 
       DO CONCURRENT(j = nx_min_2:nx_part_2, k = ny_min_2:ny_part_2, l = 1:3, i = imin2:imax2)
-         prim2(j,k,nz_min_2-l,i) = bfac_z(i) * prim2(j,k,nz_min_2-1+l,i)
+         prim2(i,j,k,nz_min_2-l) = bfac_z(i) * prim2(i,j,k,nz_min_2-1+l)
       ENDDO
    ELSEIF(boundary_flag(5) == 2) THEN
       DO CONCURRENT(j = nx_min_2:nx_part_2, k = ny_min_2:ny_part_2, l = 1:3, i = imin2:imax2)
-         prim2(j,k,nz_min_2-l,i) = prim2(j,k,nz_min_2,i)
+         prim2(i,j,k,nz_min_2-l) = prim2(i,j,k,nz_min_2)
       ENDDO             
    ENDIF
 
    ! Do the outer boundary
    IF(boundary_flag(6) == 0) THEN
       DO CONCURRENT(j = nx_min_2:nx_part_2, k = ny_min_2:ny_part_2, l = 1:3, i = imin2:imax2)
-         prim2(j,k,nz_part_2+l,i) = prim2(j,k,nz_min_2-1+l,i)
+         prim2(i,j,k,nz_part_2+l) = prim2(i,j,k,nz_min_2-1+l)
       ENDDO
    ELSEIF(boundary_flag(6) == 1) THEN
       DO CONCURRENT(j = nx_min_2:nx_part_2, k = ny_min_2:ny_part_2, l = 1:3, i = imin2:imax2)
-         prim2(j,k,nz_part_2+l,i) = bfac_z(i) * prim2(j,k,nz_part_2+1-l,i)
+         prim2(i,j,k,nz_part_2+l) = bfac_z(i) * prim2(i,j,k,nz_part_2+1-l)
       ENDDO
    ELSEIF(boundary_flag(6) == 2) THEN
       DO CONCURRENT(j = nx_min_2:nx_part_2, k = ny_min_2:ny_part_2, l = 1:3, i = imin2:imax2)
-         prim2(j,k,nz_part_2+l,i) = prim2(j,k,nz_part_2,i)
+         prim2(i,j,k,nz_part_2+l) = prim2(i,j,k,nz_part_2)
       ENDDO
    ENDIF
 END IF

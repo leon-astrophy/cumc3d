@@ -133,7 +133,7 @@ call h5screate_simple_f(space_rank,data_dims,dspace_id,error)
 call h5dcreate_f(file_id,"primitive",H5T_NATIVE_DOUBLE,dspace_id,dset_id1,error)
 
 ! write dataset !
-call h5dwrite_f(dset_id1,H5T_NATIVE_DOUBLE,prim2(1:nx_2,1:ny_2,1:nz_2,imin2:imax2),data_dims,error)
+call h5dwrite_f(dset_id1,H5T_NATIVE_DOUBLE,prim2(imin2:imax2,1:nx_2,1:ny_2,1:nz_2),data_dims,error)
 
 ! close dataset !
 call h5dclose_f(dset_id1,error)

@@ -163,26 +163,26 @@ REAL (DP), DIMENSION(imin2:imax2) :: dummy2
 !$OMP PARALLEL SHARED(alpha1_x, alpha1_y, alpha1_z, alpha2_x, alpha2_y, alpha2_z)
 IF(RUNDM_flag) THEN
    !$OMP DO SIMD COLLAPSE(2) SCHEDULE(STATIC)
-	DO k = ny_min_1, ny_part_1
+   DO k = ny_min_1, ny_part_1
       DO l = nz_min_1, nz_part_1
-		   CALL ALPHASPLIT_X (alpha1_x(k,l,:), dummy2(:), k, l, dm_f)
+		   CALL ALPHASPLIT_X (alpha1_x(:,k,l), dummy2(:), k, l, dm_f)
 	   END DO
    END DO
    !$OMP END DO
    IF(n_dim > 1) THEN
       !$OMP DO SIMD COLLAPSE(2) SCHEDULE(STATIC)
-	   DO j = nx_min_1, nx_part_1
-         DO l = nz_min_1, nz_part_1
-		      CALL ALPHASPLIT_Y (alpha1_y(j,l,:), dummy2(:), j, l, dm_f)
+      DO l = nz_min_1, nz_part_1
+         DO j = nx_min_1, nx_part_1
+		      CALL ALPHASPLIT_Y (alpha1_y(:,j,l), dummy2(:), j, l, dm_f)
 	      END DO
       END DO
       !$OMP END DO
    END IF
    IF(n_dim > 2) THEN
       !$OMP DO SIMD COLLAPSE(2) SCHEDULE(STATIC)
-	   DO j = nx_min_1, nx_part_1
-         DO k = ny_min_1, ny_part_1
-		      CALL ALPHASPLIT_Z (alpha1_z(j,k,:), dummy2(:), j, k, dm_f)
+      DO k = ny_min_1, ny_part_1
+	      DO j = nx_min_1, nx_part_1
+		      CALL ALPHASPLIT_Z (alpha1_z(:,j,k), dummy2(:), j, k, dm_f)
 	      END DO
       END DO
       !$OMP END DO
@@ -191,26 +191,26 @@ END IF
 
 ! Do for NM !
 !$OMP DO COLLAPSE(2) SCHEDULE(STATIC)
-DO k = ny_min_2, ny_part_2
-   DO l = nz_min_2, nz_part_2
-		CALL ALPHASPLIT_X (dummy1(:), alpha2_x(k,l,:), k, l, nm_f)
+DO l = nz_min_2, nz_part_2
+   DO k = ny_min_2, ny_part_2
+		CALL ALPHASPLIT_X (dummy1(:), alpha2_x(:,k,l), k, l, nm_f)
    END DO
 END DO
 !$OMP END DO
 IF(n_dim > 1) THEN
    !$OMP DO SIMD COLLAPSE(2) SCHEDULE(STATIC)
-   DO j = nx_min_2, nx_part_2
-      DO l = nz_min_2, nz_part_2
-         CALL ALPHASPLIT_Y (dummy1(:), alpha2_y(j,l,:), j, l, nm_f)
+   DO l = nz_min_2, nz_part_2
+      DO j = nx_min_2, nx_part_2
+         CALL ALPHASPLIT_Y (dummy1(:), alpha2_y(:,j,l), j, l, nm_f)
       END DO
    END DO
    !$OMP END DO
 END IF
 IF(n_dim > 2) THEN
    !$OMP DO SIMD COLLAPSE(2) SCHEDULE(STATIC)
-   DO j = nx_min_2, nx_part_2
-      DO k = ny_min_2, ny_part_2
-		   CALL ALPHASPLIT_Z (dummy1(:), alpha2_z(j,k,:), j, k, nm_f)
+   DO k = ny_min_2, ny_part_2
+      DO j = nx_min_2, nx_part_2
+		   CALL ALPHASPLIT_Z (dummy1(:), alpha2_z(:,j,k), j, k, nm_f)
 	   END DO
    END DO
    !$OMP END DO

@@ -40,8 +40,8 @@ if(DM_flag) then
 	! IF low-density grid is found
 	! Replace them with stmospheric
    DO CONCURRENT (j = nx_min_1:nx_part_1, k = ny_min_1:ny_part_1, l = nz_min_1:nz_part_1)
-      if(prim1(j,k,l,irho1) <= rho_min1) then
-         prim1(j,k,l,:) = prim1_a(:)
+      if(prim1(irho1,j,k,l) <= rho_min1) then
+         prim1(:,j,k,l) = prim1_a(:)
       endif
    END DO
 
@@ -58,8 +58,8 @@ rho_min2 = 1.1D0 * prim2_a(irho2)
 
 ! Check the density of normal matter
 DO CONCURRENT (j = nx_min_2:nx_part_2, k = ny_min_2:ny_part_2, l = nz_min_2:nz_part_2) 
-   if(prim2(j,k,l,irho2) <= rho_min2) then   
-      prim2(j,k,l,:) = prim2_a(:)
+   if(prim2(irho2,j,k,l) <= rho_min2) then   
+      prim2(:,j,k,l) = prim2_a(:)
       epsilon2(j,k,l) = eps2_a
       temp2(j,k,l) = temp2_a
    endif
@@ -85,7 +85,7 @@ IF(checkstepdm_flag) THEN
    DO k = 1, ny_1
       DO l = 1, nz_1
          DO j = nx_1, 1, -1
-            if(prim1(j,k,l,irho1) == prim1_a(irho1) .and. prim1(j-1,k,l,irho1) >= rho_min1) then
+            if(prim1(irho1,j,k,l) == prim1_a(irho1) .and. prim1(irho1,j-1,k,l) >= rho_min1) then
 	            if(j > x_grid1) then
                   x_grid1 = j
                   CYCLE
@@ -116,7 +116,7 @@ IF(checkstepdm_flag) THEN
       DO k = 1, ny_1
          DO l = 1, nz_1
             DO j = 1, nx_1
-               if(prim1(j,k,l,irho1) == prim1_a(irho1) .and. prim1(j+1,k,l,irho1) >= rho_min1) then
+               if(prim1(irho1,j,k,l) == prim1_a(irho1) .and. prim1(irho1,j+1,k,l) >= rho_min1) then
 	               if(j < x_grid1) then
                      x_grid1 = j
                      CYCLE
@@ -151,7 +151,7 @@ IF(checkstepdm_flag) THEN
    DO j = 1, nx_1
       DO l = 1, nz_1
          DO k = ny_1, 1, -1
-            if(prim1(j,k,l,irho1) == prim1_a(irho1) .and. prim1(j,k-1,l,irho1) >= rho_min1) then
+            if(prim1(irho1,j,k,l) == prim1_a(irho1) .and. prim1(irho1,j,k-1,l) >= rho_min1) then
 	            if(k > y_grid1) then
                   y_grid1 = k
                   CYCLE
@@ -182,7 +182,7 @@ IF(checkstepdm_flag) THEN
       DO j = 1, nx_1
          DO l = 1, nz_1
             DO k = 1, ny_1
-               if(prim1(j,k,l,irho1) == prim1_a(irho1) .and. prim1(j,k+1,l,irho1) >= rho_min1) then
+               if(prim1(irho1,j,k,l) == prim1_a(irho1) .and. prim1(irho1,j,k+1,l) >= rho_min1) then
 	               if(k < y_grid1) then
                      y_grid1 = k
                      CYCLE
@@ -218,7 +218,7 @@ IF(checkstepdm_flag) THEN
    DO j = 1, nx_1
       DO k = 1, ny_1
          DO l = nz_1, 1, -1
-            if(prim1(j,k,l,irho1) == prim1_a(irho1) .and. prim1(j,k,l-1,irho1) >= rho_min1) then
+            if(prim1(irho1,j,k,l) == prim1_a(irho1) .and. prim1(irho1,j,k,l-1) >= rho_min1) then
 	            if(l > z_grid1) then
                   z_grid1 = l
                   CYCLE
@@ -249,7 +249,7 @@ IF(checkstepdm_flag) THEN
       DO j = 1, nx_1
          DO k = 1, ny_1
             DO l = 1, nz_1
-               if(prim1(j,k,l,irho1) == prim1_a(irho1) .and. prim1(j,k,l+1,irho1) >= rho_min1) then
+               if(prim1(irho1,j,k,l) == prim1_a(irho1) .and. prim1(irho1,j,k,l+1) >= rho_min1) then
 	               if(l < z_grid1) then
                      z_grid1 = l
                      CYCLE
@@ -303,7 +303,7 @@ IF(checkstepnm_flag) THEN
    DO k = 1, ny_2
       DO l = 1, nz_2
          DO j = nx_2, 1, -1
-            if(prim2(j,k,l,irho2) == prim2_a(irho2) .and. prim2(j-1,k,l,irho2) >= rho_min2) then
+            if(prim2(irho2,j,k,l) == prim2_a(irho2) .and. prim2(irho2,j-1,k,l) >= rho_min2) then
 	            if(j > x_grid2) then
                   x_grid2 = j
                   CYCLE
@@ -334,7 +334,7 @@ IF(checkstepnm_flag) THEN
       DO k = 1, ny_2
          DO l = 1, nz_2
             DO j = 1, nx_2
-               if(prim2(j,k,l,irho2) == prim2_a(irho2) .and. prim2(j+1,k,l,irho2) >= rho_min2) then
+               if(prim2(irho2,j,k,l) == prim2_a(irho2) .and. prim2(irho2,j+1,k,l) >= rho_min2) then
 	               if(j < x_grid2) then
                      x_grid2 = j
                      CYCLE
@@ -369,7 +369,7 @@ IF(checkstepnm_flag) THEN
    DO j = 1, nx_2
       DO l = 1, nz_2
          DO k = ny_2, 1, -1
-            if(prim2(j,k,l,irho2) == prim2_a(irho2) .and. prim2(j,k-1,l,irho2) >= rho_min2) then
+            if(prim2(irho2,j,k,l) == prim2_a(irho2) .and. prim2(irho2,j,k-1,l) >= rho_min2) then
 	            if(k > y_grid2) then
                   y_grid2 = k
                   CYCLE
@@ -400,7 +400,7 @@ IF(checkstepnm_flag) THEN
       DO j = 1, nx_2
          DO l = 1, nz_2
             DO k = 1, ny_2
-               if(prim2(j,k,l,irho2) == prim2_a(irho2) .and. prim2(j,k+1,l,irho2) >= rho_min2) then
+               if(prim2(irho2,j,k,l) == prim2_a(irho2) .and. prim2(irho2,j,k+1,l) >= rho_min2) then
 	               if(k < y_grid2) then
                      y_grid2 = k
                      CYCLE
@@ -436,7 +436,7 @@ IF(checkstepnm_flag) THEN
    DO j = 1, nx_2
       DO k = 1, ny_2
          DO l = nz_2, 1, -1
-            if(prim1(j,k,l,irho2) == prim2_a(irho2) .and. prim2(j,k,l-1,irho2) >= rho_min2) then
+            if(prim1(irho2,j,k,l) == prim2_a(irho2) .and. prim2(irho2,j,k,l-1) >= rho_min2) then
 	            if(l > z_grid2) then
                   z_grid2 = l
                   CYCLE
@@ -467,7 +467,7 @@ IF(checkstepnm_flag) THEN
       DO j = 1, nx_2
          DO k = 1, ny_2
             DO l = 1, nz_2
-               if(prim2(j,k,l,irho2) == prim2_a(irho2) .and. prim2(j,k,l+1,irho2) >= rho_min2) then
+               if(prim2(irho2,j,k,l) == prim2_a(irho2) .and. prim2(irho2,j,k,l+1) >= rho_min2) then
 	               if(l < z_grid2) then
                      z_grid2 = l
                      CYCLE

@@ -18,8 +18,8 @@ INTEGER :: i, j, k, l
 ! This would be done only if users wants DM component !
 IF (RUNDM_flag) THEN
 	DO CONCURRENT (j = nx_min_1:nx_part_1, k = ny_min_1:ny_part_1, l = nz_min_1:nz_part_1) 	
-		p1 (j,k,l) = kgas1 * prim1(j,k,l,irho1) ** ggas1
-		dpdrho1 (j,k,l) = kgas1 * ggas1 * prim1(j,k,l,irho1) ** (ggas1 - 1.0D0)
+		p1 (j,k,l) = kgas1 * prim1(irho1,j,k,l) ** ggas1
+		dpdrho1 (j,k,l) = kgas1 * ggas1 * prim1(irho1,j,k,l) ** (ggas1 - 1.0D0)
 		dpdeps1 (j,k,l) = 0.0D0
 	END DO
 
@@ -31,13 +31,13 @@ END IF
 
 ! The following steps are more or less similar , so no repeat 
 DO CONCURRENT (j = nx_min_2:nx_part_2, k = ny_min_2:ny_part_2, l = nz_min_2:nz_part_2) 
-	prim2(j,k,l,itau2) = prim2(j,k,l,irho2) * epsilon2(j,k,l) * (ggas2 - 1.0E0_DP) 
+	prim2(itau2,j,k,l) = prim2(irho2,j,k,l) * epsilon2(j,k,l) * (ggas2 - 1.0E0_DP) 
 	dpdrho2 (j,k,l) = epsilon2(j,k,l) * (ggas2 - 1.0E0_DP)
-	dpdeps2 (j,k,l) = prim2(j,k,l,irho2) * (ggas2 - 1.0E0_DP)
+	dpdeps2 (j,k,l) = prim2(irho2,j,k,l) * (ggas2 - 1.0E0_DP)
 END DO
 
 ! Copy to boundary !
-CALL BOUNDARY1D_NM(prim2(:,:,:,itau2), even, part)
+CALL BOUNDARY1D_NM(prim2(itau2,:,:,:), even, part)
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
@@ -113,12 +113,12 @@ INTEGER :: j, k, l, p
 
 ! Loop !
 DO CONCURRENT (j = nx_min_2:nx_part_2, k = ny_min_2:ny_part_2, l = nz_min_2:nz_part_2) 
-	dp_2 (j,k,l,x_dir) = (primL2(j,k,l,itau2,x_dir) - primR2(j-1,k,l,itau2,x_dir))/dr2(j)
+	dp_2 (x_dir,j,k,l) = (primL2(itau2,x_dir,j,k,l) - primR2(itau2,x_dir,j-1,k,l))/dr2(j)
 	IF(n_dim > 1) THEN
-		dp_2 (j,k,l,y_dir) = (primL2(j,k,l,itau2,y_dir) - primR2(j,k-1,l,itau2,y_dir))/dy2
+		dp_2 (y_dir,j,k,l) = (primL2(itau2,y_dir,j,k,l) - primR2(itau2,y_dir,j,k-1,l))/dy2
 	END IF
 	IF(n_dim > 2) THEN
-		dp_2 (j,k,l,z_dir) = (primL2(j,k,l,itau2,z_dir) - primR2(j,k,l-1,itau2,z_dir))/dz2
+		dp_2 (z_dir,j,k,l) = (primL2(itau2,z_dir,j,k,l) - primR2(itau2,z_dir,j,k,l-1))/dz2
 	END IF
 END DO
 
