@@ -6,26 +6,12 @@ MODULE RIEMANN_MODULE
 USE DEFINITION
 IMPLICIT NONE
 
-! the alpha in the LF flux !
-REAL (DP), ALLOCATABLE, DIMENSION(:,:,:) :: alpha1_x, alpha1_y, alpha1_z
-REAL (DP), ALLOCATABLE, DIMENSION(:,:,:) :: alpha2_x, alpha2_y, alpha2_z
-
-! DM moving grid !
-REAL (DP), ALLOCATABLE, DIMENSION(:) :: vf1xR, vf1xL
-REAL (DP), ALLOCATABLE, DIMENSION(:) :: vf1yR, vf1yL
-REAL (DP), ALLOCATABLE, DIMENSION(:) :: vf1zR, vf1zL
-
-! NM moving grid !
-REAL (DP), ALLOCATABLE, DIMENSION(:) :: vf2xR, vf2xL
-REAL (DP), ALLOCATABLE, DIMENSION(:) :: vf2yR, vf2yL
-REAL (DP), ALLOCATABLE, DIMENSION(:) :: vf2zR, vf2zL
+! Pressure !
+REAL (DP), ALLOCATABLE, DIMENSION(:,:,:,:) :: p1L, p1R
 
 ! Left and right hydro-states for DM/NM !
 REAL (DP), ALLOCATABLE, DIMENSION(:,:,:,:) :: eps1R, eps1L 
 REAL (DP), ALLOCATABLE, DIMENSION(:,:,:,:) :: eps2R, eps2L
-
-! Pressure !
-REAL (DP), ALLOCATABLE, DIMENSION(:,:,:,:) :: p1L, p1R
 
 ! Speed of sound !
 REAL (DP), ALLOCATABLE, DIMENSION(:,:,:,:) :: cs1L, cs1R
@@ -36,6 +22,10 @@ REAL (DP), ALLOCATABLE, DIMENSION(:,:,:,:,:) :: primL1, primR1
 REAL (DP), ALLOCATABLE, DIMENSION(:,:,:,:,:) :: primL2, primR2
 REAL (DP), ALLOCATABLE, DIMENSION(:,:,:,:,:) :: fluxL1, fluxR1, uL1, uR1
 REAL (DP), ALLOCATABLE, DIMENSION(:,:,:,:,:) :: fluxL2, fluxR2, uL2, uR2
+
+! the alpha in the LF flux !
+REAL (DP), ALLOCATABLE, DIMENSION(:,:,:) :: alpha1_x, alpha1_y, alpha1_z
+REAL (DP), ALLOCATABLE, DIMENSION(:,:,:) :: alpha2_x, alpha2_y, alpha2_z
 
 contains
 
@@ -80,20 +70,10 @@ USE DEFINITION
 IMPLICIT NONE
 
 ! Left and right fluxes, conserved quantity !
-IF(RUNDM_flag) THEN
+IF(DM_flag) THEN
 	ALLOCATE(alpha1_x(imin1:imax1,-2:ny_1+3,-2:nz_1+3))
 	ALLOCATE(alpha1_y(imin1:imax1,-2:ny_1+3,-2:nz_1+3))
 	ALLOCATE(alpha1_z(imin1:imax1,-2:ny_1+3,-2:nz_1+3))
-
-	IF(movinggriddm_flag) THEN
-		ALLOCATE (vf1xL(-2:nx_1+3))
-		ALLOCATE (vf1xR(-2:nx_1+3))
-		ALLOCATE (vf1yL(-2:ny_1+3))
-		ALLOCATE (vf1yR(-2:ny_1+3))
-		ALLOCATE (vf1zL(-2:nz_1+3))
-		ALLOCATE (vf1zR(-2:nz_1+3))
-	END IF
-
 	ALLOCATE(p1L(1:n_dim,-2:nx_1+3,-2:ny_1+3,-2:nz_1+3))
 	ALLOCATE(p1R(1:n_dim,-2:nx_1+3,-2:ny_1+3,-2:nz_1+3))
 	ALLOCATE(eps1L(1:n_dim,-2:nx_1+3,-2:ny_1+3,-2:nz_1+3))
@@ -112,17 +92,6 @@ END IF
 ALLOCATE(alpha2_x(imin2:imax2,-2:ny_2+3,-2:nz_2+3))
 ALLOCATE(alpha2_y(imin2:imax2,-2:ny_2+3,-2:nz_2+3))
 ALLOCATE(alpha2_z(imin2:imax2,-2:ny_2+3,-2:nz_2+3))
-
-! Moving grid !
-IF(movinggridnm_flag) THEN
-	ALLOCATE (vf2xL(-2:nx_2+3))
-	ALLOCATE (vf2xR(-2:nx_2+3))
-	ALLOCATE (vf2yL(-2:ny_2+3))
-	ALLOCATE (vf2yR(-2:ny_2+3))
-	ALLOCATE (vf2zL(-2:nz_2+3))
-	ALLOCATE (vf2zR(-2:nz_2+3))
-END IF
-
 ALLOCATE(eps2L(1:n_dim,-2:nx_2+3,-2:ny_2+3,-2:nz_2+3))
 ALLOCATE(eps2R(1:n_dim,-2:nx_2+3,-2:ny_2+3,-2:nz_2+3))
 ALLOCATE(cs2L(1:n_dim,-2:nx_2+3,-2:ny_2+3,-2:nz_2+3))
@@ -150,7 +119,7 @@ INTEGER :: i, j, k, l, p
 
 ! For DM !
 DO CONCURRENT(j = nx_min_1 - 1:nx_part_1, k = ny_min_1 - 1:ny_part_1, l = nz_min_1 - 1:nz_part_1, i = imin1:imax1)
-	flux_1(i,x_dir,j,k,l) = 0.5D0 * (fluxL1 (i,x_dir,j,k,l) + fluxR1 (i,x_dir,j,k,l) - alpha1_x(i,k,l) * (uR1 i,x_dir,j,k,l) - uL1 (i,x_dir,j,k,l)))
+	flux_1(i,x_dir,j,k,l) = 0.5D0 * (fluxL1 (i,x_dir,j,k,l) + fluxR1 (i,x_dir,j,k,l) - alpha1_x(i,k,l) * (uR1(i,x_dir,j,k,l) - uL1 (i,x_dir,j,k,l)))
 	IF(n_dim > 1) THEN
 		flux_1(i,y_dir,j,k,l) = 0.5D0 * (fluxL1 (i,y_dir,j,k,l) + fluxR1 (i,y_dir,j,k,l) - alpha1_y(i,j,l) * (uR1 (i,y_dir,j,k,l) - uL1 (i,y_dir,j,k,l)))
 	END IF
@@ -177,7 +146,7 @@ INTEGER :: i, j, k, l, p
 
 ! For DM !
 DO CONCURRENT(j = nx_min_2 - 1:nx_part_2, k = ny_min_1 - 2:ny_part_2, l = nz_min_2 - 1:nz_part_2, i = imin2:imax2)
-	flux_2(i,x_dir,j,k,l) = 0.5D0 * (fluxL2 (i,x_dir,j,k,l) + fluxR2 (i,x_dir,j,k,l) - alpha2_x(i,k,l) * (uR2 i,x_dir,j,k,l) - uL2 (i,x_dir,j,k,l)))
+	flux_2(i,x_dir,j,k,l) = 0.5D0 * (fluxL2 (i,x_dir,j,k,l) + fluxR2 (i,x_dir,j,k,l) - alpha2_x(i,k,l) * (uR2(i,x_dir,j,k,l) - uL2 (i,x_dir,j,k,l)))
 	IF(n_dim > 1) THEN
 		flux_2(i,y_dir,j,k,l) = 0.5D0 * (fluxL2 (i,y_dir,j,k,l) + fluxR2 (i,y_dir,j,k,l) - alpha2_y(i,j,l) * (uR2 (i,y_dir,j,k,l) - uL2 (i,y_dir,j,k,l)))
 	END IF

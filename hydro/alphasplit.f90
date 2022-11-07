@@ -161,7 +161,7 @@ REAL (DP), DIMENSION(imin2:imax2) :: dummy2
 
 ! Do for DM !
 !$OMP PARALLEL SHARED(alpha1_x, alpha1_y, alpha1_z, alpha2_x, alpha2_y, alpha2_z)
-IF(RUNDM_flag) THEN
+IF(DM_flag) THEN
    !$OMP DO SIMD COLLAPSE(2) SCHEDULE(STATIC)
    DO k = ny_min_1, ny_part_1
       DO l = nz_min_1, nz_part_1

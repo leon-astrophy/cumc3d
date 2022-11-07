@@ -16,10 +16,11 @@ SOURCES=definition.f90 \
 	initial.f90 \
 	riemann1d.f90 \
 	riemann2d.f90 \
+	riemann3d.f90 \
 	rungekutta.f90 \
 	setup.f90 \
 	soundspeed.f90 \
-	spatial1d.f90 \
+	spatial.f90 \
 	update.f90 
 
 OBJECTS=$(SOURCES:.f90=.o )

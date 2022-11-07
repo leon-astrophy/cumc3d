@@ -18,72 +18,41 @@ INTEGER, INTENT (IN) :: n_in
 
 ! Dummy variables
 INTEGER :: i, j, k, l
-
-! Dummy dx due to Runge Kutta scheme
-REAL (DP) :: dx1_old, dx1_two, dx1_three, dxdt1_three
-REAL (DP) :: dx2_old, dx2_two, dx2_three, dxdt2_three
-
 ! Dummy !
 REAL (DP) :: rhoaold, dummy
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!     
 
-! Find the boundaries !
-IF(movinggridnm_flag) THEN
-	!CALL FINDRADIUS_NM
-END IF
-IF(movinggriddm_flag) THEN
-	!CALL FINDRADIUS_DM
-END IF
-
 ! Backup old arrays !
-IF(RUNDM_flag)THEN
+IF(DM_flag)THEN
 	DO CONCURRENT (j = nx_min_1:nx_part_1, k = ny_min_1:ny_part_1, l = nz_min_1:nz_part_1, i = imin1:imax1)
-		u_old1 (j,k,l,i) = cons1 (j,k,l,i)
+		u_old1 (i,j,k,l) = cons1 (i,j,k,l)
 	END DO
 END IF
 DO CONCURRENT (j = nx_min_2:nx_part_2, k = ny_min_2:ny_part_2, l = nz_min_2:nz_part_2, i = imin2:imax2)
-	u_old2 (j,k,l,i) = cons2 (j,k,l,i)
+	u_old2 (i,j,k,l) = cons2 (i,j,k,l)
 END DO
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 ! 1st iteration
 
-! Movinggrid !
-IF(movinggridnm_flag) THEN
-	dx2_old = delta2
-END IF
-IF(movinggriddm_flag) THEN
-	dx1_old = delta1
-END IF
-
 ! Discretize !
 CALL SPATIAL
 
-IF (RUNDM_flag) THEN
+IF (DM_flag) THEN
 	DO CONCURRENT (j = nx_min_1:nx_part_1, k = ny_min_1:ny_part_1, l = nz_min_1:nz_part_1, i = imin1:imax1)
-   		cons1 (j,k,l,i) = u_old1 (j,k,l,i) + 0.391752226571890D0 * dt * l1 (j,k,l,i)
+   		cons1 (i,j,k,l) = u_old1 (i,j,k,l) + 0.391752226571890D0 * dt * l1 (i,j,k,l)
 	END DO
    	CALL BOUNDARYU_DM
 END IF
 
 ! NM sector !
 DO CONCURRENT (j = nx_min_2:nx_part_2, k = ny_min_2:ny_part_2, l = nz_min_2:nz_part_2, i = imin2:imax2)
-	cons2 (j,k,l,i) = u_old2 (j,k,l,i) + 0.391752226571890D0 * dt * l2 (j,k,l,i)
+	cons2 (i,j,k,l) = u_old2 (i,j,k,l) + 0.391752226571890D0 * dt * l2 (i,j,k,l)
 END DO
 
 ! Copy the data to ghost cells in U
 CALL BOUNDARYU_NM
-
-! Update dx
-IF(movinggriddm_flag) then
-   delta1 = dx1_old + 0.391752226571890D0 * dt * vel1_max * delta1 / radius1
-   call getgrid_dm
-ENDIF
-IF(movinggridnm_flag) then
-   delta2 = dx2_old + 0.391752226571890D0 * dt * vel2_max * delta2 / radius2
-   call getgrid_nm
-ENDIF
 
 ! Convert from conservative to primitive
 CALL FROMUTORVE
@@ -99,34 +68,22 @@ CALL FROMRVETOU
 
 CALL SPATIAL
 
-IF (RUNDM_flag) THEN
+IF (DM_flag) THEN
 	DO CONCURRENT (j = nx_min_1:nx_part_1, k = ny_min_1:ny_part_1, l = nz_min_1:nz_part_1, i = imin1:imax1)
-		cons1 (j,k,l,i) = 0.444370493651235D0 * u_old1 (j,k,l,i) + 0.555629506348765D0 * cons1 (j,k,l,i) + 0.368410593050371D0 * dt * l1 (j,k,l,i)
-		u2_dm (j,k,l,i) = cons1 (j,k,l,i)
+		cons1 (i,j,k,l) = 0.444370493651235D0 * u_old1 (i,j,k,l) + 0.555629506348765D0 * cons1 (i,j,k,l) + 0.368410593050371D0 * dt * l1 (i,j,k,l)
+		u2_dm (i,j,k,l) = cons1 (i,j,k,l)
 	END DO
  	CALL BOUNDARYU_DM
 END IF
 
 ! NM sector !
 DO CONCURRENT (j = nx_min_2:nx_part_2, k = ny_min_2:ny_part_2, l = nz_min_2:nz_part_2, i = imin2:imax2)
-	cons2 (j,k,l,i) = 0.444370493651235D0 * u_old2 (j,k,l,i) + 0.555629506348765D0 * cons2 (j,k,l,i) + 0.368410593050371D0 * dt * l2 (j,k,l,i)
-	u2_nm (j,k,l,i) = cons2 (j,k,l,i)
+	cons2 (i,j,k,l) = 0.444370493651235D0 * u_old2 (i,j,k,l) + 0.555629506348765D0 * cons2 (i,j,k,l) + 0.368410593050371D0 * dt * l2 (i,j,k,l)
+	u2_nm (i,j,k,l) = cons2 (i,j,k,l)
 END DO
 
 ! Copy the data to the ghost cells in U
 CALL BOUNDARYU_NM
-
-! Update dx
-IF(movinggriddm_flag) then
-   delta1 = 0.444370493651235D0 * dx1_old + 0.555629506348765D0 * delta1 + 0.368410593050371D0 * dt * vel1_max * delta1 / radius1
-   dx1_two = delta1
-   call getgrid_dm
-ENDIF
-IF(movinggridnm_flag) then
-   delta2 = 0.444370493651235D0 * dx2_old + 0.555629506348765D0 * delta2 + 0.368410593050371D0 * dt * vel2_max * delta2 / radius2
-   dx2_two = delta2
-   call getgrid_nm
-ENDIF
 
 ! Convert from conservative to primitive
 CALL FROMUTORVE
@@ -142,38 +99,24 @@ CALL FROMRVETOU
 
 CALL SPATIAL
 
-IF (RUNDM_flag) THEN   
+IF (DM_flag) THEN   
 	DO CONCURRENT (j = nx_min_1:nx_part_1, k = ny_min_1:ny_part_1, l = nz_min_1:nz_part_1, i = imin1:imax1)
-		cons1 (j,k,l,i) = 0.620101851488403D0 * u_old1 (j,k,l,i) + 0.379898148511597D0 * cons1 (j,k,l,i) + 0.251891774271694D0 * dt * l1 (j,k,l,i)
-		u3_dm (j,k,l,i) = cons1 (j,k,l,i)
-		l3_dm (j,k,l,i) = l1 (j,k,l,i)	
+		cons1 (i,j,k,l) = 0.620101851488403D0 * u_old1 (i,j,k,l) + 0.379898148511597D0 * cons1 (i,j,k,l) + 0.251891774271694D0 * dt * l1 (i,j,k,l)
+		u3_dm (i,j,k,l) = cons1 (i,j,k,l)
+		l3_dm (i,j,k,l) = l1 (i,j,k,l)	
 	END DO
  	CALL BOUNDARYU_DM
 END IF
 
 ! NM sector ! 
 DO CONCURRENT (j = nx_min_2:nx_part_2, k = ny_min_2:ny_part_2, l = nz_min_2:nz_part_2, i = imin2:imax2)
-	cons2 (j,k,l,i) = 0.620101851488403D0 * u_old2 (j,k,l,i) + 0.379898148511597D0 * cons2 (j,k,l,i) + 0.251891774271694D0 * dt * l2 (j,k,l,i)
-	u3_nm (j,k,l,i) = cons2 (j,k,l,i)
-	l3_nm (j,k,l,i) = l2 (j,k,l,i)
+	cons2 (i,j,k,l) = 0.620101851488403D0 * u_old2 (i,j,k,l) + 0.379898148511597D0 * cons2 (i,j,k,l) + 0.251891774271694D0 * dt * l2 (i,j,k,l)
+	u3_nm (i,j,k,l) = cons2 (i,j,k,l)
+	l3_nm (i,j,k,l) = l2 (i,j,k,l)
 ENDDO
 
 ! Copy the data to the ghost cells in U
 CALL BOUNDARYU_NM
-
-! Update dx
-IF(movinggriddm_flag) then
-   dxdt1_three = vel1_max * delta1 / radius1
-   delta1 = 0.620101851488403D0 * dx1_old + 0.379898148511597D0 * delta1 + 0.251891774271694D0 * dt * vel1_max * delta1 / radius1
-   dx1_three = delta1
-   call getgrid_dm
-ENDIF
-IF(movinggridnm_flag) then
-   dxdt2_three = vel2_max * delta2 / radius2
-   delta2 = 0.620101851488403D0 * dx2_old + 0.379898148511597D0 * delta2 + 0.251891774271694D0 * dt * vel2_max * delta2 / radius2
-   dx2_three = delta2
-   call getgrid_nm
-ENDIF
 
 ! Convert from conservative to primitive
 CALL FROMUTORVE
@@ -189,30 +132,20 @@ CALL FROMRVETOU
 
 CALL SPATIAL
 
-IF (RUNDM_flag) THEN
+IF (DM_flag) THEN
 	DO CONCURRENT (j = nx_min_1:nx_part_1, k = ny_min_1:ny_part_1, l = nz_min_1:nz_part_1, i = imin1:imax1)
-		cons1 (j,k,l,i) = 0.178079954393132D0 * u_old1 (j,k,l,i)  + 0.821920045606868D0 * cons1 (j,k,l,i)  + 0.544974750228521D0 * dt * l1 (j,k,l,i) 
+		cons1 (i,j,k,l) = 0.178079954393132D0 * u_old1 (i,j,k,l)  + 0.821920045606868D0 * cons1 (i,j,k,l)  + 0.544974750228521D0 * dt * l1 (i,j,k,l) 
 	END DO
  	CALL BOUNDARYU_DM
 END IF
 
 ! NM sector !
 DO CONCURRENT (j = nx_min_2:nx_part_2, k = ny_min_2:ny_part_2, l = nz_min_2:nz_part_2, i = imin2:imax2)
-	cons2 (j,k,l,i) = 0.178079954393132D0 * u_old2 (j,k,l,i) + 0.821920045606868D0 * cons2 (j,k,l,i) + 0.544974750228521D0 * dt * l2 (j,k,l,i)
+	cons2 (i,j,k,l) = 0.178079954393132D0 * u_old2 (i,j,k,l) + 0.821920045606868D0 * cons2 (i,j,k,l) + 0.544974750228521D0 * dt * l2 (i,j,k,l)
 END DO
 
 ! Copy the data to ghost cells in U
 CALL BOUNDARYU_NM
-
-! Update dx
-IF(movinggriddm_flag) then
-   delta1 = 0.178079954393132D0 * dx1_old + 0.821920045606868D0 * delta1 + 0.544974750228521D0 * dt * vel1_max * delta1 / radius1
-   call getgrid_dm
-ENDIF
-IF(movinggridnm_flag) then
-   delta2 = 0.178079954393132D0 * dx2_old + 0.821920045606868D0 * delta2 + 0.544974750228521D0 * dt * vel2_max * delta2 / radius2
-   call getgrid_nm
-ENDIF
 
 ! Convert from conservative to primitive
 CALL FROMUTORVE
@@ -228,37 +161,30 @@ CALL FROMRVETOU
 
 CALL SPATIAL
 
-IF (RUNDM_flag) THEN
+IF (DM_flag) THEN
 	DO CONCURRENT (j = nx_min_1:nx_part_1, k = ny_min_1:ny_part_1, l = nz_min_1:nz_part_1, i = imin1:imax1)
-		cons1 (j,k,l,i) = 0.517231671970585D0 * u2_dm (j,k,l,i) + 0.096059710526147D0 * u3_dm (j,k,l,i) + 0.386708617503269D0 * cons1 (j,k,l,i) &
-						+ 0.063692468666290D0 * dt * l3_dm (j,k,l,i) + 0.226007483236906D0 * dt * l1 (j,k,l,i)
+		cons1 (i,j,k,l) = 0.517231671970585D0 * u2_dm (i,j,k,l) + 0.096059710526147D0 * u3_dm (i,j,k,l) + 0.386708617503269D0 * cons1 (i,j,k,l) &
+						+ 0.063692468666290D0 * dt * l3_dm (i,j,k,l) + 0.226007483236906D0 * dt * l1 (i,j,k,l)
 	END DO
  	CALL BOUNDARYU_DM
 END IF
 
 ! NM sector !
 DO CONCURRENT (j = nx_min_2:nx_part_2, k = ny_min_2:ny_part_2, l = nz_min_2:nz_part_2, i = imin2:imax2)
-	cons2 (j,k,l,i) = 0.517231671970585D0 * u2_nm (j,k,l,i) + 0.096059710526147D0 * u3_nm (j,k,l,i) + 0.386708617503269D0 * cons2 (j,k,l,i) &
-					+ 0.063692468666290D0 * dt * l3_nm (j,k,l,i) + 0.226007483236906D0 * dt * l2 (j,k,l,i)
+	cons2 (i,j,k,l) = 0.517231671970585D0 * u2_nm (i,j,k,l) + 0.096059710526147D0 * u3_nm (i,j,k,l) + 0.386708617503269D0 * cons2 (i,j,k,l) &
+					+ 0.063692468666290D0 * dt * l3_nm (i,j,k,l) + 0.226007483236906D0 * dt * l2 (i,j,k,l)
 END DO
 
 ! Copy the data to ghost cells in U
 CALL BOUNDARYU_NM
 
-! Update dx
-IF(movinggriddm_flag) then
-   delta1 = 0.517231671970585D0 * dx1_two + 0.096059710526147D0 * dx1_three + 0.386708617503269D0 * delta1 &
-		+ 0.063692468666290D0 * dt * dxdt1_three + 0.226007483236906D0 * dt * vel1_max * delta1 / radius1
-   call getgrid_dm
-ENDIF
-IF(movinggridnm_flag) then
-   delta2 = 0.517231671970585D0 * dx2_two + 0.096059710526147D0 * dx2_three + 0.386708617503269D0 * delta2 &
-		+ 0.063692468666290D0 * dt * dxdt2_three + 0.226007483236906D0 * dt * vel2_max * delta2 / radius2
-   call getgrid_nm
-ENDIF
-
 ! Convert from conservative to primitive
 CALL FROMUTORVE 
+
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+! Section for operator splitting
+
+!CALL OPERATOR_SPLIT
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 ! Section for adjusting atmospheric density !
@@ -350,7 +276,7 @@ dt_out1 = 1.0D5
 dt_out2 = 1.0D5
 
 ! Now we find the minimum time constrained by DM sector
-IF(runDM_flag) THEN
+IF(DM_flag) THEN
    	DO j = nx_min_1, nx_part_1
 		DO k = ny_min_1, ny_part_1
 			DO l = nz_min_1, nz_part_1

@@ -32,6 +32,7 @@ contains
 ! Do reconstruction using WENO interpolation, but along the vertical directions !
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 SUBROUTINE WENO_Reconstruct
+USE OMP_LIB
 USE RIEMANN_MODULE
 USE DEFINITION  
 IMPLICIT NONE
@@ -41,31 +42,52 @@ INTEGER :: j, k, l, i, p
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-!$OMP PARALLEL SHARED(prim2, primL2, primR2, cs2, cs2L, cs2R, eps2L, eps2R, vf2xR, vf2xL, vf2yR, vf2yL, vf2zR, vf2zL, xF2, yF2, zF2, &
-!$OMP prim1, primL1, primR1, cs1, cs1L, cs1R, eps1L, eps1R, vf1xR, vf1xL, vf1yR, vf1yL, vf1zR, vf1zL, xF1, yF1, zF1)
+!$OMP PARALLEL SHARED(prim2, primL2, primR2, cs2, cs2L, cs2R, eps2L, eps2R, prim1, primL1, primR1, cs1, cs1L, cs1R, eps1L, eps1R, p1L, p1R)
 
 ! Do the same for DM !
-IF(RUNDM_flag) THEN
+IF(DM_flag) THEN
 	!$OMP DO SIMD COLLAPSE(3) SCHEDULE (STATIC)
-	DO k = ny_min_1, ny_part_1
-      DO l = nz_min_1, nz_part_1
-         DO j = nx_min_1 - 1, nx_part_1 + 1
-			   	DO i = imin1, imax1
-				   	CALL WENO_MN (j, x_dir, prim1(j-2,k,l,i), prim1(j-1,k,l,i), prim1(j,k,l,i), prim1(j+1,k,l,i), prim1(j+2,k,l,i), primR1(j-1,k,l,i,x_dir), primL1(j,k,l,i,x_dir), dm_f)
-			   	END DO
+    DO l = nz_min_1 - 1, nz_part_1 + 1
+		DO k = ny_min_1 - 1, ny_part_1 + 1
+         	DO j = nx_min_1 - 1, nx_part_1 + 1
 
-		       	! Get the epsilon at boundary !
-			   	CALL EOSPRESSURE (primR1(j-1,k,l,irho1,x_dir), p1R(j-1,k,l,x_dir), eps1R(j-1,k,l,x_dir), dm_f)
-			   	CALL EOSPRESSURE (primL1(j,k,l,irho1,x_dir), p1L(j,k,l,x_dir), eps1L(j,k,l,x_dir), dm_f)
-			   	CALL EOSEPSILON (primR1(j-1,k,l,irho1,x_dir), p1R(j-1,k,l,x_dir), eps1R(j-1,k,l,x_dir), dm_f)
-			   	CALL EOSEPSILON (primL1(j,k,l,irho1,x_dir), p1L(j,k,l,x_dir), eps1L(j,k,l,x_dir), dm_f)
-			   	CALL EOSSOUNDSPEED (p1R(j-1,k,l,x_dir), primR1(j-1,k,l,irho1,x_dir), eps1R(j-1,k,l,x_dir), cs1R(j-1,k,l,x_dir), dm_f)
-			   	CALL EOSSOUNDSPEED (p1L(j,k,l,x_dir), primL1(j,k,l,irho1,x_dir), eps1L(j,k,l,x_dir), cs1L(j,k,l,x_dir), dm_f)
+		 		! reconstruct !
+				DO i = imin1, imax1
+					CALL WENO_MN (j, x_dir, prim1(i,j-2,k,l), prim1(i,j-1,k,l), prim1(i,j,k,l), prim1(i,j+1,k,l), prim1(i,j+2,k,l), primR1(i,x_dir,j-1,k,l), primL1(i,x_dir,j,k,l), dm_f)
+				END DO
 
-				! No reconstruction for frame velocity since we assume analytic continous form !
-				If(movinggridnm_flag) THEN
-					vf1xR(j) = vel1_max*xF1(j)/radius1
-					vf1xL(j) = vel1_max*xF1(j)/radius1
+		    	! Get the epsilon at boundary !
+				CALL EOSPRESSURE (primR1(irho1,x_dir,j-1,k,l), p1R(x_dir,j-1,k,l), eps1R(x_dir,j-1,k,l), dm_f)
+				CALL EOSPRESSURE (primL1(irho1,x_dir,j,k,l), p1L(x_dir,j,k,l), eps1L(x_dir,j,k,l), dm_f)
+				CALL EOSEPSILON (primR1(irho1,x_dir,j-1,k,l), p1R(x_dir,j-1,k,l), eps1R(x_dir,j-1,k,l), dm_f)
+				CALL EOSEPSILON (primL1(irho1,x_dir,j,k,l), p1L(x_dir,j,k,l), eps1L(x_dir,j,k,l), dm_f)
+				CALL EOSSOUNDSPEED (p1R(x_dir,j-1,k,l), primR1(irho1,x_dir,j-1,k,l), eps1R(x_dir,j-1,k,l), cs1R(x_dir,j-1,k,l), dm_f)
+				CALL EOSSOUNDSPEED (p1L(x_dir,j,k,l), primL1(irho1,x_dir,j,k,l), eps1L(x_dir,j,k,l), cs1L(x_dir,j,k,l), dm_f)
+
+				! y-sweep !
+				IF(n_dim > 1) THEN
+					DO i = imin1, imax1
+						CALL WENO_JS (k, prim1(i,j,k-2,l), prim1(i,j,k-1,l), prim1(i,j,k,l), prim1(i,j,k+1,l), prim1(i,j,k+2,l), primR1(i,y_dir,j,k-1,l), primL1(i,y_dir,j,k,l))
+					END DO
+					CALL EOSPRESSURE (primR1(irho1,y_dir,j,k-1,l), p1R(y_dir,j,k-1,l), eps1R(y_dir,j,k-1,l), dm_f)
+					CALL EOSPRESSURE (primL1(irho1,y_dir,j,k,l), p1L(y_dir,j,k,l), eps1L(y_dir,j,k,l), dm_f)
+					CALL EOSEPSILON (primR1(irho1,y_dir,j,k-1,l), p1R(y_dir,j,k-1,l), eps1R(y_dir,j,k-1,l), dm_f)
+					CALL EOSEPSILON (primL1(irho1,y_dir,j,k,l), p1L(y_dir,j,k,l), eps1L(y_dir,j,k,l), dm_f)
+					CALL EOSSOUNDSPEED (p1R(y_dir,j,k-1,l), primR1(irho1,y_dir,j,k-1,l), eps1R(y_dir,j,k-1,l), cs1R(y_dir,j,k-1,l), dm_f)
+					CALL EOSSOUNDSPEED (p1L(y_dir,j,k,l), primL1(irho1,y_dir,j,k,l), eps1L(y_dir,j,k,l), cs1L(y_dir,j,k,l), dm_f)
+				END IF
+
+				! z-sweep !
+				IF(n_dim > 1) THEN
+					DO i = imin1, imax1
+						CALL WENO_JS (l, prim1(i,j,k,l-2), prim1(i,j,k,l-1), prim1(i,j,k,l), prim1(i,j,k,l+1), prim1(i,j,k,l+2), primR1(i,z_dir,j,k,l-1), primL1(i,z_dir,j,k,l))
+					END DO
+					CALL EOSPRESSURE (primR1(irho1,z_dir,j,k,l-1), p1R(z_dir,j,k,l-1), eps1R(z_dir,j,k,l-1), dm_f)
+					CALL EOSPRESSURE (primL1(irho1,z_dir,j,k,l), p1L(z_dir,j,k,l), eps1L(z_dir,j,k,l), dm_f)
+					CALL EOSEPSILON (primR1(irho1,z_dir,j,k,l-1), p1R(z_dir,j,k,l-1), eps1R(z_dir,j,k,l-1), dm_f)
+					CALL EOSEPSILON (primL1(irho1,z_dir,j,k,l), p1L(z_dir,j,k,l), eps1L(z_dir,j,k,l), dm_f)
+					CALL EOSSOUNDSPEED (p1R(z_dir,j,k,l-1), primR1(irho1,z_dir,j,k,l-1), eps1R(z_dir,j,k,l-1), cs1R(z_dir,j,k,l-1), dm_f)
+					CALL EOSSOUNDSPEED (p1L(z_dir,j,k,l), primL1(irho1,z_dir,j,k,l), eps1L(z_dir,j,k,l), cs1L(z_dir,j,k,l), dm_f)
 				END IF
 
          	END DO
@@ -76,74 +98,56 @@ END IF
 
 ! We first interpolate density for NM !
 !$OMP DO SIMD COLLAPSE(3) SCHEDULE (STATIC)
-DO j = nx_min_2 - 1, nx_part_2 + 1
+DO l = nz_min_2 - 1, nz_part_2 + 1
 	DO k = ny_min_2 - 1, ny_part_2 + 1
-   		DO l = nz_min_2 - 1, nz_part_2 + 1
-
+		DO j = nx_min_2 - 1, nx_part_2 + 1
+   		
 			! Reconstruct for the x-direction !
 			DO i = imin2, imax2
-				CALL WENO_MN (j, x_dir, prim2(j-2,k,l,i), prim2(j-1,k,l,i), prim2(j,k,l,i), prim2(j+1,k,l,i), prim2(j+2,k,l,i), primR2(j-1,k,l,i,x_dir), primL2(j,k,l,i,x_dir), nm_f)
+				CALL WENO_MN (j, x_dir, prim2(i,j-2,k,l), prim2(i,j-1,k,l), prim2(i,j,k,l), prim2(i,j+1,k,l), prim2(i,j+2,k,l), primR2(i,x_dir,j-1,k,l), primL2(i,x_dir,j,k,l), nm_f)
 			END DO
 			IF(dual_energy) THEN
-				eps2R(j-1,k,l,x_dir) = primR2(j-1,k,l,ieps2,x_dir)/primR2(j-1,k,l,irho2,x_dir)
-				eps2L(j,k,l,x_dir) = primL2(j,k,l,ieps2,x_dir)/primL2(j,k,l,irho2,x_dir)
-				CALL WENO_MN (j, x_dir, cs2(j-2,k,l), cs2(j-1,k,l), cs2(j,k,l), cs2(j+1,k,l), cs2(j+2,k,l), cs2R(j-1,k,l,x_dir), cs2L(j,k,l,x_dir), nm_f)
+				eps2R(x_dir,j-1,k,l) = primR2(ieps2,x_dir,j-1,k,l)/primR2(irho2,x_dir,j-1,k,l)
+				eps2L(x_dir,j,k,l) = primL2(ieps2,x_dir,j,k,l)/primL2(irho2,x_dir,j,k,l)
+				CALL WENO_MN (j, x_dir, cs2(j-2,k,l), cs2(j-1,k,l), cs2(j,k,l), cs2(j+1,k,l), cs2(j+2,k,l), cs2R(x_dir,j-1,k,l), cs2L(x_dir,j,k,l), nm_f)
 			ELSE
-			   	CALL EOSEPSILON (primR2(j-1,k,l,irho2,x_dir), primR2(j-1,k,l,itau2,x_dir), eps2R(j-1,k,l,x_dir), nm_f)
-			   	CALL EOSEPSILON (primL2(j,k,l,irho2,x_dir), primL2(j,k,l,itau2,x_dir), eps2L(j,k,l,x_dir), nm_f)
-			   	CALL EOSSOUNDSPEED (primR2(j-1,k,l,itau2,x_dir), primR2(j-1,k,l,irho2,x_dir), eps2R(j-1,k,l,x_dir), cs2R(j-1,k,l,x_dir), nm_f)
-			   	CALL EOSSOUNDSPEED (primL2(j,k,l,itau2,x_dir), primL2(j,k,l,irho2,x_dir), eps2L(j,k,l,x_dir), cs2L(j,k,l,x_dir), nm_f)
-			END IF
-
-			! No reconstruction for frame velocity since we assume analytic continous form !
-			If(movinggridnm_flag) THEN
-				vf2xR(j) = vel2_max*xF2(j)/radius2
-				vf2xL(j) = vel2_max*xF2(j)/radius2
+			   	CALL EOSEPSILON (primR2(irho2,x_dir,j-1,k,l), primR2(itau2,x_dir,j-1,k,l), eps2R(x_dir,j-1,k,l), nm_f)
+			   	CALL EOSEPSILON (primL2(irho2,x_dir,j,k,l), primL2(itau2,x_dir,j,k,l), eps2L(x_dir,j,k,l), nm_f)
+			   	CALL EOSSOUNDSPEED (primR2(itau2,x_dir,j-1,k,l), primR2(irho2,x_dir,j-1,k,l), eps2R(x_dir,j-1,k,l), cs2R(x_dir,j-1,k,l), nm_f)
+			   	CALL EOSSOUNDSPEED (primL2(itau2,x_dir,j,k,l), primL2(irho2,x_dir,j,k,l), eps2L(x_dir,j,k,l), cs2L(x_dir,j,k,l), nm_f)
 			END IF
 
 			! y-sweep !
 			IF(n_dim > 1) THEN
 				DO i = imin2, imax2
-					CALL WENO_MN (k, y_dir, prim2(j,k-2,l,i), prim2(j,k-1,l,i), prim2(j,k,l,i), prim2(j,k+1,l,i), prim2(j,k+2,l,i), primR2(j,k-1,l,i,y_dir), primL2(j,k,l,i,y_dir), nm_f)
+					CALL WENO_JS (k, prim2(i,j,k-2,l), prim2(i,j,k-1,l), prim2(i,j,k,l), prim2(i,j,k+1,l), prim2(i,j,k+2,l), primR2(i,y_dir,j,k-1,l), primL2(i,y_dir,j,k,l))
 				END DO
 				IF(dual_energy) THEN
-					eps2R(j,k-1,l,y_dir) = primR2(j,k-1,l,ieps2,y_dir)/primR2(j,k-1,l,irho2,y_dir)
-					eps2L(j,k,l,y_dir) = primL2(j,k,l,ieps2,y_dir)/primL2(j,k,l,irho2,y_dir)
-					CALL WENO_MN (k, y_dir, cs2(j,k-2,l), cs2(j,k-1,l), cs2(j,k,l), cs2(j,k+1,l), cs2(j,k+2,l), cs2R(j,k-1,l,y_dir), cs2L(j,k,l,y_dir), nm_f)
+					eps2R(y_dir,j,k-1,l) = primR2(ieps2,y_dir,j,k-1,l)/primR2(irho2,y_dir,j,k-1,l)
+					eps2L(y_dir,j,k,l) = primL2(ieps2,y_dir,j,k,l)/primL2(irho2,y_dir,j,k,l)
+					CALL WENO_JS (k, cs2(j,k-2,l), cs2(j,k-1,l), cs2(j,k,l), cs2(j,k+1,l), cs2(j,k+2,l), cs2R(y_dir,j,k-1,l), cs2L(y_dir,j,k,l))
 				ELSE
-			   		CALL EOSEPSILON (primR2(j,k-1,l,irho2,y_dir), primR2(j,k-1,l,itau2,y_dir), eps2R(j,k-1,l,y_dir), nm_f)
-			   		CALL EOSEPSILON (primL2(j,k,l,irho2,y_dir), primL2(j,k,l,itau2,y_dir), eps2L(j,k,l,y_dir), nm_f)
-			   		CALL EOSSOUNDSPEED (primR2(j,k-1,l,itau2,y_dir), primR2(j,k-1,l,irho2,y_dir), eps2R(j,k-1,l,y_dir), cs2R(j,k-1,l,y_dir), nm_f)
-			   		CALL EOSSOUNDSPEED (primL2(j,k,l,itau2,y_dir), primL2(j,k,l,irho2,y_dir), eps2L(j,k,l,y_dir), cs2L(j,k,l,y_dir), nm_f)
-				END IF
-
-				! No reconstruction for frame velocity since we assume analytic continous form !
-				If(movinggridnm_flag) THEN
-					vf2yR(k) = vel2_max*yF2(k)/radius2
-					vf2yL(k) = vel2_max*yF2(k)/radius2
+			   		CALL EOSEPSILON (primR2(irho2,y_dir,j,k-1,l), primR2(itau2,y_dir,j,k-1,l), eps2R(y_dir,j,k-1,l), nm_f)
+			   		CALL EOSEPSILON (primL2(irho2,y_dir,j,k,l), primL2(itau2,y_dir,j,k,l), eps2L(y_dir,j,k,l), nm_f)
+			   		CALL EOSSOUNDSPEED (primR2(itau2,y_dir,j,k-1,l), primR2(irho2,y_dir,j,k-1,l), eps2R(y_dir,j,k-1,l), cs2R(y_dir,j,k-1,l), nm_f)
+			   		CALL EOSSOUNDSPEED (primL2(itau2,y_dir,j,k,l), primL2(irho2,y_dir,j,k,l), eps2L(y_dir,j,k,l), cs2L(y_dir,j,k,l), nm_f)
 				END IF
 			END IF
 
 			! z-sweep !
 			IF(n_dim > 2) THEN
 				DO i = imin2, imax2
-					CALL WENO_MN (k, z_dir, prim2(j,k,l-2,i), prim2(j,k,l-1,i), prim2(j,k,l,i), prim2(j,k,l+1,i), prim2(j,k,l+2,i), primR2(j,k,l-1,i,z_dir), primL2(j,k,l,i,z_dir), nm_f)
+					CALL WENO_JS (l, prim2(i,j,k,l-2), prim2(i,j,k,l-2), prim2(i,j,k,l), prim2(i,j,k,l+1), prim2(i,j,k,l+2), primR2(i,z_dir,j,k,l-1), primL2(i,z_dir,j,k,l))
 				END DO
 				IF(dual_energy) THEN
-					eps2R(j,k,l-1,z_dir) = primR2(j,k,l-1,ieps2,z_dir)/primR2(j,k,l-1,irho2,z_dir)
-					eps2L(j,k,l,z_dir) = primL2(j,k,l,ieps2,z_dir)/primL2(j,k,l,irho2,z_dir)
-					CALL WENO_MN (k, z_dir, cs2(j,k,l-2), cs2(j,k,l-1), cs2(j,k,l), cs2(j,k,l+1), cs2(j,k,l+2), cs2R(j,k,l-1,z_dir), cs2L(j,k,l,z_dir), nm_f)
+					eps2R(z_dir,j,k,l-1) = primR2(ieps2,z_dir,j,k,l-1)/primR2(irho2,z_dir,j,k,l-1)
+					eps2L(z_dir,j,k,l) = primL2(ieps2,z_dir,j,k,l)/primL2(irho2,z_dir,j,k,l)
+					CALL WENO_JS (l, cs2(j,k,l-2), cs2(j,k,l-1), cs2(j,k,l), cs2(j,k,l+1), cs2(j,k,l+2), cs2R(z_dir,j,k,l-1), cs2L(z_dir,j,k,l))
 				ELSE
-			   		CALL EOSEPSILON (primR2(j,k,l-1,irho2,z_dir), primR2(j,k,l-1,itau2,z_dir), eps2R(j,k,l-1,z_dir), nm_f)
-			   		CALL EOSEPSILON (primL2(j,k,l,irho2,z_dir), primL2(j,k,l,itau2,z_dir), eps2L(j,k,l,z_dir), nm_f)
-			   		CALL EOSSOUNDSPEED (primR2(j,k,l-1,itau2,z_dir), primR2(j,k,l-1,irho2,z_dir), eps2R(j,k,l-1,z_dir), cs2R(j,k,l-1,z_dir), nm_f)
-			   		CALL EOSSOUNDSPEED (primL2(j,k,l,itau2,z_dir), primL2(j,k,l,irho2,z_dir), eps2L(j,k,l,z_dir), cs2L(j,k,l,z_dir), nm_f)
-				END IF
-
-				! No reconstruction for frame velocity since we assume analytic continous form !
-				If(movinggridnm_flag) THEN
-					vf2zR(l) = vel2_max*zF2(l)/radius2
-					vf2zL(l) = vel2_max*zF2(l)/radius2
+			   		CALL EOSEPSILON (primR2(irho2,z_dir,j,k,l-1), primR2(itau2,z_dir,j,k,l-1), eps2R(z_dir,j,k,l-1), nm_f)
+			   		CALL EOSEPSILON (primL2(irho2,z_dir,j,k,l), primL2(itau2,z_dir,j,k,l), eps2L(z_dir,j,k,l), nm_f)
+			   		CALL EOSSOUNDSPEED (primR2(itau2,z_dir,j,k,l-1), primR2(irho2,z_dir,j,k,l-1), eps2R(z_dir,j,k,l-1), cs2R(z_dir,j,k,l-1), nm_f)
+			   		CALL EOSSOUNDSPEED (primL2(itau2,z_dir,j,k,l), primL2(irho2,z_dir,j,k,l), eps2L(z_dir,j,k,l), cs2L(z_dir,j,k,l), nm_f)
 				END IF
 			END IF
 
@@ -318,6 +322,199 @@ B_weno(3) = (13.0D0/12.0D0)*(2.0D0*U10_weno - 4.0D0*v_weno(i_in - 1) + 2.0D0*U21
 tau5 = abs(B_weno(1) - B_weno(3))
 w_weno(:) = g_weno(:)*(1.0D0 + (tau5/(smallpara + B_weno(:)))**2)
 vm_out = SUM(w_weno*P_weno)/SUM(w_weno)
+
+END SUBROUTINE
+
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!
+! This subroutine reads in the constant for WENO reconstuction
+! assuming uniform grid anywhere along the row/column
+!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+subroutine GetWenoConst
+implicit none
+
+! Dummy variable
+integer :: r
+
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+! Const C
+
+c (-1, 0) = 1.1E1_DP / 6.0E0_DP
+c (-1, 1) = - 7.0E0_DP / 6.0E0_DP
+c (-1, 2) = 1.0E0_DP / 3.0E0_DP
+
+c (0, 0) = 1.0E0_DP / 3.0E0_DP
+c (0, 1) = 5.0E0_DP / 6.0E0_DP
+c (0, 2) = - 1.0E0_DP / 6.0E0_DP
+
+c (1, 0) = - 1.0E0_DP / 6.0E0_DP
+c (1, 1) = 5.0E0_DP / 6.0E0_DP
+c (1, 2) = 1.0E0_DP / 3.0E0_DP
+
+c (2, 0) = 1.0E0_DP / 3.0E0_DP
+c (2, 1) = - 7.0E0_DP / 6.0E0_DP
+c (2, 2) = 1.1E1_DP / 6.0E0_DP
+
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+! Const D
+
+d (0) = 3.0E0_DP / 1.0E1_DP
+d (1) = 3.0E0_DP / 5.0E0_DP
+d (2) = 1.0E0_DP / 1.0E1_DP
+
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+! Const tilde_D
+
+DO r = 0, 2
+    td (r) = d (2 - r)
+END DO
+
+END SUBROUTINE
+
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+! This is the WENO scheme for reconstructing the numerical flux at both the !
+! left and right hand side located at the boundary cell. In this version, I !
+! provide different WENO scheme that differ by their smoothness indicator   !
+! I also include WENO scheme that use combination of high and low order     !
+! polynominal as building block. Nonetheless, a monotonicity preserving     !
+! limter option is provided so to make the solution to be MPW               !
+! For details, please refer to the textbook with ISBN 3-540-65893-9         !
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+SUBROUTINE WENO_JS (i, vm2, vm1, vc, vp1, vp2, vm_out, vp_out)
+USE DEFINITION
+IMPLICIT NONE
+
+! Input integer !
+INTEGER, INTENT(IN) :: i
+
+! The input into the subroutine, including conservative variable and input flux function !
+REAL (DP), INTENT (IN) :: vm2, vm1, vc, vp1, vp2
+
+! The output of the subroutine, the flux at cell boundary !
+REAL (DP), INTENT (OUT) :: vm_out, vp_out
+
+! Temporal arrays !
+REAL (DP), DIMENSION (0 : 2) :: vrhs, vlhs
+
+! For assigning weights !
+REAL (DP), DIMENSION (0 : 2) :: alpha, talpha, omega, tomega, beta
+
+! Temporal arrays !
+REAL (DP), DIMENSION (i - 2 : i + 2) :: v
+
+! Integer !
+INTEGER :: j, r, s
+
+! Tempeorary parameter !
+REAL (DP) :: tau, temp
+
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+! Assign temporal arrays !
+v(i - 2) = vm2
+v(i - 1) = vm1
+v(i) = vc
+v(i + 1) = vp1
+v(i + 2) = vp2
+
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+ 
+! We calculate the value of u at each grid by the following loop !
+! Do the right cell boundary !
+DO r = 0, 2
+	vrhs (r) = 0.0E0_DP
+		
+	! We calculate the value of u at right boundary !
+	DO j = 0, 2
+		vrhs (r) = vrhs (r) + c (r, j) * v (i - r + j)
+	END DO
+END DO
+
+! Do the left cell boundary !
+DO r = 0, 2
+	vlhs (r) = 0.0E0_DP
+
+	! Do the same for left boundary !
+	DO j = 0, 2
+		vlhs (r) = vlhs (r) + c (r - 1, j) * v (i - r + j)
+	END DO
+END DO
+
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+! These are essential parameter for further construction of u !
+beta (0) = (1.3E1_DP / 1.2E1_DP) * (v (i) - 2 * v (i + 1) + v (i + 2)) ** 2 &
+		+ (1.0E0_DP / 4.0E0_DP) * (3 * v (i) - 4 * v (i + 1) + v (i + 2)) ** 2
+beta (1) = (1.3E1_DP / 1.2E1_DP) * (v (i - 1) - 2 * v (i) + v (i + 1)) ** 2 &
+		+ (1.0E0_DP / 4.0E0_DP) * (v (i - 1) - v (i + 1)) ** 2
+beta (2) = (1.3E1_DP / 1.2E1_DP) * (v (i - 2) - 2 * v (i - 1) + v (i)) ** 2 &
+		+ (1.0E0_DP / 4.0E0_DP) * (v (i - 2) - 4 * v (i - 1) + 3 * v (i)) ** 2
+
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+! Assigning tau for the WENO-Z corrections !
+tau = abs (beta(0) -beta(2))
+
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+! Do WENO-Z weight reconstructions !
+DO r = 0, 2
+	alpha (r) = d (r) * (1.0D0 + (tau/(beta(r) + smallpara))**2)
+END DO
+
+temp = 0.0E0_DP
+	
+! The denominator in finding omega, a coefficient for the last step of reconstruction  !
+DO s = 0, 2
+	temp = temp + alpha (s)
+END DO
+	
+! Find the omega !
+DO r = 0, 2
+	omega (r) = alpha (r) / temp
+END DO
+
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+! Find the alpha, omega for the value of u at left grid boundary... !
+DO r = 0, 2
+	talpha (r) = td (r) * (1.0D0 + (tau/(beta(r) + smallpara))**2)
+END DO
+
+temp = 0.0E0_DP
+
+DO s = 0, 2
+	temp = temp + talpha (s)
+END DO
+
+DO r = 0, 2
+	tomega (r) = talpha (r) / temp
+END DO
+
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+vp_out = 0.0E0_DP
+	
+! u at the left boundary !
+DO r = 0, 2
+
+	! Original WENO !
+	vp_out = vp_out + omega (r) * vrhs (r)
+
+END DO
+
+vm_out = 0.0E0_DP
+	
+! u at the right boundary !
+DO r = 0, 2
+
+	! Original WENO !
+	vm_out = vm_out + tomega (r) * vlhs (r)	
+
+END DO
+
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 END SUBROUTINE
 

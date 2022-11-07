@@ -5,7 +5,6 @@
 ! with subroutine GETRHOEOSRTOP                                      !
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 SUBROUTINE FINDPRESSURE
-USE OMP_LIB
 USE DEFINITION
 IMPLICIT NONE
 
@@ -16,7 +15,7 @@ INTEGER :: i, j, k, l
 
 ! We do the DM case first !
 ! This would be done only if users wants DM component !
-IF (RUNDM_flag) THEN
+IF (DM_flag) THEN
 	DO CONCURRENT (j = nx_min_1:nx_part_1, k = ny_min_1:ny_part_1, l = nz_min_1:nz_part_1) 	
 		p1 (j,k,l) = kgas1 * prim1(irho1,j,k,l) ** ggas1
 		dpdrho1 (j,k,l) = kgas1 * ggas1 * prim1(irho1,j,k,l) ** (ggas1 - 1.0D0)

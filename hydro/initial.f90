@@ -6,6 +6,7 @@
 
 SUBROUTINE initial
 USE DEFINITION
+USE WENO_MODULE
 USE RIEMANN_MODULE
 IMPLICIT NONE
 
@@ -33,6 +34,11 @@ WRITE(*,*)
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 ! Section for building arrays !
+
+WRITE(*,*) 'Build weno coefficients'
+CALL GetWenoConst
+WRITE(*,*) 'End building weno coefficients'
+WRITE(*,*)
 
 WRITE(*,*) 'Build hydro equations'
 CALL SETUP_EQN
@@ -67,7 +73,7 @@ delta2 = dx2
 ! Set initial conservative/primitive variables !
 cons2 = 0.0D0
 prim2 = 0.0D0
-IF(RUNDM_flag) THEN
+IF(DM_flag) THEN
     cons1 = 0.0D0
     prim1 = 0.0D0
 END IF
@@ -81,6 +87,8 @@ IF(hydro_test) THEN
         CALL Riemann_1d
    	ELSEIF(n_dim == 2) THEN
         CALL Riemann_2d
+   	ELSEIF(n_dim == 3) THEN
+        CALL Riemann_3d
     END IF
 END IF
 

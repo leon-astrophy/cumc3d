@@ -14,7 +14,6 @@
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 SUBROUTINE CHECKRHO
-USE OMP_LIB
 USE DEFINITION
 IMPLICIT NONE
 

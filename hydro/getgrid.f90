@@ -20,20 +20,14 @@ IMPLICIT NONE
 INTEGER :: j, k, l, n_mid
 
 ! Real !
-REAL (DP) :: dh_x, dh_y, dh_z
+REAL (DP) :: dh_x, dh_y, dh_z, rad2
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 ! Assign !
-IF(movinggridnm_flag) THEN
-	dh_x = delta2
-	dh_y = delta2
-	dh_z = delta2
-ELSE
-	dh_x = dx2
-	dh_y = dy2
-	dh_z = dz2
-END IF
+dh_x = dx2
+dh_y = dy2
+dh_z = dz2
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 ! Grid position of motherboard
@@ -100,55 +94,40 @@ END IF
 
 ! Radial distances !
 IF(coordinate_flag == 2) THEN
-	DO CONCURRENT (j = -2:nx_2+3, k = -2:ny_2+3, l = -2:nz_2+3)
-		rad2(j,k,l) = x2(j)
-		IF(n_dim > 1) THEN
+	IF(n_dim > 1) THEN
+		DO CONCURRENT (j = -2:nx_2+3, k = -2:ny_2+3, l = -2:nz_2+3)
  			cos2(j,k,l) = DCOS(y2(k))
 			sin2(j,k,l) = DSIN(y2(k))
-		END IF
-	END DO
+		END DO
+	END IF
 ELSEIF(coordinate_flag == 1) THEN
    	DO CONCURRENT (j = -2:nx_2+3, k = -2:ny_2+3, l = -2:nz_2+3)
-		rad2(j,k,l) = x2(j)**2 
+		rad2 = x2(j)**2 
 		IF(n_dim > 1) THEN
-			rad2(j,k,l) = rad2(j,k,l) + y2(k)**2
+			rad2 = rad2 + y2(k)**2
 		END IF
-		rad2(j,k,l) = SQRT(rad2(j,k,l))
- 		cos2(j,k,l) = y2(k)/rad2(j,k,l)
-		sin2(j,k,l) = x2(j)/rad2(j,k,l)
+		rad2 = SQRT(rad2)
+ 		cos2(j,k,l) = y2(k)/rad2
+		sin2(j,k,l) = x2(j)/rad2
 	END DO
 ELSE
    	DO CONCURRENT (j = -2:nx_2+3, k = -2:ny_2+3, l = -2:nz_2+3)
-		rad2(j,k,l) = x2(j)**2
+		rad2 = x2(j)**2
 		IF(n_dim > 1) THEN
-			rad2(j,k,l) = rad2(j,k,l) + y2(k)**2
+			rad2 = rad2 + y2(k)**2
 		END IF
 		IF(n_dim > 2) THEN
-			rad2(j,k,l) = rad2(j,k,l) + z2(l)**2
+			rad2 = rad2 + z2(l)**2
 		END IF
-		rad2(j,k,l) = SQRT(rad2(j,k,l))
+		rad2 = SQRT(rad2)
 		IF(n_dim > 1) THEN
-			sin2(j,k,l) = SQRT(x2(j)**2 + y2(k)**2)/rad2(j,k,l)
+			sin2(j,k,l) = SQRT(x2(j)**2 + y2(k)**2)/rad2
 		END IF
 		IF(n_dim > 2) THEN
-			cos2(j,k,l) = z2(l)/rad2(j,k,l)
+			cos2(j,k,l) = z2(l)/rad2
 		END IF
 	END DO
 END IF
-
-! Get maxmimum distance !
-rmax2 = maxval(x2)
-IF(n_dim > 1) THEN
-	rmax2 = MAX(rmax2, maxval(y2))
-END IF
-IF(n_dim > 2) THEN
-	rmax2 = MAX(rmax2, maxval(z2))
-END IF 
-
-! Dimensionless distances !
-DO CONCURRENT (j = -2:nx_2+3, k = -2:ny_2+3, l = -2:nz_2+3)
-	radbar2(j,k,l) = rad2(j,k,l)/rmax2
-END DO
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
@@ -184,11 +163,6 @@ IF(NOT(fullz_flag)) THEN
 	END Do
 END IF
 
-! Dimensionless volume !
-DO CONCURRENT (j = -2:nx_2+3, k = -2:ny_2+3, l = -2:nz_2+3)
-	volbar2(j,k,l) = vol2(j,k,l)/rmax2**3
-END DO
-
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 END SUBROUTINE
@@ -207,20 +181,14 @@ IMPLICIT NONE
 INTEGER :: j, k, l, n_mid
 
 ! Real !
-REAL (DP) :: dh_x, dh_y, dh_z
+REAL (DP) :: dh_x, dh_y, dh_z, rad1
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 ! Assign !
-IF(movinggriddm_flag) THEN
-	dh_x = delta1
-	dh_y = delta1
-	dh_z = delta1
-ELSE
-	dh_x = dx1
-	dh_y = dy1
-	dh_z = dz1
-END IF
+dh_x = dx1
+dh_y = dy1
+dh_z = dz1
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 ! Grid position of motherboard
@@ -287,55 +255,40 @@ END IF
 
 ! Radial distances !
 IF(coordinate_flag == 2) THEN
-	DO CONCURRENT (j = -2:nx_1+3, k = -2:ny_1+3, l = -2:nz_1+3)
-		rad1(j,k,l) = x1(j)
-		IF(n_dim > 1) THEN
+	IF(n_dim > 1) THEN
+		DO CONCURRENT (j = -2:nx_1+3, k = -2:ny_1+3, l = -2:nz_1+3)
  			cos1(j,k,l) = DCOS(y1(k))
 			sin1(j,k,l) = DSIN(y1(k))
-		END IF
-	END DO
+		END DO
+	END IF
 ELSEIF(coordinate_flag == 1) THEN
    	DO CONCURRENT (j = -2:nx_1+3, k = -2:ny_1+3, l = -2:nz_1+3)
-		rad1(j,k,l) = x1(j)**2 
+		rad1 = x1(j)**2 
 		IF(n_dim > 1) THEN
-			rad1(j,k,l) = rad1(j,k,l) + y1(k)**2
+			rad1 = rad1 + y1(k)**2
 		END IF
-		rad1(j,k,l) = SQRT(rad1(j,k,l))
- 		cos1(j,k,l) = y1(k)/rad1(j,k,l)
-		sin1(j,k,l) = x1(j)/rad1(j,k,l)
+		rad1 = SQRT(rad1)
+ 		cos1(j,k,l) = y1(k)/rad1
+		sin1(j,k,l) = x1(j)/rad1
 	END DO
 ELSE
    	DO CONCURRENT (j = -2:nx_1+3, k = -2:ny_1+3, l = -2:nz_1+3)
-		rad1(j,k,l) = x1(j)**2
+		rad1 = x1(j)**2
 		IF(n_dim > 1) THEN
-			rad1(j,k,l) = rad1(j,k,l) + y1(k)**2
+			rad1 = rad1 + y1(k)**2
 		END IF
 		IF(n_dim > 2) THEN
-			rad1(j,k,l) = rad1(j,k,l) + z1(l)**2
+			rad1 = rad1 + z1(l)**2
 		END IF
-		rad1(j,k,l) = SQRT(rad1(j,k,l))
+		rad1 = SQRT(rad1)
 		IF(n_dim > 1) THEN
-			sin1(j,k,l) = SQRT(x1(j)**2 + y1(k)**2)/rad1(j,k,l)
+			sin1(j,k,l) = SQRT(x1(j)**2 + y1(k)**2)/rad1
 		END IF
 		IF(n_dim > 2) THEN
-			cos1(j,k,l) = z1(l)/rad1(j,k,l)
+			cos1(j,k,l) = z1(l)/rad1
 		END IF
 	END DO
 END IF
-
-! Get maxmimum distance !
-rmax1 = maxval(x1)
-IF(n_dim > 1) THEN
-	rmax1 = MAX(rmax1, maxval(y1))
-END IF
-IF(n_dim > 2) THEN
-	rmax1 = MAX(rmax1, maxval(z1))
-END IF 
-
-! Dimensionless distances !
-DO CONCURRENT (j = -2:nx_1+3, k = -2:ny_1+3, l = -2:nz_1+3)
-	radbar1(j,k,l) = rad1(j,k,l)/rmax1
-END DO
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
@@ -370,11 +323,6 @@ IF(NOT(fullz_flag)) THEN
 		vol1(j,k,l) = vol1(j,k,l)*2.0D0
 	END Do
 END IF
-
-! Dimensionless volume !
-DO CONCURRENT (j = -2:nx_1+3, k = -2:ny_1+3, l = -2:nz_1+3)
-	volbar1(j,k,l) = vol1(j,k,l)/rmax1**3
-END DO
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 

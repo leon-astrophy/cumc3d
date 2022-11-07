@@ -19,7 +19,6 @@
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 SUBROUTINE FROMRVETOU
-USE OMP_LIB
 USE DEFINITION
 IMPLICIT NONE
 
@@ -30,12 +29,12 @@ INTEGER :: i, j, k, l
 ! DM Sector !
 
 ! From RVE to U 
-IF(runDM_flag) then
+IF(DM_flag) then
 	DO CONCURRENT (j = nx_min_1:nx_part_1, k = ny_min_1:ny_part_1, l = nz_min_1:nz_part_1) 
 		DO i = imin1, imax1
-			cons1(j,k,l,i) = prim1(j,k,l,i)*prim1(j,k,l,irho1)
+			cons1(i,j,k,l) = prim1(i,j,k,l)*prim1(irho1,j,k,l)
 		END DO
-		cons1(j,k,l,irho1) = prim1(j,k,l,irho1)
+		cons1(irho1,j,k,l) = prim1(irho1,j,k,l)
 	END DO
 END IF
   
@@ -45,15 +44,15 @@ END IF
 ! Convert NM hydro
 DO CONCURRENT (j = nx_min_2:nx_part_2, k = ny_min_2:ny_part_2, l = nz_min_2:nz_part_2) 
 	DO i = imin2, imax2
-		cons2(j,k,l,i) = prim2(j,k,l,i)*prim2(j,k,l,irho2)
+		cons2(i,j,k,l) = prim2(i,j,k,l)*prim2(irho2,j,k,l)
 	END DO
-	cons2(j,k,l,irho2) = prim2(j,k,l,irho2)
-	cons2(j,k,l,itau2) = prim2(j,k,l,irho2)*(epsilon2(j,k,l) + 0.5D0*(prim2(j,k,l,ivel2_x)**2 & 
-				  	   		   + prim2(j,k,l,ivel2_y)**2 + prim2(j,k,l,ivel2_z)**2))
+	cons2(irho2,j,k,l) = prim2(irho2,j,k,l)
+	cons2(itau2,j,k,l) = prim2(irho2,j,k,l)*(epsilon2(j,k,l) + 0.5D0*(prim2(ivel2_x,j,k,l)**2 & 
+				  	   		   + prim2(ivel2_y,j,k,l)**2 + prim2(ivel2_z,j,k,l)**2))
 
 	! Dual energy !
 	IF(dual_energy) THEN
-		cons2(j,k,l,ieps2) = prim2(j,k,l,irho2) * epsilon2(j,k,l)
+		cons2(ieps2,j,k,l) = prim2(irho2,j,k,l) * epsilon2(j,k,l)
 	END IF
 END DO
 
@@ -78,12 +77,12 @@ REAL (DP) :: et_2, bige_2
 ! From U to RVE for DM sectors !
 
 ! Convert the DM hydro
-IF(runDM_flag) THEN
+IF(DM_flag) THEN
 	DO CONCURRENT (j = nx_min_1:nx_part_1, k = ny_min_1:ny_part_1, l = nz_min_1:nz_part_1)
 		DO i = imin1, imax1
-			prim1(j,k,l,i) = cons1(j,k,l,i)/cons1(j,k,l,irho1)
+			prim1(i,j,k,l) = cons1(i,j,k,l)/cons1(irho1,j,k,l)
 		END DO
-		prim1(j,k,l,irho1) = cons1(j,k,l,irho1)
+		prim1(irho1,j,k,l) = cons1(irho1,j,k,l)
 	END DO
 
 	! Copy to boundaries !
@@ -96,23 +95,23 @@ END IF
 ! Convert the NM hydro
 DO CONCURRENT (j = nx_min_2:nx_part_2, k = ny_min_2:ny_part_2, l = nz_min_2:nz_part_2) 
 	DO i = imin2, imax2
-		prim2(j,k,l,i) = cons2(j,k,l,i)/cons2(j,k,l,irho2)
+		prim2(i,j,k,l) = cons2(i,j,k,l)/cons2(irho2,j,k,l)
 	END DO
-	prim2(j,k,l,irho2) = cons2(j,k,l,irho2)
+	prim2(irho2,j,k,l) = cons2(irho2,j,k,l)
 
 	! Determine the epsilon for epsilon equation !
 	IF (dual_energy) THEN
-		prim2(j,k,l,ieps2) = cons2(j,k,l,ieps2)
-		bige_2 = cons2(j,k,l,itau2)/cons2(j,k,l,irho2)
-		et_2 = bige_2 - 5.0E-1_DP * (prim2(j,k,l,ivel2_x) ** 2 & 
-			 + prim2(j,k,l,ivel2_y) ** 2 + prim2(j,k,l,ivel2_z) ** 2)
+		prim2(ieps2,j,k,l) = cons2(ieps2,j,k,l)
+		bige_2 = cons2(itau2,j,k,l)/cons2(irho2,j,k,l)
+		et_2 = bige_2 - 5.0E-1_DP * (prim2(ivel2_x,j,k,l) ** 2 & 
+			 + prim2(ivel2_y,j,k,l) ** 2 + prim2(ivel2_z,j,k,l) ** 2)
 		If(et_2 > 1.0D-4*bige_2) THEN
 			epsilon2(j,k,l) = et_2 
 		ELSE
-			epsilon2(j,k,l) = cons2 (j,k,l,ieps2)/cons2(j,k,l,irho2)
+			epsilon2(j,k,l) = cons2 (ieps2,j,k,l)/cons2(irho2,j,k,l)
 		END	IF
 	ELSE
-		epsilon2(j,k,l) = (cons2(j,k,l,itau2)/cons2(j,k,l,irho2) - 5.0E-1_DP * (prim2(j,k,l,ivel2_x) ** 2 + prim2(j,k,l,ivel2_y) ** 2 + prim2(j,k,l,ivel2_z) ** 2))
+		epsilon2(j,k,l) = (cons2(itau2,j,k,l)/cons2(irho2,j,k,l) - 5.0E-1_DP * (prim2(ivel2_x,j,k,l) ** 2 + prim2(ivel2_y,j,k,l) ** 2 + prim2(ivel2_z,j,k,l) ** 2))
 	END IF
 END DO
 

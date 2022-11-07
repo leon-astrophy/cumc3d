@@ -79,12 +79,9 @@ REAL (DP), ALLOCATABLE, DIMENSION (:) :: dr1
 REAL (DP), ALLOCATABLE, DIMENSION (:) :: xF1
 REAL (DP), ALLOCATABLE, DIMENSION (:) :: yF1
 REAL (DP), ALLOCATABLE, DIMENSION (:) :: zF1
-REAL (DP), ALLOCATABLE, DIMENSION (:,:,:) :: rad1
 REAL (DP), ALLOCATABLE, DIMENSION (:,:,:) :: cos1
 REAL (DP), ALLOCATABLE, DIMENSION (:,:,:) :: sin1
 REAL (DP), ALLOCATABLE, DIMENSION (:,:,:) :: vol1
-REAL (DP), ALLOCATABLE, DIMENSION (:,:,:) :: radbar1
-REAL (DP), ALLOCATABLE, DIMENSION (:,:,:) :: volbar1
 
 ! R and Z coordinate of the grid for NM !
 REAL (DP), ALLOCATABLE, DIMENSION (:) :: x2
@@ -94,12 +91,9 @@ REAL (DP), ALLOCATABLE, DIMENSION (:) :: dr2
 REAL (DP), ALLOCATABLE, DIMENSION (:) :: xF2
 REAL (DP), ALLOCATABLE, DIMENSION (:) :: yF2
 REAL (DP), ALLOCATABLE, DIMENSION (:) :: zF2
-REAL (DP), ALLOCATABLE, DIMENSION (:,:,:) :: rad2
 REAL (DP), ALLOCATABLE, DIMENSION (:,:,:) :: cos2
 REAL (DP), ALLOCATABLE, DIMENSION (:,:,:) :: sin2
 REAL (DP), ALLOCATABLE, DIMENSION (:,:,:) :: vol2
-REAL (DP), ALLOCATABLE, DIMENSION (:,:,:) :: radbar2
-REAL (DP), ALLOCATABLE, DIMENSION (:,:,:) :: volbar2
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 ! Hydrodynamical variables
@@ -172,17 +166,6 @@ REAL (DP), ALLOCATABLE, DIMENSION (:,:,:,:) :: dphi_2
 REAL (DP), ALLOCATABLE, DIMENSION (:,:,:,:) :: dp_2
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-! Section for multipole solvers 
-
-! Legendre polynominal for DM and NM
-REAL (DP), ALLOCATABLE, DIMENSION (:,:,:,:) :: legendre1
-REAL (DP), ALLOCATABLE, DIMENSION (:,:,:,:) :: legendre2
-REAL (DP), ALLOCATABLE, DIMENSION (:,:,:,:) :: rsolid_1, rsolid_2
-REAL (DP), ALLOCATABLE, DIMENSION (:,:,:,:) :: isolid_1, isolid_2
-REAL (DP), ALLOCATABLE, DIMENSION (:,:) :: inner_1, outer_1
-REAL (DP), ALLOCATABLE, DIMENSION (:,:) :: inner_2, outer_2
-
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 ! Section for time-evolution !
 
 ! For RK-Time evolution 
@@ -201,10 +184,6 @@ REAL (DP), allocatable, DIMENSION (:,:,:,:,:) :: dflux_2
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 ! Real/integer variable scalars !
-
-! Scaling constants for grid size !
-REAL (DP) :: rmax1
-REAL (DP) :: rmax2
 
 ! The number of highest grid along three axis !
 INTEGER :: nx_part_1, ny_part_1, nz_part_1
@@ -243,10 +222,6 @@ INTEGER :: potential_flag
 
 ! Global simulation time !
 REAL (DP) :: global_time
-
-! Variables of expanding grid !
-real (DP) :: vel1_max, radius1, boundary1
-real (DP) :: vel2_max, radius2, boundary2
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 

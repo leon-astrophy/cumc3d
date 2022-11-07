@@ -11,14 +11,14 @@ INTEGER :: i, j, k, l
 ! For DM !
 IF (DM_flag) THEN
 	DO CONCURRENT (j = nx_min_1:nx_part_1, k = ny_min_1:ny_part_1, l = nz_min_1:nz_part_1)
-		cs1(j,k,l) = sqrt(dpdrho1(j,k,l)+dpdeps1(j,k,l)*p1(j,k,l)/prim1(j,k,l,irho1)**(2.0E0_DP))
+		cs1(j,k,l) = sqrt(dpdrho1(j,k,l)+dpdeps1(j,k,l)*p1(j,k,l)/prim1(irho1,j,k,l)**(2.0E0_DP))
 	END DO
 	CALL BOUNDARY1D_DM (cs1, even, part)
 ENDIF
 
 ! For NM !
 DO CONCURRENT (j = nx_min_2:nx_part_2, k = ny_min_2:ny_part_2, l = nz_min_2:nz_part_2)
-	cs2(j,k,l) = sqrt(dpdrho2(j,k,l)+dpdeps2(j,k,l)*prim2(j,k,l,itau2)/prim2(j,k,l,irho2)**(2.0E0_DP))
+	cs2(j,k,l) = sqrt(dpdrho2(j,k,l)+dpdeps2(j,k,l)*prim2(itau2,j,k,l)/prim2(irho2,j,k,l)**(2.0E0_DP))
 END DO
 
 ! Boundary !

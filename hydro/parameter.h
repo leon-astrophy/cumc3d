@@ -18,6 +18,9 @@ INTEGER, PARAMETER :: DP = SELECTED_REAL_KIND (15, 307)
 ! Range (0,1,2,3) stands for the scalar, X-type vector, Y-type vector and Z-type vector
 INTEGER, PARAMETER :: even = 0, oddX = 1, oddY = 2, oddZ = 3	
 
+! Which direction of reconstruction
+INTEGER, PARAMETER :: x_dir = 1, y_dir = 2, z_dir = 3
+
 ! Apply boundary conditions to the full/partial box
 INTEGER, PARAMETER :: part = 0, full = 1	
 
@@ -41,7 +44,7 @@ REAL (DP), PARAMETER :: hbar = 1.1965E-76_DP
 INTEGER, PARAMETER :: coordinate_flag = 0
 
 ! Dimension, 1 = 1D, 2 = 2D, 3 = 3D
-INTEGER, PARAMETER :: n_dim = 2
+INTEGER, PARAMETER :: n_dim = 3
 
 ! Flag for boundary condition
 ! The boundary flag is defined by four scalar
@@ -54,7 +57,7 @@ INTEGER, PARAMETER :: n_dim = 2
 ! 0 = periodic
 ! 1 = reflecting boundary (depend on scalar/vector)
 ! 2 = outgoing (1st derivative = 0)
-INTEGER, PARAMETER :: boundary_flag(6) = (/1,2,1,2,2,2/)
+INTEGER, PARAMETER :: boundary_flag(6) = (/0,0,0,0,0,0/)
 
 ! Flag for simulating with the full box (extend to negative x,y,z)
 LOGICAL, PARAMETER :: fullx_flag = .false.
@@ -65,25 +68,25 @@ LOGICAL, PARAMETER :: fullz_flag = .false.
 LOGICAL, PARAMETER :: dmnm_diffbox = .false.
 
 ! The number of grid in the x,y,z direction for DM
-INTEGER, PARAMETER :: nx_1 = 300
-INTEGER, PARAMETER :: ny_1 = 300
-INTEGER, PARAMETER :: nz_1 = 1
+INTEGER, PARAMETER :: nx_1 = 100
+INTEGER, PARAMETER :: ny_1 = 100
+INTEGER, PARAMETER :: nz_1 = 100
 
 ! The number of grid in the x,y,z direction for NM
-INTEGER, PARAMETER :: nx_2 = 300
-INTEGER, PARAMETER :: ny_2 = 300
-INTEGER, PARAMETER :: nz_2 = 1
+INTEGER, PARAMETER :: nx_2 = 100
+INTEGER, PARAMETER :: ny_2 = 100
+INTEGER, PARAMETER :: nz_2 = 100
 
 ! Grid sizes for DM 
 ! Hint: The standard grid size (Note: 1 unit = 1.4774 km)
-REAL (DP), PARAMETER :: dx1 = 0.005D0	
-REAL (DP), PARAMETER :: dy1 = 0.005D0		
-REAL (DP), PARAMETER :: dz1 = 0.1D0	
+REAL (DP), PARAMETER :: dx1 = 0.01D0	
+REAL (DP), PARAMETER :: dy1 = 0.01D0		
+REAL (DP), PARAMETER :: dz1 = 0.01D0	
 
 ! Grid sizes for NM
-REAL (DP), PARAMETER :: dx2 = 0.005D0
-REAL (DP), PARAMETER :: dy2 = 0.005D0
-REAL (DP), PARAMETER :: dz2 = 0.1D0	
+REAL (DP), PARAMETER :: dx2 = 0.01D0	
+REAL (DP), PARAMETER :: dy2 = 0.01D0	
+REAL (DP), PARAMETER :: dz2 = 0.01D0	
 
 ! Section for fornax !
 ! Use non-constant grid? !
@@ -98,14 +101,11 @@ REAL (DP), PARAMETER :: xt = 1.5d2
 REAL (DP), PARAMETER :: cfl = 0.20E0_DP			
 
 ! Maximum time to be simulated in the model
-REAL (DP) :: total_time = 3.0D0
+REAL (DP) :: total_time = 0.12D0
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 ! Section for core hydrodynamic solver
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
-! Which direction of reconstruction
-INTEGER, PARAMETER :: x_dir = 1, y_dir = 2, z_dir = 3
 
 ! Use the LF Riemann solver !
 LOGICAL, PARAMETER :: LF_flag = .true.
@@ -152,9 +152,6 @@ REAL (DP), PARAMETER :: tolerance = 3.0E-8_DP
 ! Want to have a DM component ? !
 LOGICAL, PARAMETER :: DM_flag = .false.
 
-! Want the DM to be movable ? !
-LOGICAL, PARAMETER :: runDM_flag = .false.
-
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 ! Section for Temporaily
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -165,14 +162,12 @@ LOGICAL, PARAMETER :: hydro_test = .true.
 ! which test model ? !
 INTEGER, PARAMETER :: test_model = 2
 
-LOGICAL, PARAMETER :: etran_flag = .false.
-
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 ! Section for grid/atmospheric settings
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 ! Check if the NM/DM density fall below the lower limit !
-LOGICAL, PARAMETER :: checkrho_flag = .true.
+LOGICAL, PARAMETER :: checkrho_flag = .false.
 
 ! Fix the DM/NM atmospheric density !
 LOGICAL, PARAMETER :: fixrhonm_flag = .false.
@@ -181,14 +176,6 @@ LOGICAL, PARAMETER :: fixrhodm_flag = .false.
 ! Check the computational box for DM/NM !
 LOGICAL, PARAMETER :: checkstepnm_flag = .true.
 LOGICAL, PARAMETER :: checkstepdm_flag = .false.
-
-! Turn on the moving-mesh for DM/NM !
-LOGICAL, PARAMETER :: movinggridnm_flag = .false.
-LOGICAL, PARAMETER :: movinggriddm_flag = .false.
-
-! Check if moving-mesh is needed !
-LOGICAL :: found_movinggridnm_flag = .false.
-LOGICAL :: found_movinggriddm_flag = .false.
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 ! Section for Output setting
