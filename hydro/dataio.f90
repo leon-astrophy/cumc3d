@@ -121,10 +121,10 @@ call h5sclose_f(dspace_id,error)
 
 ! define DIMENSION !
 space_rank = 4
-data_dims(1) = nx_2
-data_dims(2) = ny_2 
-data_dims(3) = nz_2 
-data_dims(4) = (imax2 - imin2) + 1
+data_dims(1) = (imax2 - imin2) + 1
+data_dims(2) = nx_2
+data_dims(3) = ny_2 
+data_dims(4) = nz_2 
 
 ! open dataspace !
 call h5screate_simple_f(space_rank,data_dims,dspace_id,error)
