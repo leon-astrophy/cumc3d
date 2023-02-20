@@ -1,0 +1,25 @@
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+! CUMC3D - A parallel, multiphysics, multipurpose, Newtonian/GR MHD code
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+Developer: Ho Sang (Leon) Chan
+Credit: Ka-Wing Wong, Shing-Chi Leung, Zha Shuai
+Version: 1.25
+
+Description:
+
+  CUMC3D is a parallel code for high-energy astrophysical simulations
+  The current version is 1.0, which includes basic MHD solvers and models 
+  for simulating accretion discs around supermassive black holes
+
+Version Status:
+
+  HLLC, HLLE, LF Riemann solvers are all available
+  3 types of PPM reconstructions, and WENO-Z reconstructions are all available
+  Full-3D simulations can now be performed
+  Cylindrical coordinates changed to right-handed description
+
+Future Updates:
+
+  HLLD Riemann solvers, Upwind Constrained Transport, Further vectorization of loops
+  

@@ -1,0 +1,17 @@
+./solver/mhd/definition.f90 
+./solver/mhd/rsolver_module.f90 
+./solver/mhd/mhd_module.f90 
+./solver/mhd/weno_module.f90
+./solver/mhd/ppm_module.f90 
+./solver/mhd/main.f90 
+./solver/mhd/boundary.f90 
+./solver/mhd/checkrho.f90 
+./solver/mhd/dataio.f90 
+./solver/mhd/fromrvetou.f90 
+./solver/mhd/getepsilon.f90 
+./solver/mhd/getgrid.f90 
+./solver/mhd/initial.f90 
+./solver/mhd/rungekutta.f90 
+./solver/mhd/setup.f90 
+./solver/mhd/spatial.f90 
+./solver/mhd/update.f90 
