@@ -4,22 +4,32 @@
 
 Developer: Ho Sang (Leon) Chan
 Credit: Ka-Wing Wong, Shing-Chi Leung, Zha Shuai
-Version: 1.25
+Version: 1.28
 
 Description:
 
   CUMC3D is a parallel code for high-energy astrophysical simulations
-  The current version is 1.0, which includes basic MHD solvers and models 
+  The current version is 1.28, which includes basic MHD solvers and models 
   for simulating accretion discs around supermassive black holes
 
 Version Status:
 
   HLLC, HLLE, LF Riemann solvers are all available
-  3 types of PPM reconstructions, and WENO-Z reconstructions are all available
+  TVD reconsturctions, PPM reconstructions, and WENO-Z reconstructions are all available
   Full-3D simulations can now be performed
-  Cylindrical coordinates changed to right-handed description
+  Cylindrical coordinates changed to right-handed description (r, phi, z)
+  Updated folder structures for data-anaylsis packages 
+  Included plotting utilities for 2D/3D simulations, with B-field stream lines
+
+Analysis Package:
+
+  To plot figures, cd into the folder analysis, and run the python script analysis.py
+  Enter the simulation dimension (1D/2D/3D), the coordinate systems (Cartesian/Cylindrical/Spherical)
+  To generate movies, run the python script animation.py and enter the simulation dimension (1D/2D/3D)
 
 Future Updates:
 
   HLLD Riemann solvers, Upwind Constrained Transport, Further vectorization of loops
+  Volume rendering of 3D simulations
+  Advanced Leakage Scheme for neutrino transport
   
