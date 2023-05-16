@@ -40,7 +40,7 @@ def plot_contour(X1_in,X2_in,prim,filename,domain='xy',scale='log',stream=False,
     if(scale == 'log'):
         zmax = int(math.ceil(np.log10(np.max(prim))))
         zmin = int(math.floor(np.log10(np.min(prim))))
-        cp = ax.contourf(X1_in, X2_in, prim, np.logspace(zmin, zmax, 100), locator=ticker.LogLocator(), cmap='RdGy',extend='both')
+        cp = ax.contourf(X1_in, X2_in, prim, np.logspace(zmin, zmax, 100), locator=ticker.LogLocator(), cmap='plasma',extend='both')
         cbar = fig.colorbar(cp)
         rang = np.arange(int(np.log10(np.min(prim))), int(np.log10(np.max(prim))) + 1, 1)
         loca = 10 ** (np.array(rang).astype(float))
@@ -51,7 +51,7 @@ def plot_contour(X1_in,X2_in,prim,filename,domain='xy',scale='log',stream=False,
 
     # linear scale plot #
     elif(scale == 'linear'):
-        cp = ax.contourf(X1_in, X2_in, prim, 100, cmap='RdGy', extend='both')
+        cp = ax.contourf(X1_in, X2_in, prim, 100, cmap='plasma', extend='both')
         cbar = fig.colorbar(cp)
         cbar.ax.tick_params(labelsize=15)
     
