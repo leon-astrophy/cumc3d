@@ -82,13 +82,13 @@ END IF
 
 ! Along the second direction !
 IF(coordinate_flag == 2) THEN
-	DO j = -2, ny_2 + 3
-		y2cen(j) = (yF2(j-1)*COS(yF2(j-1)) - yF2(j)*COS(yF2(j)) + SIN(yF2(j)) - SIN(yF2(j-1))) & 
-						 / (COS(yF2(j-1)) - COS(yF2(j)))
+	DO k = -2, ny_2 + 3
+		y2cen(k) = (yF2(k-1)*COS(yF2(k-1)) - yF2(k)*COS(yF2(k)) + SIN(yF2(k)) - SIN(yF2(k-1))) & 
+						 / (COS(yF2(k-1)) - COS(yF2(k)))
 	END DO
 ELSE
-	DO j = -2, ny_2 + 3
-		y2cen(j) = y2(j)
+	DO k = -2, ny_2 + 3
+		y2cen(k) = y2(k)
 	END DO
 END IF
 

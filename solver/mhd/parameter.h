@@ -89,7 +89,7 @@ REAL*8, PARAMETER :: y2_start = small_num
 REAL*8, PARAMETER :: z2_start = 0.0d0
 
 ! Ending position of the grid !
-REAL*8, PARAMETER :: x2_end = 15.5d0
+REAL*8, PARAMETER :: x2_end = 51.5d0
 REAL*8, PARAMETER :: y2_end = pi - small_num
 REAL*8, PARAMETER :: z2_end = 2.0d0*pi
 
@@ -133,10 +133,10 @@ LOGICAL, PARAMETER :: tvdmc_flag = .false.
 LOGICAL, PARAMETER :: tvdvl_flag = .false.
 
 ! Use the PPM (Mignone 2014) reconstruction scheme !
-LOGICAL, PARAMETER :: ppm_flag = .false.
+LOGICAL, PARAMETER :: ppm_flag = .true.
 
 ! Use the PPM (Colella 1984) reconstruction scheme !
-LOGICAL, PARAMETER :: ppmc_flag = .true.
+LOGICAL, PARAMETER :: ppmc_flag = .false.
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 ! Section for Realistic treatment of normal matter 

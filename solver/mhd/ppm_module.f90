@@ -35,7 +35,7 @@ REAL*8 :: pow_x, pow_y, pow_z
 REAL*8 :: dmu, dmubar
 
 ! Integer !
-INTEGER :: i, j, k, info
+INTEGER :: i, j, k, l, info
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 ! Initailize all reconstruction weight !
@@ -122,23 +122,23 @@ END IF
 
 ! y-direction !
 IF(coordinate_flag == 2) THEN
-	DO j = 0, ny_2 + 1
+	DO k = 0, ny_2 + 1
 		dmu = COS(yF2(k-1)) - COS(yF2(k))
 		dmubar = SIN(yF2(k-1)) - SIN(yF2(k))
-		hpy(j) = dy2(k)*(dmubar + dy2(k)*COS(yF2(k)))/(dy2(k)*(SIN(yF2(k-1)) + SIN(yF2(k))) - 2.0d0*dmu)
-		hmy(j) = -dy2(k)*(dmubar + dy2(k)*COS(yF2(k-1)))/(dy2(k)*(SIN(yF2(k-1)) + SIN(yF2(k))) - 2.0d0*dmu)
+		hpy(k) = dy2(k)*(dmubar + dy2(k)*COS(yF2(k)))/(dy2(k)*(SIN(yF2(k-1)) + SIN(yF2(k))) - 2.0d0*dmu)
+		hmy(k) = -dy2(k)*(dmubar + dy2(k)*COS(yF2(k-1)))/(dy2(k)*(SIN(yF2(k-1)) + SIN(yF2(k))) - 2.0d0*dmu)
 	END DO
 ELSE
-	DO j = 0, ny_2 + 1
-		hpy(j) = 3.0d0
-		hmy(j) = 3.0d0
+	DO k = 0, ny_2 + 1
+		hpy(k) = 3.0d0
+		hmy(k) = 3.0d0
 	END DO
 END IF
 
 ! Z-direction !
-DO j = 0, nz_2 + 1
-	hpz(j) = 3.0d0
-	hmz(j) = 3.0d0
+DO l = 0, nz_2 + 1
+	hpz(l) = 3.0d0
+	hmz(l) = 3.0d0
 END DO
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -421,7 +421,7 @@ DO i = 1, 5
 		left = yF2(j_in + s_temp - 1)
 		right = yF2(j_in + s_temp)
 		DO k = 0, n_temp
-			matrix_out(i, j) = matrix_out(i, j) + factorial(n_temp)/factorial(k) &
+			matrix_out(i, j) = matrix_out(i, j) + factorial(n_temp)/factorial(n_temp - k) &
 			*(left**(DBLE(n_temp - k))*COS(left + DBLE(k)*0.5d0*pi) - right**(DBLE(n_temp - k))*COS(right + DBLE(k)*0.5d0*pi))
 		END DO
 		matrix_out(i, j) = matrix_out(i, j)/(COS(left) - COS(right))
