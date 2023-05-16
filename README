@@ -4,18 +4,18 @@
 
 Developer: Ho Sang (Leon) Chan
 Credit: Ka-Wing Wong, Shing-Chi Leung, Zha Shuai
-Version: 1.38
+Version: 1.27
 
 Description:
 
   CUMC3D is a parallel code for high-energy astrophysical simulations
-  The current version is 1.38, which includes basic MHD solvers and models
-  for simulating magnetised accretion discs
+  The current version is 1.33, which includes basic MHD solvers and models 
+  for simulating accretion discs around supermassive black holes
 
 Version Status:
 
   HLLD, HLLC, HLLE, LF Riemann solvers are all available
-  TVD reconsturctions, PPM (Mignone 2014) and PPM (Colella 1984) reconstructions are all available
+  TVD reconsturctions, PPM reconstructions, and WENO-Z reconstructions are all available
   Full-3D simulations can now be performed
   Cylindrical coordinates changed to right-handed description (r, phi, z)
   Updated folder structures for data-anaylsis packages 
@@ -29,5 +29,5 @@ Analysis Package:
 Future Updates:
 
   Volume rendering of 3D simulations
-  MPI parallelisation for running jobs in clusters
+  Advanced Leakage Scheme for neutrino transport
   
