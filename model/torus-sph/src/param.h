@@ -45,11 +45,14 @@ INTEGER, PARAMETER :: x_grid = 128
 ! number of theta-grid to contain the finest resolution !
 INTEGER, PARAMETER :: y_grid = 128
 
-! size of the box in r-direction to contain finest resolution !
-REAL*8, PARAMETER :: x_fine = 150.0D0
+! Outer domain of the box in the r-direction to contain finest resolution !
+REAL*8, PARAMETER :: x_fine = 11.5D0
 
-! size of the box in theta-direction to contain finest resolution !
-REAL*8, PARAMETER :: y_fine = pi/2
+! Inner domain of the box in the theta-direction to contain finest resolution !
+REAL*8, PARAMETER :: y1_fine = pi/4.0d0
+
+! Outer domain of the box in the theta-direction to contain finest resolution !
+REAL*8, PARAMETER :: y2_fine = 3.0d0*pi/4.0d0
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 ! Controlling density/magnetic field floor

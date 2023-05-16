@@ -13,6 +13,48 @@ END SUBROUTINE
 SUBROUTINE CUSTOM_GRID
 USE DEFINITION
 IMPLICIT NONE
+INCLUDE "param.h"
+
+! Intger !
+INTEGER :: i, j, k, l
+INTEGER :: j1, j2
+
+! Real !
+REAL*8 :: s_grid
+REAL*8 :: dx_fine, dy_fine
+REAL*8 :: alpha, beta
+REAL*8 :: r1, r2
+
+! Do refined grid if neccessary !
+IF(refined_grid) THEN
+
+  !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+  ! x-direction 
+
+  ! Parameter defining the number of grid !
+  j1 = x_grid
+  j2 = nx_2
+
+  ! Define grid size !
+  dx_fine = (x_fine - x2_start)/DBLE(x_grid)
+
+  ! Assign finest resolution grid !
+  DO j = -2, x_grid
+    xF2(j) = x2_start + DBLE(j)*dx_fine
+  END DO
+
+  ! Exponential parameters
+  r1 = x_fine
+  r2 = x2_end
+  beta = 1.0d0/DBLE(j2 - j1)*log(r2/r1)
+  alpha = r1*exp(-DBLE(j1)/DBLE(j2-j1)*log(r2/r1))
+
+  ! Exponential grid for the outer domain !
+  DO j = x_grid + 1, nx_2 + 3
+    xF2(j) = alpha*exp(beta*DBLE(j))
+  END DO
+
+END IF
 
 END SUBROUTINE
 

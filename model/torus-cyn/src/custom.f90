@@ -27,10 +27,18 @@ REAL*8 :: r1, r2
 ! Do refined grid if neccessary !
 IF(refined_grid) THEN
 
+  !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+  ! x-direction !
+
   ! Define grid size !
   dx_fine = x_fine/DBLE(x_grid)
 
-  ! exponential parameters
+  ! Finest resolution grid interface !
+  DO j = -2, x_grid
+    xF2(j) = x2_start + DBLE(j)*dx_fine
+  END DO
+
+  ! Exponential grid interface parameters
   r1 = x2_start + x_fine
   r2 = x2_end
   j1 = x_grid
@@ -38,18 +46,26 @@ IF(refined_grid) THEN
   beta = 1.0d0/DBLE(j2 - j1)*log(r2/r1)
   alpha = r1*exp(-DBLE(j1)/DBLE(j2-j1)*log(r2/r1))
 
-  ! My custom grid !
-  DO j = -2, x_grid
-    xF2(j) = x2_start + DBLE(j)*dx_fine
-  END DO
+  ! Coarse grid interface 
   DO j = x_grid + 1, nx_2 + 3
     xF2(j) = alpha*exp(beta*DBLE(j))
   END DO
 
+  !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+  ! z-direction !
+
   ! Define grid size !
   dz_fine = z_fine/DBLE(z_grid)
 
-  ! exponential parmaeters
+  ! Finest resolution grid interface !
+  DO j = nz_2/2, nz_2/2 + z_grid/2
+    zF2(j) = DBLE(j - nz_2/2)*dz_fine
+  END DO
+  DO j = nz_2/2, nz_2/2 - z_grid/2, -1
+    zF2(j) = DBLE(j - nz_2/2)*dz_fine
+  END DO
+
+  ! Exponential grid interface parameters
   r1 = z_fine/2
   r2 = z2_end
   j1 = nz_2/2 + z_grid/2
@@ -57,10 +73,7 @@ IF(refined_grid) THEN
   beta = 1.0d0/DBLE(j2 - j1)*log(r2/r1)
   alpha = r1*exp(-DBLE(j1)/DBLE(j2-j1)*log(r2/r1))
 
-  ! My custom grid !
-  DO j = nz_2/2, nz_2/2 + z_grid/2
-    zF2(j) = DBLE(j - nz_2/2)*dz_fine
-  END DO
+  ! Coarse grid interface 
   DO j = nz_2/2 + z_grid/2, nz_2 + 3
     zF2(j) = alpha*exp(beta*DBLE(j))
   END DO
@@ -73,10 +86,7 @@ IF(refined_grid) THEN
   beta = 1.0d0/DBLE(j2 - j1)*log(r2/r1)
   alpha = r1*exp(-DBLE(j1)/DBLE(j2-j1)*log(r2/r1))
 
-  ! My custom grid !
-  DO j = nz_2/2, nz_2/2 - z_grid/2, -1
-    zF2(j) = DBLE(j - nz_2/2)*dz_fine
-  END DO
+  ! Coarse grid interface 
   DO j = nz_2/2 - z_grid/2, -2, -1
     zF2(j) = alpha*exp(beta*DBLE(j))
   END DO

@@ -252,20 +252,6 @@ END DO
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-! Perturb the density !
-DO l = 1, nz_2
-  DO k = 1, ny_2
-    DO j = 1, nx_2
-      CALL RANDOM_NUMBER(rand)
-      IF(prim2(irho2,j,k,l) > rho_max*rho_fac) THEN
-        prim2(ivel2_x,j,k,l) = 1.0d-5*(rand - 0.5D0)/0.5D0
-      END IF
-    END DO
-  END DO
-END DO
-
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
 ! set atmospheric primitive variables !
 prim2_a(:,:,:,:) = 0.0D0
 prim2_a(irho2,:,:,:) = rho_max*rho_fac
@@ -276,8 +262,8 @@ eps2_a(:,:,:) = k_poly*prim2_a(irho2,:,:,:)**(gamma - 1.0D0)/(gamma - 1.0D0)
 t_scale = 2.0d0*pi/(SQRT(h_square)*s_max**(-q_grad))
 
 ! Set output profile interval !
-total_time = 1.0d-30 !*t_scale
-output_profiletime = 1.0d0 !total_time/20.0d0
+total_time = 500.0d0 !*t_scale
+output_profiletime = 10.0d0 !total_time/20.0d0
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
