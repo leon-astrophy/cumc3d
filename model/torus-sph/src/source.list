@@ -1,0 +1,5 @@
+./model/torus-sph/custom.f90 
+./model/torus-sph/findpressure.f90 
+./model/torus-sph/getepsilon.f90 
+./model/torus-sph/model.f90 
+./model/torus-sph/soundspeed.f90 
