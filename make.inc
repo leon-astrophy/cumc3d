@@ -1,3 +1,6 @@
+# Want to fix pole? #
+FIXPOLE = -DFIXPOLE 
+
 # Want to debug? #
 #DEBUG = -DDEBUG
 
@@ -15,8 +18,8 @@ MULTICORE = -mp
 F90=/home/leon/HDF5/bin/h5fc
 
 # Define F90 flags #
-F90FLAGS= -llapack -lblas -cpp -fastsse -Mipa=fast -O4 -Mvect=simd -Mvect=levels:5 -Msmartalloc -Mstack_arrays -Mprefetch $(MULTICORE) $(COMPILE) $(DEBUG) $(DIVB)
-LDFLAGS= -llapack -lblas -cpp -fastsse -Mipa=fast -O4 -Mvect=simd -Mvect=levels:5 -Msmartalloc -Mstack_arrays -Mprefetch $(MULTICORE) $(COMPILE) $(DEBUG) $(DIVB)
+F90FLAGS= -llapack -lblas -cpp -fastsse -Mipa=fast -O4 -Mvect=simd -Mvect=levels:5 -Msmartalloc -Mstack_arrays -Mprefetch $(MULTICORE) $(COMPILE) $(DEBUG) $(DIVB) $(FIXPOLE)
+LDFLAGS= -llapack -lblas -cpp -fastsse -Mipa=fast -O4 -Mvect=simd -Mvect=levels:5 -Msmartalloc -Mstack_arrays -Mprefetch $(MULTICORE) $(COMPILE) $(DEBUG) $(DIVB) $(FIXPOLE)
 
 # Define HDF5 library location
 HDF5INCS=-I/home/leon/HDF5/include
