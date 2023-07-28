@@ -33,7 +33,7 @@ REAL*8, PARAMETER :: taucgs2code = (masscgs2code*lencgs2code**2/tcgs2code**2)
 REAL*8, PARAMETER :: h_bar = (1.054571817D-27)*(lencgs2code**2*masscgs2code/tcgs2code)
 
 ! Current conversion !
-REAL*8, PARAMETER :: amp2code = (mu_0*1.0D5*masscgs2code*lencgs2code)**(0.5D0)*tcgs2code
+REAL*8, PARAMETER :: amp2code = (mu_0*1.0D5*masscgs2code*lencgs2code)**(0.5D0)/tcgs2code
 
 ! Magnetic field !
 REAL*8, PARAMETER :: gauss2code = 1.0D-1*masscgs2code/amp2code/tcgs2code**2
