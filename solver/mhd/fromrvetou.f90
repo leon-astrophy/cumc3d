@@ -65,8 +65,10 @@ ELSEIF(coordinate_flag == 1) THEN
   DO l = nz_min_2, nz_part_2
     DO k = ny_min_2, ny_part_2
       DO j = nx_min_2, nx_part_2
-        bcell(ibx,j,k,l) = (xF2(j)*prim2(ibx,j,k,l) + xF2(j-1)*prim2(ibx,j-1,k,l))/(dx2_sq(j))
-        bcell(iby,j,k,l) = 0.5D0*(prim2(iby,j,k,l) + prim2(iby,j,k-1,l))
+        bcell(ibx,j,k,l) = ((xF2(j) - x2cen(j))*prim2(ibx,j,k,l) + (x2cen(j) - xF2(j-1))*prim2(ibx,j-1,k,l))/(dx2(j))
+        !(xF2(j)*prim2(ibx,j,k,l) + xF2(j-1)*prim2(ibx,j-1,k,l))/(xF2(j) + xF2(j-1))
+        bcell(iby,j,k,l) = ((yF2(k) - y2cen(k))*prim2(iby,j,k,l) + (y2cen(k) - yF2(k-1))*prim2(iby,j,k-1,l))/(dy2(k))
+        !0.5D0*(prim2(iby,j,k,l) + prim2(iby,j,k-1,l))
         bcell(ibz,j,k,l) = 0.5D0*(prim2(ibz,j,k,l) + prim2(ibz,j,k,l-1))
       END DO
     END DO
@@ -79,8 +81,10 @@ ELSEIF(coordinate_flag == 2) THEN
   DO l = nz_min_2, nz_part_2
     DO k = ny_min_2, ny_part_2
       DO j = nx_min_2, nx_part_2
-        bcell(ibx,j,k,l) = 1.5D0*dx2(j)/dx2_cb(j)*(xF2(j)*xF2(j)*prim2(ibx,j,k,l) + xF2(j-1)*xF2(j-1)*prim2(ibx,j-1,k,l))
-        bcell(iby,j,k,l) = 0.5D0*dy2(k)/dcos2(k)*(sin2f(k)*prim2(iby,j,k,l) + sin2f(k-1)*prim2(iby,j,k-1,l))
+        bcell(ibx,j,k,l) = ((xF2(j) - x2cen(j))*prim2(ibx,j,k,l) + (x2cen(j) - xF2(j-1))*prim2(ibx,j-1,k,l))/(dx2(j))
+        !1.5D0*dx2(j)/dx2_cb(j)*(xF2(j)**2*prim2(ibx,j,k,l) + xF2(j-1)**2*prim2(ibx,j-1,k,l))
+        bcell(iby,j,k,l) = ((yF2(k) - y2cen(k))*prim2(iby,j,k,l) + (y2cen(k) - yF2(k-1))*prim2(iby,j,k-1,l))/(dy2(k))
+        !0.5D0*dy2(k)/dcos2(k)*(sin2f(k)*prim2(iby,j,k,l) + sin2f(k-1)*prim2(iby,j,k-1,l))
         bcell(ibz,j,k,l) = 0.5D0*(prim2(ibz,j,k,l) + prim2(ibz,j,k,l-1))
       END DO
     END DO
@@ -125,6 +129,7 @@ END SUBROUTINE
 SUBROUTINE FROMUTORVE
 USE DEFINITION
 USE MHD_MODULE
+use ieee_arithmetic
 IMPLICIT NONE
 
 ! Dummy variables
@@ -177,7 +182,7 @@ IF(coordinate_flag == 0) THEN
         bcell(iby,j,k,l) = 0.5D0*(prim2(iby,j,k,l) + prim2(iby,j,k-1,l))
         bcell(ibz,j,k,l) = 0.5D0*(prim2(ibz,j,k,l) + prim2(ibz,j,k,l-1))
       END DO
-    END DO
+    END DO 
   END DO
   !$ACC END PARALLEL
   !$OMP END DO
@@ -187,8 +192,10 @@ ELSEIF(coordinate_flag == 1) THEN
   DO l = nz_min_2, nz_part_2
     DO k = ny_min_2, ny_part_2
       DO j = nx_min_2, nx_part_2
-        bcell(ibx,j,k,l) = (xF2(j)*prim2(ibx,j,k,l) + xF2(j-1)*prim2(ibx,j-1,k,l))/(dx2_sq(j))
-        bcell(iby,j,k,l) = 0.5D0*(prim2(iby,j,k,l) + prim2(iby,j,k-1,l))
+        bcell(ibx,j,k,l) = ((xF2(j) - x2cen(j))*prim2(ibx,j,k,l) + (x2cen(j) - xF2(j-1))*prim2(ibx,j-1,k,l))/(dx2(j))
+        !(xF2(j)*prim2(ibx,j,k,l) + xF2(j-1)*prim2(ibx,j-1,k,l))/(xF2(j) + xF2(j-1))
+        bcell(iby,j,k,l) = ((yF2(k) - y2cen(k))*prim2(iby,j,k,l) + (y2cen(k) - yF2(k-1))*prim2(iby,j,k-1,l))/(dy2(k))
+        !0.5D0*(prim2(iby,j,k,l) + prim2(iby,j,k-1,l))
         bcell(ibz,j,k,l) = 0.5D0*(prim2(ibz,j,k,l) + prim2(ibz,j,k,l-1))
       END DO
     END DO
@@ -201,8 +208,10 @@ ELSEIF(coordinate_flag == 2) THEN
   DO l = nz_min_2, nz_part_2
     DO k = ny_min_2, ny_part_2
       DO j = nx_min_2, nx_part_2
-        bcell(ibx,j,k,l) = 1.5D0*dx2(j)/dx2_cb(j)*(xF2(j)*xF2(j)*prim2(ibx,j,k,l) + xF2(j-1)*xF2(j-1)*prim2(ibx,j-1,k,l))
-        bcell(iby,j,k,l) = 0.5D0*dy2(k)/dcos2(k)*(sin2f(k)*prim2(iby,j,k,l) + sin2f(k-1)*prim2(iby,j,k-1,l))
+        bcell(ibx,j,k,l) = ((xF2(j) - x2cen(j))*prim2(ibx,j,k,l) + (x2cen(j) - xF2(j-1))*prim2(ibx,j-1,k,l))/(dx2(j))
+        !1.5D0*dx2(j)/dx2_cb(j)*(xF2(j)**2*prim2(ibx,j,k,l) + xF2(j-1)**2*prim2(ibx,j-1,k,l))
+        bcell(iby,j,k,l) = ((yF2(k) - y2cen(k))*prim2(iby,j,k,l) + (y2cen(k) - yF2(k-1))*prim2(iby,j,k-1,l))/(dy2(k))
+        !0.5D0*dy2(k)/dcos2(k)*(sin2f(k)*prim2(iby,j,k,l) + sin2f(k-1)*prim2(iby,j,k-1,l))
         bcell(ibz,j,k,l) = 0.5D0*(prim2(ibz,j,k,l) + prim2(ibz,j,k,l-1))
       END DO
     END DO
@@ -232,12 +241,6 @@ END DO
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !$OMP END PARALLEL
-
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
-! boundary condition !
-call boundary1d_NM (epsilon2, part, even, even, even, even, even, even)
-call BOUNDARYP_NM
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 

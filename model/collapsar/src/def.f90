@@ -21,4 +21,7 @@ REAL*8, PARAMETER :: omega_weight = 1.9d0
 ! mass of black hole !
 REAL*8 :: m_bh, mbh_old
 
+! mass injection due to floor !
+REAL*8 :: m_inj
+
 END MODULE

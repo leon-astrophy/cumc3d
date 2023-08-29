@@ -39,6 +39,11 @@ REAL*8, PARAMETER :: amp2code = (mu_0*1.0D5*masscgs2code*lencgs2code)**(0.5D0)/t
 REAL*8, PARAMETER :: gauss2code = 1.0D-1*masscgs2code/amp2code/tcgs2code**2
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+! floor values !
+REAL*8, PARAMETER :: max_alv = 1.0d0
+
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 ! For the physical setup !
  
 ! which rotational profile? 1 = rigid, 2 = differential !
@@ -51,7 +56,7 @@ REAL*8, PARAMETER :: s_0 = (5.0D3*1.0D5)*lencgs2code
 REAL*8, PARAMETER :: w_0 = 10.0D0/tcgs2code
 
 ! Maximum magnetic field strength (in gauss) !
-REAL*8, PARAMETER :: b_0 = 1.0D12*gauss2code
+REAL*8, PARAMETER :: b_0 = 1.0D10*gauss2code
 
 ! Limiting rotation velocity for the progenitor
 REAL*8, PARAMETER :: v_crit = 0.01D0
@@ -66,6 +71,6 @@ INTEGER, PARAMETER :: n_pot = 10
 INTEGER, PARAMETER :: relax_max = 100000
 
 ! Tolerance in relaxation of the potential			
-REAL*8, PARAMETER :: tolerance = 1.0D-6
+REAL*8, PARAMETER :: tolerance = 1.0D-10
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!

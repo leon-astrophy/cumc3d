@@ -24,6 +24,9 @@ REAL*8 :: omega
 REAL*8 :: maxdb
 REAL*8 :: div_b
 
+! Random number !
+REAL*8 :: rand
+
 ! Vector potential !
 REAL*8, ALLOCATABLE, DIMENSION(:,:,:) :: a_phi
 
@@ -156,12 +159,13 @@ END IF
 DO l = 0, nz_2
   DO k = 0, ny_2
     DO j = 0, nx_2
-      a_phi(j,k,l) = 0.5d0*b_0*xF2(j)*sin2f(k) !*s_core**3/(s_core**3 + xF2(j)**3)*xF2(j)*sin2f(k) 
+      a_phi(j,k,l) = xF2(j)*sin2f(k)*0.5*b_0 !*s_core**3/(s_core**3 + xF2(j)**3)*xF2(j)*sin2f(k)
     END DO
   END DO
 END DO
 
 ! magnetic field !
+prim2(ibx:ibz,:,:,:) = 0.0d0
 DO l = 0, nz_2
   DO k = 0, ny_2
     DO j = 0, nx_2
@@ -172,12 +176,13 @@ DO l = 0, nz_2
 END DO
 
 ! Find DIVB !
+div_b = 0.0D0
 DO l = nz_min_2, nz_part_2
   DO k = ny_min_2, ny_part_2
     DO j = nx_min_2, nx_part_2
       div_b = (xF2(j)**2*prim2(ibx,j,k,l) - xF2(j-1)**2*prim2(ibx,j-1,k,l))*dcos2(k)*dz2(l) &
-           + (sin2f(k)*prim2(iby,j,k,l) - sin2f(k-1)*prim2(iby,j,k-1,l))*0.5d0*dx2_sq(j)*dz2(l) &
-           + (prim2(ibz,j,k,l) - prim2(ibz,j,k,l-1))*0.5d0*dx2_sq(j)*dy2(k)
+            + (sin2f(k)*prim2(iby,j,k,l) - sin2f(k-1)*prim2(iby,j,k-1,l))*0.5d0*dx2_sq(j)*dz2(l) &
+            + (prim2(ibz,j,k,l) - prim2(ibz,j,k,l-1))*0.5d0*dx2_sq(j)*dy2(k)
       maxdb = MAX(maxdb, ABS(div_b))
     END DO
   END DO
@@ -185,6 +190,20 @@ END DO
 WRITE (*,*)
 WRITE (*,*) 'Maximum initial divergence B', maxdb
 WRITE (*,*)
+
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+! Add perturbation to the density !
+DO l = 1, nz_2
+  DO k = 1, ny_2 
+    DO j = 1, nx_2
+      !IF(prim2(irho2,j,k,l) > prim2(irho2,nx_2,1,1)) THEN
+      !  CALL RANDOM_NUMBER(rand)
+      !  prim2(irho2,j,k,l) = prim2(irho2,j,k,l)*(1.0D0 + 1.0d-4*(rand - 0.5D0)/(0.5D0))
+      !END IF
+    END DO
+  END DO
+END DO
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
@@ -199,11 +218,14 @@ prim2_a(irho2) = prim2(irho2,nx_2,1,1)
 prim2_a(itau2) = prim2(itau2,nx_2,1,1)
 eps2_a = prim2_a(itau2)/prim2_a(irho2)/(ggas2 - 1.0d0)
 
+! Initialize !
+m_inj = 0.0d0
+
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 ! Set output profile interval !
-total_time = 1000.0d0 !10.0d-30*tcgs2code
-output_profiletime = 0.1D0*tcgs2code 
+total_time = 15.0d0*tcgs2code
+output_profiletime = 0.03D0*tcgs2code 
 
 END SUBROUTINE
 

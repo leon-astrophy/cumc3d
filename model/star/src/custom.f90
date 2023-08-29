@@ -90,48 +90,13 @@ ENDDO
 CLOSE(999)
 
 END SUBROUTINE
-
+ 
 !!!!!!!!!!!!!!!!!!!!!!!!
 ! Building custom grid !
 !!!!!!!!!!!!!!!!!!!!!!!!
 SUBROUTINE CUSTOM_BOUNDARY_X
 USE DEFINITION
 IMPLICIT NONE
-
-! Dummy variables
-INTEGER :: i, j, k, l
-
-! Check timing with or without openmp
-#ifdef DEBUG
-INTEGER :: time_start, time_end
-INTEGER :: cr
-REAL*8 :: rate
-CALL system_clock(count_rate=cr)
-rate = REAL(cr)
-CALL system_clock(time_start)
-#endif
-
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
-!$OMP PARALLEL DO COLLAPSE(3) SCHEDULE(STATIC)
-!$ACC PARALLEL LOOP GANG WORKER VECTOR COLLAPSE(3) DEFAULT(PRESENT)   
-DO l = nz_min_2 - 1, nz_part_2 + 1
-  DO k = ny_min_2 - 1, ny_part_2 + 1
-    DO j = 1, 3
-      !prim2(ivel2_x,1-j,k,l) = MIN(prim2(ivel2_x,1-j,k,l), 0.0D0)
-      !prim2(ivel2_x,nx_2+j,k,l) = MAX(prim2(ivel2_x,nx_2+j,k,l), 0.0D0)
-    END DO
-  END DO               
-ENDDO
-!$ACC END PARALLEL
-!$OMP END PARALLEL DO
-
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
-#ifdef DEBUG
-CALL system_clock(time_end)
-WRITE(*,*) 'custom boundary = ', REAL(time_end - time_start) / rate
-#endif
 
 END SUBROUTINE
 
@@ -240,7 +205,7 @@ contains
 	REAL*8 :: xm1, xc, xp1, fm1, fc, fp1, h1, h2
   h2 = xp1 - xc
   h1 = xc - xm1
-	first_derivative = (fp1*(h1)*fp1*(h1)+fc*(h2*h2-h1*h1)-fm1*h2*h2)/(h1*h2*(h1+h2))
+	first_derivative = ((fp1-fc)*h1*h1+(fc-fm1)*h2*h2)/(h1*h2*(h1+h2))
 	end function
 
 END SUBROUTINE

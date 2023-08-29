@@ -608,7 +608,7 @@ DO l = nz_min_2 - 1, nz_part_2 + kz
 			sR = max(primR2(ivn,j,k,l) + cfsR, ubar + cbar)
 
 			! Compute state accordingly !
-			IF(sL > 0.0d0) THEN
+			IF(sL >= 0.0d0) THEN
 				flux_2(imin2:imax2,j,k,l) = fluxL2(imin2:imax2,j,k,l)
 			ELSEIF(sR <= 0.0d0) THEN
 				flux_2(imin2:imax2,j,k,l) = fluxR2(imin2:imax2,j,k,l)
@@ -696,7 +696,7 @@ DO l = nz_min_2 - 1, nz_part_2 + kz
 				ustarR(itau2) = ustarR(itau2) + ((pRs*sM - pRt*primR2(ivn,j,k,l)) - (bdotus - bdotu)*primR2(ibn,j,k,l))/(sR - sM)
 
 				! Choose state !
-				IF(sstarL > 0.0d0) THEN
+				IF(sstarL >= 0.0d0) THEN
 					flux_2(imin2:imax2,j,k,l) = fluxL2(imin2:imax2,j,k,l) + sL*(ustarL(imin2:imax2) - uL2(imin2:imax2,j,k,l))
 				ELSEIF(sstarR <= 0.0d0) THEN
 					flux_2(imin2:imax2,j,k,l) = fluxR2(imin2:imax2,j,k,l) + sR*(ustarR(imin2:imax2) - uR2(imin2:imax2,j,k,l))
@@ -741,7 +741,7 @@ DO l = nz_min_2 - 1, nz_part_2 + kz
 					usstarR(itau2) = ustarR(itau2) + DSQRT(ustarR(irho2))*(bdotus - bdotuss)*fac_2
 
 					! Choose state !
-					IF(sM > 0.0d0) THEN
+					IF(sM >= 0.0d0) THEN
 						flux_2(imin2:imax2,j,k,l) = fluxL2(imin2:imax2,j,k,l) + sL*(ustarL(imin2:imax2) - uL2(imin2:imax2,j,k,l)) + sstarL*(usstarL(imin2:imax2) - ustarL(imin2:imax2))
 					ELSE
 						flux_2(imin2:imax2,j,k,l) = fluxR2(imin2:imax2,j,k,l) + sR*(ustarR(imin2:imax2) - uR2(imin2:imax2,j,k,l)) + sstarR*(usstarR(imin2:imax2) - ustarR(imin2:imax2))

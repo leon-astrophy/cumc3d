@@ -10,7 +10,7 @@ IMPLICIT NONE
 INCLUDE "param.h"
 
 ! Integer !
-INTEGER :: i, j, k
+INTEGER :: i, j, k, l
 
 ! Get poisson coefficient !
 Do i = 1, nx_2

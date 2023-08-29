@@ -11,8 +11,8 @@ DIVB = -DDIVB
 #COMPILE = -Minfo=accel
 
 # Choose between CPU or GPU threading #
-#MULTICORE = -DGPU -acc
-MULTICORE = -mp
+MULTICORE = -DGPU -acc
+#MULTICORE = -mp
 
 # Define F90 compiler #
 F90=/home/leon/HDF5/bin/h5fc

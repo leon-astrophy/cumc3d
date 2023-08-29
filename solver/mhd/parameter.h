@@ -90,7 +90,7 @@ REAL*8, PARAMETER :: z2_start = 0.0d0
 
 ! Ending position of the grid !
 REAL*8, PARAMETER :: x2_end = 11.5d0
-REAL*8, PARAMETER :: y2_end = pi 
+REAL*8, PARAMETER :: y2_end = pi
 REAL*8, PARAMETER :: z2_end = 2.0d0*pi
 
 ! The number of grid in the x,y,z direction for NM
@@ -146,7 +146,7 @@ LOGICAL, PARAMETER :: ppmc_flag = .false.
 LOGICAL, PARAMETER :: checkrho_flag = .true.
 
 ! Using custom variables floor !
-LOGICAL, PARAMETER :: custom_floor = .false.
+LOGICAL, PARAMETER :: custom_floor = .true.
 
 ! Fix the DM/NM atmospheric density !
 LOGICAL, PARAMETER :: fixrhonm_flag = .false.

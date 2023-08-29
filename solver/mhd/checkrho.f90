@@ -64,10 +64,6 @@ ELSE
   
 END IF
 
-! Make sure the ghost cell knows the udpate
-CALL BOUNDARY1D_NM (epsilon2, part, even, even, even, even, even, even)
-CALL BOUNDARYP_NM  
-
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 #ifdef DEBUG

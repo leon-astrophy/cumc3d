@@ -11,6 +11,8 @@
 
 SUBROUTINE RUNGEKUTTA
 USE RIEMANN_MODULE
+use ieee_arithmetic
+USE MHD_MODULE
 USE DEFINITION
 IMPLICIT NONE
 
@@ -93,11 +95,14 @@ IF (checkrho_flag) THEN
 	CALL CHECKRHO
 END IF
 
-! Update 
-CALL UPDATE (1)
-
 ! Do conversion again !
 CALL FROMRVETOU
+
+! set boundary conditions !
+call BOUNDARY
+
+! Update 
+CALL UPDATE (1)
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 ! 2nd iteration
@@ -137,11 +142,14 @@ IF (checkrho_flag) THEN
 	CALL CHECKRHO
 END IF
 
-! Update 
-CALL UPDATE (2)
-
 ! Do conversion again !
 CALL FROMRVETOU
+
+! set boundary conditions !
+call BOUNDARY
+
+! Update 
+CALL UPDATE (2)
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 ! Prepare for next step
@@ -213,11 +221,14 @@ IF (checkrho_flag) THEN
 	CALL CHECKRHO
 END IF
 
-! Update physical quantities
-CALL UPDATE (3)
-
 ! Update again !
 CALL FROMRVETOU
+
+! set boundary conditions !
+call BOUNDARY
+
+! Update physical quantities
+CALL UPDATE (3)
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 

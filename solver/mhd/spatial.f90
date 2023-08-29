@@ -104,7 +104,7 @@ IF(n_dim > 2) THEN
 
 	! Reconstruction !
 	IF(tvdvl_flag) THEN
-		CALL tvdvl_reconz
+		CALL tvdvl_reconz 
 	ELSEIF(tvdmc_flag) THEN
 		CALL tvdmc_reconz
 	ELSEIF(ppm_flag) THEN
@@ -161,9 +161,6 @@ INTEGER :: i, j, k, l
 ! Pressure gradients !
 REAL*8 :: bsquare, rho_min2
 
-! Threshold for atmosphere density
-REAL*8 :: factor, diff
-
 ! Check timing with or without openmp
 #ifdef DEBUG
 INTEGER :: time_start, time_end
@@ -181,7 +178,7 @@ CALL system_clock(time_start)
 rho_min2 = 1.1D0 * prim2_a(irho2)
 
 ! Geometric sources
-!$OMP PARALLEL PRIVATE(bsquare, diff, factor) FIRSTPRIVATE(rho_min2)
+!$OMP PARALLEL PRIVATE(bsquare) FIRSTPRIVATE(rho_min2)
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 ! Initialize !
 !$OMP DO COLLAPSE(4) SCHEDULE(STATIC)
@@ -201,17 +198,15 @@ END DO
 ! Choose coordinate system, add geometric source term !
 IF(coordinate_flag == 1) THEN
 	!$OMP DO COLLAPSE(3) SCHEDULE(STATIC)
-	!$ACC PARALLEL LOOP GANG WORKER VECTOR COLLAPSE(3) DEFAULT(PRESENT) PRIVATE(bsquare, diff, factor) FIRSTPRIVATE(rho_min2)
+	!$ACC PARALLEL LOOP GANG WORKER VECTOR COLLAPSE(3) DEFAULT(PRESENT) PRIVATE(bsquare) FIRSTPRIVATE(rho_min2)
 	DO l = nz_min_2, nz_part_2
 		DO k = ny_min_2, ny_part_2
-				DO j = nx_min_2, nx_part_2
-				diff = prim2(irho2,j,k,l) - rho_min2
-				factor = MAX(SIGN(1.0D0, diff), 0.0D0)
+			DO j = nx_min_2, nx_part_2
 				bsquare = dot_product(bcell(ibx:ibz,j,k,l),bcell(ibx:ibz,j,k,l))
-				sc2(ivel2_x,j,k,l) = sc2(ivel2_x,j,k,l) + (factor*prim2(itau2,j,k,l) + factor*prim2(irho2,j,k,l)*prim2(ivel2_y,j,k,l)*prim2(ivel2_y,j,k,l) & 
+				sc2(ivel2_x,j,k,l) = sc2(ivel2_x,j,k,l) + (prim2(itau2,j,k,l) + prim2(irho2,j,k,l)*prim2(ivel2_y,j,k,l)*prim2(ivel2_y,j,k,l) & 
 																									+ 0.5D0*bsquare - bcell(iby,j,k,l)*bcell(iby,j,k,l))*(2.0D0*dx2(j)/dx2_sq(j))!/x2(j)	
 																																											
-				sc2(ivel2_y,j,k,l) = sc2(ivel2_y,j,k,l) - (factor*prim2(irho2,j,k,l)*prim2(ivel2_x,j,k,l)*prim2(ivel2_y,j,k,l) & 
+				sc2(ivel2_y,j,k,l) = sc2(ivel2_y,j,k,l) - (prim2(irho2,j,k,l)*prim2(ivel2_x,j,k,l)*prim2(ivel2_y,j,k,l) & 
 																									- bcell(ibx,j,k,l)*bcell(iby,j,k,l))*(2.0D0*dx2(j)/dx2_sq(j))!/x2(j)		
 			END DO
 		END DO
@@ -220,27 +215,25 @@ IF(coordinate_flag == 1) THEN
 	!$OMP END DO
 ELSEIF(coordinate_flag == 2) THEN
 	!$OMP DO COLLAPSE(3) SCHEDULE(STATIC)
-	!$ACC PARALLEL LOOP GANG WORKER VECTOR COLLAPSE(3) DEFAULT(PRESENT) PRIVATE(bsquare, diff, factor) FIRSTPRIVATE(rho_min2)
+	!$ACC PARALLEL LOOP GANG WORKER VECTOR COLLAPSE(3) DEFAULT(PRESENT) PRIVATE(bsquare) FIRSTPRIVATE(rho_min2)
 	DO l = nz_min_2, nz_part_2
 		DO k = ny_min_2, ny_part_2
-				DO j = nx_min_2, nx_part_2
-				diff = prim2(irho2,j,k,l) - rho_min2
-				factor = MAX(SIGN(1.0D0, diff), 0.0D0)
+			DO j = nx_min_2, nx_part_2
 				bsquare = dot_product(bcell(ibx:ibz,j,k,l),bcell(ibx:ibz,j,k,l))
-				sc2(ivel2_x,j,k,l) = sc2(ivel2_x,j,k,l) + (2.0D0*factor*prim2(itau2,j,k,l) + bcell(ibx,j,k,l)*bcell(ibx,j,k,l) &
-																								+ factor*prim2(irho2,j,k,l)*(prim2(ivel2_y,j,k,l)*prim2(ivel2_y,j,k,l) + prim2(ivel2_z,j,k,l)*prim2(ivel2_z,j,k,l))) & 
+				sc2(ivel2_x,j,k,l) = sc2(ivel2_x,j,k,l) + (2.0D0*prim2(itau2,j,k,l) + bcell(ibx,j,k,l)*bcell(ibx,j,k,l) &
+																								+ prim2(irho2,j,k,l)*(prim2(ivel2_y,j,k,l)*prim2(ivel2_y,j,k,l) + prim2(ivel2_z,j,k,l)*prim2(ivel2_z,j,k,l))) & 
 																								*(1.5D0*dx2_sq(j)/dx2_cb(j)) !/x2(j)
 
-				sc2(ivel2_y,j,k,l) = sc2(ivel2_y,j,k,l) + (factor*prim2(itau2,j,k,l) + factor*prim2(irho2,j,k,l)*prim2(ivel2_z,j,k,l)*prim2(ivel2_z,j,k,l) & 
+				sc2(ivel2_y,j,k,l) = sc2(ivel2_y,j,k,l) + (prim2(itau2,j,k,l) + prim2(irho2,j,k,l)*prim2(ivel2_z,j,k,l)*prim2(ivel2_z,j,k,l) & 
 																								+ 0.5D0*bsquare - bcell(ibz,j,k,l)*bcell(ibz,j,k,l))*(1.5D0*dx2_sq(j)/dx2_cb(j))*(dsin2(k)/dcos2(k)) & !/DTAN(y2(k)) & !/x2(j)
 																						
-																								- (factor*prim2(irho2,j,k,l)*prim2(ivel2_x,j,k,l)*prim2(ivel2_y,j,k,l) & 
+																								- (prim2(irho2,j,k,l)*prim2(ivel2_x,j,k,l)*prim2(ivel2_y,j,k,l) & 
 																								- bcell(ibx,j,k,l)*bcell(iby,j,k,l))*(1.5D0*dx2_sq(j)/dx2_cb(j)) !/x2(j) 
 
-				sc2(ivel2_z,j,k,l) = sc2(ivel2_z,j,k,l) - (factor*prim2(irho2,j,k,l)*prim2(ivel2_x,j,k,l)*prim2(ivel2_z,j,k,l) & 
+				sc2(ivel2_z,j,k,l) = sc2(ivel2_z,j,k,l) - (prim2(irho2,j,k,l)*prim2(ivel2_x,j,k,l)*prim2(ivel2_z,j,k,l) & 
 																								- bcell(ibx,j,k,l)*bcell(ibz,j,k,l))*(1.5D0*dx2_sq(j)/dx2_cb(j)) & !/x2(j)
 
-																								- (factor*prim2(irho2,j,k,l)*prim2(ivel2_y,j,k,l)*prim2(ivel2_z,j,k,l) & 
+																								- (prim2(irho2,j,k,l)*prim2(ivel2_y,j,k,l)*prim2(ivel2_z,j,k,l) & 
 																								- bcell(iby,j,k,l)*bcell(ibz,j,k,l))*(1.5D0*dx2_sq(j)/dx2_cb(j))*(dsin2(k)/dcos2(k)) !/DTAN(y2(k)) !/x2(j)
 			END DO
 		END DO
@@ -635,9 +628,6 @@ END DO
 !$ACC END PARALLEL
 !$OMP END DO
 
-! Initialize !
-maxDivB = 0.0d0
-
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 ! Magnetic field, we do it by line-integral but not direct numerical derivative !
 IF(coordinate_flag == 0) THEN
@@ -697,7 +687,7 @@ ELSEIF(coordinate_flag == 2) THEN
 
 				! dbz/dt !
 				l2(ibz,j,k,l) = - ((xF2(j)*efield_y(j,k,l) - xF2(j-1)*efield_y(j-1,k,l))*dy2(k) - (efield_x(j,k,l) - efield_x(j,k-1,l))*dx2(j))/(0.5d0*dx2_sq(j)*dy2(k))
-				
+
 			END DO
 		END DO
 	END DO

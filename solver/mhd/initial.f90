@@ -107,8 +107,7 @@ WRITE(*,*) 'Done building initial conservative variables'
 WRITE(*,*)
 
 ! set boundary conditions !
-call BOUNDARY1D_NM (epsilon2, part, even, even, even, even, even, even)
-call BOUNDARYP_NM
+call BOUNDARY
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 ! Calculate the items needed for SPATIAL

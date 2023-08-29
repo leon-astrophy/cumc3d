@@ -65,6 +65,7 @@ IMPLICIT NONE
 
 ! Integer !
 INTEGER :: i, nlines
+REAL :: dr_temp 
 
 ! Read the number of lines in the file !
 nlines = 0 
@@ -115,8 +116,8 @@ CALL system_clock(time_start)
 
 !$OMP PARALLEL DO COLLAPSE(3) SCHEDULE(STATIC)
 !$ACC PARALLEL LOOP GANG WORKER VECTOR COLLAPSE(3) DEFAULT(PRESENT)   
-DO l = nz_min_2 - 1, nz_part_2 + 1
-  DO k = ny_min_2 - 1, ny_part_2 + 1
+DO l = nz_min_2 - 3, nz_part_2 + 3
+  DO k = ny_min_2 - 3, ny_part_2 + 3
     DO j = 1, 3
       prim2(ivel2_x,1-j,k,l) = MIN(prim2(ivel2_x,1-j,k,l), 0.0D0)
       prim2(ivel2_x,nx_2+j,k,l) = MAX(prim2(ivel2_x,nx_2+j,k,l), 0.0D0)
@@ -157,8 +158,64 @@ END SUBROUTINE
 ! Custom variable floor !
 !!!!!!!!!!!!!!!!!!!!!!!!!
 SUBROUTINE CUSTOMFLOOR
+USE CUSTOM_DEF
+USE MHD_MODULE
 USE DEFINITION
 IMPLICIT NONE
+INCLUDE "param.h"
+
+! Dummy variables
+INTEGER :: i, j, k, l
+
+! Threshold for atmosphere density
+REAL*8 :: rho_min2, factor, diff, bfield, alven, rho_old, m_local
+
+! Check timing with or without openmp
+#ifdef DEBUG
+INTEGER :: time_start, time_end
+INTEGER :: cr
+REAL*8 :: rate
+CALL system_clock(count_rate=cr)
+rate = REAL(cr)
+CALL system_clock(time_start)
+#endif
+
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+! assign threshold density !
+rho_min2 = 1.1D0 * prim2_a(irho2)
+
+!$OMP PARALLEL DO FIRSTPRIVATE(rho_min2) PRIVATE(diff, factor, bfield, alven, rho_old, m_local) COLLAPSE(3) SCHEDULE(STATIC) REDUCTION(+:m_inj)
+!$ACC PARALLEL LOOP GANG WORKER VECTOR COLLAPSE(3) DEFAULT(PRESENT) FIRSTPRIVATE(rho_min2) PRIVATE(diff, factor, bfield, alven, rho_old, m_local) REDUCTION(+:m_inj)
+DO l = nz_min_2, nz_part_2
+  DO k = ny_min_2, ny_part_2
+    DO j = nx_min_2, nx_part_2
+
+      ! Standard !
+      diff = prim2(irho2,j,k,l) - rho_min2
+      factor = MAX(SIGN(1.0D0, diff), 0.0D0)
+      prim2(irho2:ivel2_z,j,k,l) = factor*prim2(irho2:ivel2_z,j,k,l) + (1.0D0 - factor)*prim2_a(irho2:ivel2_z)
+      epsilon2(j,k,l) = factor*epsilon2(j,k,l) + (1.0D0 - factor)*eps2_a
+
+      ! Check alven speed !
+      bfield = SQRT(dot_product(bcell(ibx:ibz,j,k,l), bcell(ibx:ibz,j,k,l)))
+      alven = bfield/SQRT(prim2(irho2,j,k,l))
+
+      ! Check !
+      IF(alven >= max_alv) THEN
+        rho_old = prim2(irho2,j,k,l)
+        prim2(irho2,j,k,l) = (bfield/max_alv)**2
+        m_local = (prim2(irho2,j,k,l) - rho_old)*vol2(j,k,l)
+        m_inj = m_inj + m_local
+      END IF
+
+    END DO
+  END DO
+END DO
+!$ACC END PARALLEL
+!$OMP END PARALLEL DO
+
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 END SUBROUTINE
 
@@ -202,7 +259,7 @@ DO l = nz_min_2, nz_part_2
 
       ! Include only non-atmosphere !
 			diff = prim2(irho2,j,k,l) - rho_min2
-      factor = MAX(SIGN(1.0D0, diff), 0.0D0)
+      factor = MAX(SIGN(1.0D0, diff), 0.0D0) 
 
       ! Gravitational potential of the matter !
       dphidx = first_derivative (x2(j-1), x2(j), x2(j+1), phi(j-1,k,l), phi(j,k,l), phi(j+1,k,l))
@@ -243,7 +300,7 @@ contains
 	REAL*8 :: xm1, xc, xp1, fm1, fc, fp1, h1, h2
   h2 = xp1 - xc
   h1 = xc - xm1
-	first_derivative = (fp1*h1*h1+fc*(h2*h2-h1*h1)-fm1*h2*h2)/(h1*h2*(h1+h2))
+	first_derivative = ((fp1-fc)*h1*h1+(fc-fm1)*h2*h2)/(h1*h2*(h1+h2))
 	end function
 
 END SUBROUTINE
@@ -309,6 +366,7 @@ IF (p_in > 0) THEN
   ELSEIF (p_in == 3) THEN
     m_bh = rk30 * mbh_old + rk31 * m_bh + rk32 * dt * mdot
   END IF
+
 END IF
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -419,7 +477,7 @@ IF (p_in == 0 .OR. MOD(n_step, n_pot) == 0) THEN
 
     !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     ! Look for maximum abserror !
-    !$OMP DO COLLAPSE(3) SCHEDULE(STATIC)
+    !$OMP DO COLLAPSE(3) SCHEDULE(STATIC) Reduction(MAX:abserror)
     !$ACC PARALLEL LOOP GANG WORKER VECTOR COLLAPSE(3) DEFAULT(PRESENT) Reduction(MAX:abserror)
     DO l = nz_min_2, nz_part_2
       DO k = ny_min_2, ny_part_2
@@ -438,7 +496,7 @@ IF (p_in == 0 .OR. MOD(n_step, n_pot) == 0) THEN
     DO l = nz_min_2, nz_part_2
       DO k = ny_min_2, ny_part_2
         phi(0,k,l) = phi(1,k,l)
-        phi(nx_part_2+1,k,l) = 0.0d0
+        phi(nx_part_2+1,k,l) = -1.0d0
       END DO
     END DO
     !$ACC END PARALLEL
@@ -507,13 +565,22 @@ SUBROUTINE OPENFILE_CUSTOM
 USE DEFINITION
 IMPLICIT NONE
 
+! Open !
+OPEN (UNIT = 689, FILE = './outfile/star_weno_mbh.dat')
+OPEN (UNIT = 777, FILE = './outfile/star_weno_minj.dat')
+
 END SUBROUTINE
 
 !!!!!!!!!!!!!!!!!!!!!!!!
 ! Building custom grid !
 !!!!!!!!!!!!!!!!!!!!!!!!
 SUBROUTINE CUSTOM_ANALYSIS
+USE CUSTOM_DEF
 USE DEFINITION
 IMPLICIT NONE
+
+! WRITE !
+WRITE (689, *) global_time, m_bh
+WRITE (777, *) global_time, m_inj
 
 END SUBROUTINE
