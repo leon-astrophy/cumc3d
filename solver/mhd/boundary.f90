@@ -8,7 +8,7 @@ IMPLICIT NONE
 
 ! Call boundary condition !
 call BOUNDARYP_NM
-call BOUNDARY1D_NM (epsilon2, part, even, even, even, even, even, even)
+call BOUNDARY1D_NM (epsilon, even, even, even, even, even, even)
 
 END SUBROUTINE
 
@@ -26,26 +26,20 @@ END SUBROUTINE
 !
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-SUBROUTINE BOUNDARY1D_NM (array, domain, signx_in, signx_out, signy_in, signy_out, signz_in, signz_out)
+SUBROUTINE BOUNDARY1D_NM (array, signx_in, signx_out, signy_in, signy_out, signz_in, signz_out)
 USE DEFINITION
 IMPLICIT NONE
 
 ! Input/Output array
-REAL*8, INTENT (INOUT), DIMENSION (-2:nx_2+3,-2:ny_2+3,-2:nz_2+3) :: array
+REAL*8, INTENT (INOUT), DIMENSION (-2:nx+3,-2:ny+3,-2:nz+3) :: array
 
 ! Input parity
-INTEGER, INTENT (IN) :: domain
 INTEGER, INTENT (IN) :: signx_in, signx_out
 INTEGER, INTENT (IN) :: signy_in, signy_out
 INTEGER, INTENT (IN) :: signz_in, signz_out
 
 ! Dummy variables
 INTEGER :: i, j, k, l
-
-! Integer for domain size !
-INTEGER :: nx_min, nx_max
-INTEGER :: ny_min, ny_max
-INTEGER :: nz_min, nz_max
 
 ! Parity factor
 INTEGER :: fac_xin, fac_yin, fac_zin
@@ -60,25 +54,6 @@ CALL system_clock(count_rate=cr)
 rate = REAL(cr)
 CALL system_clock(time_start)
 #endif
-
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
-! Setup domain size !
-IF(domain == 0) THEN
-  nx_min = nx_min_2
-  ny_min = ny_min_2
-  nz_min = nz_min_2
-  nx_max = nx_part_2
-  ny_max = ny_part_2
-  nz_max = nz_part_2
-ELSEIF(domain == 1) THEN
-  nx_min = 1
-  ny_min = 1
-  nz_min = 1
-  nx_max = nx_2
-  ny_max = ny_2
-  nz_max = nz_2
-END IF
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
@@ -133,10 +108,10 @@ IF(boundary_flag(1) == 0) THEN
 
   !$OMP DO COLLAPSE(3) SCHEDULE(STATIC)
   !$ACC LOOP GANG WORKER VECTOR COLLAPSE(3)   
-  DO l = nz_min - 3, nz_max + 3
-    DO k = ny_min - 3, ny_max + 3
+  DO l = -2, nz + 3
+    DO k =  -2, ny + 3 
       DO j = 1, 3 
-        array(nx_min-j,k,l) = array(nx_max+1-j,k,l)
+        array(1-j,k,l) = array(nx+1-j,k,l)
       END DO
     END DO
   ENDDO
@@ -146,10 +121,10 @@ ELSEIF(boundary_flag(1) == 1) THEN
 
   !$OMP DO COLLAPSE(3) SCHEDULE(STATIC)  
   !$ACC LOOP GANG WORKER VECTOR COLLAPSE(3)   
-  DO l = nz_min - 3, nz_max + 3
-    DO k = ny_min - 3, ny_max + 3
+  DO l = -2, nz + 3
+    DO k =  -2, ny + 3 
       DO j = 1, 3 
-        array(nx_min-j,k,l) = array(nx_min,k,l)
+        array(1-j,k,l) = array(1,k,l)
       END DO
     END DO
   ENDDO
@@ -159,10 +134,10 @@ ELSEIF(boundary_flag(1) >= 2) THEN
 
   !$OMP DO COLLAPSE(3) SCHEDULE(STATIC)   
   !$ACC LOOP GANG WORKER VECTOR COLLAPSE(3)       
-  DO l = nz_min - 3, nz_max + 3
-    DO k = ny_min - 3, ny_max + 3
+  DO l = -2, nz + 3
+    DO k =  -2, ny + 3 
       DO j = 1, 3 
-        array(nx_min-j,k,l) = fac_xin * array(nx_min-1+j,k,l)
+        array(1-j,k,l) = fac_xin * array(j,k,l)
       END DO
     END DO
   ENDDO
@@ -176,10 +151,10 @@ IF(boundary_flag(2) == 0) THEN
 
   !$OMP DO COLLAPSE(3) SCHEDULE(STATIC)  
   !$ACC LOOP GANG WORKER VECTOR COLLAPSE(3)   
-  DO l = nz_min - 3, nz_max + 3
-    DO k = ny_min - 3, ny_max + 3
+  DO l = -2, nz + 3
+    DO k =  -2, ny + 3 
       DO j = 1, 3 
-        array(nx_max+j,k,l) = array(nx_min-1+j,k,l)
+        array(nx+j,k,l) = array(j,k,l)
       END DO
     END DO
   ENDDO
@@ -189,10 +164,10 @@ ELSEIF(boundary_flag(2) == 1) THEN
 
   !$OMP DO COLLAPSE(3) SCHEDULE(STATIC)  
   !$ACC LOOP GANG WORKER VECTOR COLLAPSE(3)     
-  DO l = nz_min - 3, nz_max + 3
-    DO k = ny_min - 3, ny_max + 3
+  DO l = -2, nz + 3
+    DO k =  -2, ny + 3 
       DO j = 1, 3 
-        array(nx_max+j,k,l) = array(nx_max,k,l)
+        array(nx+j,k,l) = array(nx,k,l)
       END DO
     END DO
   ENDDO
@@ -202,10 +177,10 @@ ELSEIF(boundary_flag(2) >= 2) THEN
 
   !$OMP DO COLLAPSE(3) SCHEDULE(STATIC)  
   !$ACC LOOP GANG WORKER VECTOR COLLAPSE(3)     
-  DO l = nz_min - 3, nz_max + 3
-    DO k = ny_min - 3, ny_max + 3
+  DO l = -2, nz + 3
+    DO k =  -2, ny + 3 
       DO j = 1, 3 
-        array(nx_max+j,k,l) = fac_xout * array(nx_max+1-j,k,l)
+        array(nx+j,k,l) = fac_xout * array(nx+1-j,k,l)
       END DO
     END DO
   ENDDO
@@ -226,10 +201,10 @@ IF(boundary_flag(3) == 0) THEN
 
   !$OMP DO COLLAPSE(3) SCHEDULE(STATIC) 
   !$ACC LOOP GANG WORKER VECTOR COLLAPSE(3)     
-  DO l = nz_min - 3, nz_max + 3
+  DO l = -2, nz + 3
     DO k = 1, 3
-      DO j = nx_min - 3, nx_max + 3
-        array(j,ny_min-k,l) = array(j,ny_max+1-k,l)                     
+      DO j = -2, nx + 3
+        array(j,1-k,l) = array(j,ny+1-k,l)                     
       END DO
     END DO
   ENDDO
@@ -239,10 +214,10 @@ ELSEIF(boundary_flag(3) == 1) THEN
 
   !$OMP DO COLLAPSE(3) SCHEDULE(STATIC)   
   !$ACC LOOP GANG WORKER VECTOR COLLAPSE(3)   
-  DO l = nz_min - 3, nz_max + 3
+  DO l = -2, nz + 3
     DO k = 1, 3
-      DO j = nx_min - 3, nx_max + 3
-        array(j,ny_min-k,l) = array(j,ny_min,l)
+      DO j = -2, nx + 3
+        array(j,1-k,l) = array(j,1,l)
       END DO
     END DO
   ENDDO
@@ -252,10 +227,10 @@ ELSEIF(boundary_flag(3) >= 2) THEN
 
   !$OMP DO COLLAPSE(3) SCHEDULE(STATIC)  
   !$ACC LOOP GANG WORKER VECTOR COLLAPSE(3)                  
-  DO l = nz_min - 3, nz_max + 3
+  DO l = -2, nz + 3
     DO k = 1, 3
-      DO j = nx_min - 3, nx_max + 3
-        array(j,ny_min-k,l) = fac_yin * array(j,ny_min-1+k,l)
+      DO j = -2, nx + 3
+        array(j,1-k,l) = fac_yin * array(j,k,l)
       END DO
     END DO
   ENDDO
@@ -269,10 +244,10 @@ IF(boundary_flag(3) == 0) THEN
 
   !$OMP DO COLLAPSE(3) SCHEDULE(STATIC)  
   !$ACC LOOP GANG WORKER VECTOR COLLAPSE(3)     
-  DO l = nz_min - 3, nz_max + 3
+  DO l = -2, nz + 3
     DO k = 1, 3
-      DO j = nx_min - 3, nx_max + 3
-        array(j,ny_max+k,l) = array(j,ny_min-1+k,l)
+      DO j = -2, nx + 3
+        array(j,ny+k,l) = array(j,k,l)
       END DO
     END DO
   ENDDO
@@ -282,10 +257,10 @@ ELSEIF(boundary_flag(4) == 1) THEN
 
   !$OMP DO COLLAPSE(3) SCHEDULE(STATIC)  
   !$ACC LOOP GANG WORKER VECTOR COLLAPSE(3)     
-  DO l = nz_min - 3, nz_max + 3
+  DO l = -2, nz + 3
     DO k = 1, 3
-      DO j = nx_min - 3, nx_max + 3
-        array(j,ny_max+k,l) = array(j,ny_max,l)
+      DO j = -2, nx + 3
+        array(j,ny+k,l) = array(j,ny,l)
       END DO
     END DO
   ENDDO
@@ -295,10 +270,10 @@ ELSEIF(boundary_flag(4) >= 2) THEN
 
   !$OMP DO COLLAPSE(3) SCHEDULE(STATIC)  
   !$ACC LOOP GANG WORKER VECTOR COLLAPSE(3)   
-  DO l = nz_min - 3, nz_max + 3
+  DO l = -2, nz + 3
     DO k = 1, 3
-      DO j = nx_min - 3, nx_max + 3
-        array(j,ny_max+k,l) = fac_yout * array(j,ny_max+1-k,l)
+      DO j = -2, nx + 3
+        array(j,ny+k,l) = fac_yout * array(j,ny+1-k,l)
       END DO
     END DO
   ENDDO
@@ -320,9 +295,9 @@ IF(boundary_flag(5) == 0) THEN
   !$OMP DO COLLAPSE(3) SCHEDULE(STATIC)   
   !$ACC LOOP GANG WORKER VECTOR COLLAPSE(3)      
   DO l = 1, 3
-    DO k = ny_min - 3, ny_max + 3
-      DO j = nx_min - 3, nx_max + 3
-        array(j,k,nz_min-l) = array(j,k,nz_max+1-l)                     
+    DO k =  -2, ny + 3 
+      DO j = -2, nx + 3
+        array(j,k,1-l) = array(j,k,nz+1-l)                     
       END DO
     END DO
   ENDDO
@@ -333,9 +308,9 @@ ELSEIF(boundary_flag(5) == 1) THEN
   !$OMP DO COLLAPSE(3) SCHEDULE(STATIC)  
   !$ACC LOOP GANG WORKER VECTOR COLLAPSE(3)   
   DO l = 1, 3
-    DO k = ny_min - 3, ny_max + 3
-      DO j = nx_min - 3, nx_max + 3
-        array(j,k,nz_min-l) = array(j,k,nz_min)
+    DO k =  -2, ny + 3 
+      DO j = -2, nx + 3
+        array(j,k,1-l) = array(j,k,1)
       END DO
     END DO
   ENDDO
@@ -346,9 +321,9 @@ ELSEIF(boundary_flag(5) >= 2) THEN
   !$OMP DO COLLAPSE(3) SCHEDULE(STATIC)  
   !$ACC LOOP GANG WORKER VECTOR COLLAPSE(3)         
   DO l = 1, 3
-    DO k = ny_min - 3, ny_max + 3
-      DO j = nx_min - 3, nx_max + 3
-        array(j,k,nz_min-l) = fac_zin * array(j,k,nz_min-1+l)
+    DO k =  -2, ny + 3 
+      DO j = -2, nx + 3
+        array(j,k,1-l) = fac_zin * array(j,k,l)
       END DO
     END DO
   ENDDO
@@ -363,9 +338,9 @@ IF(boundary_flag(6) == 0) THEN
   !$OMP DO COLLAPSE(3) SCHEDULE(STATIC)
   !$ACC LOOP GANG WORKER VECTOR COLLAPSE(3)    
   DO l = 1, 3
-    DO k = ny_min - 3, ny_max + 3
-      DO j = nx_min - 3, nx_max + 3
-        array(j,k,nz_max+l) = array(j,k,nz_min-1+l)
+    DO k =  -2, ny + 3 
+      DO j = -2, nx + 3
+        array(j,k,nz+l) = array(j,k,l)
       END DO
     END DO
   ENDDO
@@ -376,9 +351,9 @@ ELSEIF(boundary_flag(6) == 1) THEN
   !$OMP DO COLLAPSE(3) SCHEDULE(STATIC)
   !$ACC LOOP GANG WORKER VECTOR COLLAPSE(3)     
   DO l = 1, 3
-    DO k = ny_min - 3, ny_max + 3
-      DO j = nx_min - 3, nx_max + 3
-        array(j,k,nz_max+l) = array(j,k,nz_max)
+    DO k =  -2, ny + 3 
+      DO j = -2, nx + 3
+        array(j,k,nz+l) = array(j,k,nz)
       END DO
     END DO
   ENDDO
@@ -389,9 +364,9 @@ ELSEIF(boundary_flag(6) >= 2) THEN
   !$OMP DO COLLAPSE(3) SCHEDULE(STATIC)  
   !$ACC LOOP GANG WORKER VECTOR COLLAPSE(3)     
   DO l = 1, 3
-    DO k = ny_min - 3, ny_max + 3
-      DO j = nx_min - 3, nx_max + 3
-        array(j,k,nz_max+l) = fac_zout * array(j,k,nz_max+1-l)
+    DO k =  -2, ny + 3 
+      DO j = -2, nx + 3
+        array(j,k,nz+l) = fac_zout * array(j,k,nz+1-l)
       END DO
     END DO
   ENDDO
@@ -449,13 +424,13 @@ IF(boundary_flag(1) == 0) THEN
 
   !$OMP DO COLLAPSE(3) SCHEDULE(STATIC)
   !$ACC LOOP GANG WORKER VECTOR COLLAPSE(3)     
-  DO l = nz_min_2 - 3, nz_part_2 + 3
-    DO k = ny_min_2 - 3, ny_part_2 + 3
+  DO l = -2, nz + 3
+    DO k = -2, ny + 3
       DO j = 1, 3
-        prim2(imin2:ibx-1,nx_min_2-j,k,l) = prim2(imin2:ibx-1,nx_part_2+1-j,k,l)    
-        bcell(ibx:ibz,nx_min_2-j,k,l) = bcell(ibx:ibz,nx_part_2+1-j,k,l)
-        prim2(iby,nx_min_2-j,k,l) = prim2(iby,nx_part_2+1-j,k,l)
-        prim2(ibz,nx_min_2-j,k,l) = prim2(ibz,nx_part_2+1-j,k,l)
+        prim(imin:ibx-1,1-j,k,l) = prim(imin:ibx-1,nx+1-j,k,l)    
+        bcell(ibx:ibz,1-j,k,l) = bcell(ibx:ibz,nx+1-j,k,l)
+        prim(iby,1-j,k,l) = prim(iby,nx+1-j,k,l)
+        prim(ibz,1-j,k,l) = prim(ibz,nx+1-j,k,l)
       END DO
     END DO               
   ENDDO
@@ -465,13 +440,13 @@ ELSEIF(boundary_flag(1) == 1) THEN
 
   !$OMP DO COLLAPSE(3) SCHEDULE(STATIC)
   !$ACC LOOP GANG WORKER VECTOR COLLAPSE(3)
-  DO l = nz_min_2 - 3, nz_part_2 + 3
-    DO k = ny_min_2 - 3, ny_part_2 + 3
+  DO l = -2, nz + 3
+    DO k = -2, ny + 3
       DO j = 1, 3
-        prim2(imin2:ibx-1,nx_min_2-j,k,l) = prim2(imin2:ibx-1,nx_min_2,k,l)
-        bcell(ibx:ibz,nx_min_2-j,k,l) = bcell(ibx:ibz,nx_min_2,k,l)
-        prim2(iby,nx_min_2-j,k,l) = prim2(iby,nx_min_2,k,l)
-        prim2(ibz,nx_min_2-j,k,l) = prim2(ibz,nx_min_2,k,l)
+        prim(imin:ibx-1,1-j,k,l) = prim(imin:ibx-1,1,k,l)
+        bcell(ibx:ibz,1-j,k,l) = bcell(ibx:ibz,1,k,l)
+        prim(iby,1-j,k,l) = prim(iby,1,k,l)
+        prim(ibz,1-j,k,l) = prim(ibz,1,k,l)
       END DO
     END DO               
   ENDDO
@@ -481,13 +456,13 @@ ELSEIF(boundary_flag(1) >= 2) THEN
 
   !$OMP DO COLLAPSE(3) SCHEDULE(STATIC)
   !$ACC LOOP GANG WORKER VECTOR COLLAPSE(3)
-  DO l = nz_min_2 - 3, nz_part_2 + 3
-    DO k = ny_min_2 - 3, ny_part_2 + 3
+  DO l = -2, nz + 3
+    DO k = -2, ny + 3
       DO j = 1, 3
-        prim2(imin2:ibx-1,nx_min_2-j,k,l) = bfac_xin(imin2:ibx-1) * prim2(imin2:ibx-1,nx_min_2-1+j,k,l)
-        bcell(ibx:ibz,nx_min_2-j,k,l) = bfac_xin(ibx:ibz) * bcell(ibx:ibz,nx_min_2-1+j,k,l)
-        prim2(iby,nx_min_2-j,k,l) = bfac_xin(iby) * prim2(iby,nx_min_2-1+j,k,l)
-        prim2(ibz,nx_min_2-j,k,l) = bfac_xin(ibz) * prim2(ibz,nx_min_2-1+j,k,l)
+        prim(imin:ibx-1,1-j,k,l) = bfac_xin(imin:ibx-1) * prim(imin:ibx-1,j,k,l)
+        bcell(ibx:ibz,1-j,k,l) = bfac_xin(ibx:ibz) * bcell(ibx:ibz,j,k,l)
+        prim(iby,1-j,k,l) = bfac_xin(iby) * prim(iby,j,k,l)
+        prim(ibz,1-j,k,l) = bfac_xin(ibz) * prim(ibz,j,k,l)
       END DO
     END DO               
   ENDDO
@@ -501,13 +476,13 @@ IF(boundary_flag(2) == 0) THEN
 
   !$OMP DO COLLAPSE(3) SCHEDULE(STATIC)
   !$ACC LOOP GANG WORKER VECTOR COLLAPSE(3)
-  DO l = nz_min_2 - 3, nz_part_2 + 3
-    DO k = ny_min_2 - 3, ny_part_2 + 3
+  DO l = -2, nz + 3
+    DO k = -2, ny + 3
       DO j = 1, 3
-        prim2(imin2:ibx-1,nx_part_2+j,k,l) = prim2(imin2:ibx-1,nx_min_2-1+j,k,l)
-        bcell(ibx:ibz,nx_part_2+j,k,l) = bcell(ibx:ibz,nx_min_2-1+j,k,l)
-        prim2(iby,nx_part_2+j,k,l) = prim2(iby,nx_min_2-1+j,k,l)
-        prim2(ibz,nx_part_2+j,k,l) = prim2(ibz,nx_min_2-1+j,k,l)
+        prim(imin:ibx-1,nx+j,k,l) = prim(imin:ibx-1,j,k,l)
+        bcell(ibx:ibz,nx+j,k,l) = bcell(ibx:ibz,j,k,l)
+        prim(iby,nx+j,k,l) = prim(iby,j,k,l)
+        prim(ibz,nx+j,k,l) = prim(ibz,j,k,l)
       END DO
     END DO               
   ENDDO
@@ -517,13 +492,13 @@ ELSEIF(boundary_flag(2) == 1) THEN
 
   !$OMP DO COLLAPSE(3) SCHEDULE(STATIC)
   !$ACC LOOP GANG WORKER VECTOR COLLAPSE(3)
-  DO l = nz_min_2 - 3, nz_part_2 + 3
-    DO k = ny_min_2 - 3, ny_part_2 + 3
+  DO l = -2, nz + 3
+    DO k = -2, ny + 3
       DO j = 1, 3
-        prim2(imin2:ibx-1,nx_part_2+j,k,l) = prim2(imin2:ibx-1,nx_part_2,k,l)
-        bcell(ibx:ibz,nx_part_2+j,k,l) = bcell(ibx:ibz,nx_part_2,k,l)
-        prim2(iby,nx_part_2+j,k,l) = prim2(iby,nx_part_2,k,l)
-        prim2(ibz,nx_part_2+j,k,l) = prim2(ibz,nx_part_2,k,l)
+        prim(imin:ibx-1,nx+j,k,l) = prim(imin:ibx-1,nx,k,l)
+        bcell(ibx:ibz,nx+j,k,l) = bcell(ibx:ibz,nx,k,l)
+        prim(iby,nx+j,k,l) = prim(iby,nx,k,l)
+        prim(ibz,nx+j,k,l) = prim(ibz,nx,k,l)
       END DO
     END DO               
   ENDDO
@@ -533,13 +508,13 @@ ELSEIF(boundary_flag(2) >= 2) THEN
 
   !$OMP DO COLLAPSE(3) SCHEDULE(STATIC)
   !$ACC LOOP GANG WORKER VECTOR COLLAPSE(3)
-  DO l = nz_min_2 - 3, nz_part_2 + 3
-    DO k = ny_min_2 - 3, ny_part_2 + 3
+  DO l = -2, nz + 3
+    DO k = -2, ny + 3
       DO j = 1, 3
-        prim2(imin2:ibx-1,nx_part_2+j,k,l) = bfac_xout(imin2:ibx-1) * prim2(imin2:ibx-1,nx_part_2+1-j,k,l)
-        bcell(ibx:ibz,nx_part_2+j,k,l) = bfac_xout(ibx:ibz) * bcell(ibx:ibz,nx_part_2+1-j,k,l)
-        prim2(iby,nx_part_2+j,k,l) = bfac_xout(iby) * prim2(iby,nx_part_2+1-j,k,l)
-        prim2(ibz,nx_part_2+j,k,l) = bfac_xout(ibz) * prim2(ibz,nx_part_2+1-j,k,l)
+        prim(imin:ibx-1,nx+j,k,l) = bfac_xout(imin:ibx-1) * prim(imin:ibx-1,nx+1-j,k,l)
+        bcell(ibx:ibz,nx+j,k,l) = bfac_xout(ibx:ibz) * bcell(ibx:ibz,nx+1-j,k,l)
+        prim(iby,nx+j,k,l) = bfac_xout(iby) * prim(iby,nx+1-j,k,l)
+        prim(ibz,nx+j,k,l) = bfac_xout(ibz) * prim(ibz,nx+1-j,k,l)
       END DO
     END DO               
   ENDDO
@@ -560,13 +535,13 @@ IF(boundary_flag(3) == 0) THEN
 
   !$OMP DO COLLAPSE(3) SCHEDULE(STATIC)
   !$ACC LOOP GANG WORKER VECTOR COLLAPSE(3)
-  DO l = nz_min_2 - 3, nz_part_2 + 3
+  DO l = -2, nz + 3
     DO k = 1, 3
-      DO j = nx_min_2 - 3, nx_part_2 + 3
-        prim2(imin2:ibx-1,j,ny_min_2-k,l) = prim2(imin2:ibx-1,j,ny_part_2+1-k,l) 
-        bcell(ibx:ibz,j,ny_min_2-k,l) = bcell(ibx:ibz,j,ny_part_2+1-k,l)            
-        prim2(ibx,j,ny_min_2-k,l) = prim2(ibx,j,ny_part_2+1-k,l)
-        prim2(ibz,j,ny_min_2-k,l) = prim2(ibz,j,ny_part_2+1-k,l)               
+      DO j = -2, nx + 3
+        prim(imin:ibx-1,j,1-k,l) = prim(imin:ibx-1,j,ny+1-k,l) 
+        bcell(ibx:ibz,j,1-k,l) = bcell(ibx:ibz,j,ny+1-k,l)            
+        prim(ibx,j,1-k,l) = prim(ibx,j,ny+1-k,l)
+        prim(ibz,j,1-k,l) = prim(ibz,j,ny+1-k,l)               
       END DO
     END DO               
   ENDDO 
@@ -576,13 +551,13 @@ ELSEIF(boundary_flag(3) == 1) THEN
 
   !$OMP DO COLLAPSE(3) SCHEDULE(STATIC)
   !$ACC LOOP GANG WORKER VECTOR COLLAPSE(3)
-  DO l = nz_min_2 - 3, nz_part_2 + 3
+  DO l = -2, nz + 3
     DO k = 1, 3
-      DO j = nx_min_2 - 3, nx_part_2 + 3
-        prim2(imin2:ibx-1,j,ny_min_2-k,l) = prim2(imin2:ibx-1,j,ny_min_2,l)
-        bcell(ibx:ibz,j,ny_min_2-k,l) = bcell(ibx:ibz,j,ny_min_2,l)
-        prim2(ibx,j,ny_min_2-k,l) = prim2(ibx,j,ny_min_2,l)
-        prim2(ibz,j,ny_min_2-k,l) = prim2(ibz,j,ny_min_2,l)          
+      DO j = -2, nx + 3
+        prim(imin:ibx-1,j,1-k,l) = prim(imin:ibx-1,j,1,l)
+        bcell(ibx:ibz,j,1-k,l) = bcell(ibx:ibz,j,1,l)
+        prim(ibx,j,1-k,l) = prim(ibx,j,1,l)
+        prim(ibz,j,1-k,l) = prim(ibz,j,1,l)          
       END DO
     END DO               
   ENDDO 
@@ -592,13 +567,13 @@ ELSEIF(boundary_flag(3) >= 2) THEN
 
   !$OMP DO COLLAPSE(3) SCHEDULE(STATIC)
   !$ACC LOOP GANG WORKER VECTOR COLLAPSE(3)
-  DO l = nz_min_2 - 3, nz_part_2 + 3
+  DO l = -2, nz + 3
     DO k = 1, 3
-      DO j = nx_min_2 - 3, nx_part_2 + 3
-        prim2(imin2:ibx-1,j,ny_min_2-k,l) = bfac_yin(imin2:ibx-1) * prim2(imin2:ibx-1,j,ny_min_2-1+k,l)
-        bcell(ibx:ibz,j,ny_min_2-k,l) = bfac_yin(ibx:ibz) * bcell(ibx:ibz,j,ny_min_2-1+k,l)
-        prim2(ibx,j,ny_min_2-k,l) = bfac_yin(ibx) * prim2(ibx,j,ny_min_2-1+k,l)
-        prim2(ibz,j,ny_min_2-k,l) = bfac_yin(ibz) * prim2(ibz,j,ny_min_2-1+k,l)         
+      DO j = -2, nx + 3
+        prim(imin:ibx-1,j,1-k,l) = bfac_yin(imin:ibx-1) * prim(imin:ibx-1,j,k,l)
+        bcell(ibx:ibz,j,1-k,l) = bfac_yin(ibx:ibz) * bcell(ibx:ibz,j,k,l)
+        prim(ibx,j,1-k,l) = bfac_yin(ibx) * prim(ibx,j,k,l)
+        prim(ibz,j,1-k,l) = bfac_yin(ibz) * prim(ibz,j,k,l)         
       END DO
     END DO               
   ENDDO 
@@ -612,13 +587,13 @@ IF(boundary_flag(4) == 0) THEN
 
   !$OMP DO COLLAPSE(3) SCHEDULE(STATIC)
   !$ACC LOOP GANG WORKER VECTOR COLLAPSE(3)
-  DO l = nz_min_2 - 3, nz_part_2 + 3
+  DO l = -2, nz + 3
     DO k = 1, 3
-      DO j = nx_min_2 - 3, nx_part_2 + 3
-        prim2(imin2:ibx-1,j,ny_part_2+k,l) = prim2(imin2:ibx-1,j,ny_min_2-1+k,l)
-        bcell(ibx:ibz,j,ny_part_2+k,l) = bcell(ibx:ibz,j,ny_min_2-1+k,l)
-        prim2(ibx,j,ny_part_2+k,l) = prim2(ibx,j,ny_min_2-1+k,l)
-        prim2(ibz,j,ny_part_2+k,l) = prim2(ibz,j,ny_min_2-1+k,l)        
+      DO j = -2, nx + 3
+        prim(imin:ibx-1,j,ny+k,l) = prim(imin:ibx-1,j,k,l)
+        bcell(ibx:ibz,j,ny+k,l) = bcell(ibx:ibz,j,k,l)
+        prim(ibx,j,ny+k,l) = prim(ibx,j,k,l)
+        prim(ibz,j,ny+k,l) = prim(ibz,j,k,l)        
       END DO
     END DO               
   ENDDO 
@@ -628,13 +603,13 @@ ELSEIF(boundary_flag(4) == 1) THEN
 
   !$OMP DO COLLAPSE(3) SCHEDULE(STATIC)
   !$ACC LOOP GANG WORKER VECTOR COLLAPSE(3)
-  DO l = nz_min_2 - 3, nz_part_2 + 3
+  DO l = -2, nz + 3
     DO k = 1, 3
-      DO j = nx_min_2 - 3, nx_part_2 + 3
-        prim2(imin2:ibx-1,j,ny_part_2+k,l) = prim2(imin2:ibx-1,j,ny_part_2,l)
-        bcell(ibx:ibz,j,ny_part_2+k,l) = bcell(ibx:ibz,j,ny_part_2,l)
-        prim2(ibx,j,ny_part_2+k,l) = prim2(ibx,j,ny_part_2,l)
-        prim2(ibz,j,ny_part_2+k,l) = prim2(ibz,j,ny_part_2,l)       
+      DO j = -2, nx + 3
+        prim(imin:ibx-1,j,ny+k,l) = prim(imin:ibx-1,j,ny,l)
+        bcell(ibx:ibz,j,ny+k,l) = bcell(ibx:ibz,j,ny,l)
+        prim(ibx,j,ny+k,l) = prim(ibx,j,ny,l)
+        prim(ibz,j,ny+k,l) = prim(ibz,j,ny,l)       
       END DO
     END DO               
   ENDDO 
@@ -644,13 +619,13 @@ ELSEIF(boundary_flag(4) >= 2) THEN
 
   !$OMP DO COLLAPSE(3) SCHEDULE(STATIC)
   !$ACC LOOP GANG WORKER VECTOR COLLAPSE(3)
-  DO l = nz_min_2 - 3, nz_part_2 + 3
+  DO l = -2, nz + 3
     DO k = 1, 3
-      DO j = nx_min_2 - 3, nx_part_2 + 3
-        prim2(imin2:ibx-1,j,ny_part_2+k,l) = bfac_yout(imin2:ibx-1) * prim2(imin2:ibx-1,j,ny_part_2+1-k,l)
-        bcell(ibx:ibz,j,ny_part_2+k,l) = bfac_yout(ibx:ibz) * bcell(ibx:ibz,j,ny_part_2+1-k,l)
-        prim2(ibx,j,ny_part_2+k,l) = bfac_yout(ibx) * prim2(ibx,j,ny_part_2+1-k,l)
-        prim2(ibz,j,ny_part_2+k,l) = bfac_yout(ibz) * prim2(ibz,j,ny_part_2+1-k,l)       
+      DO j = -2, nx + 3
+        prim(imin:ibx-1,j,ny+k,l) = bfac_yout(imin:ibx-1) * prim(imin:ibx-1,j,ny+1-k,l)
+        bcell(ibx:ibz,j,ny+k,l) = bfac_yout(ibx:ibz) * bcell(ibx:ibz,j,ny+1-k,l)
+        prim(ibx,j,ny+k,l) = bfac_yout(ibx) * prim(ibx,j,ny+1-k,l)
+        prim(ibz,j,ny+k,l) = bfac_yout(ibz) * prim(ibz,j,ny+1-k,l)       
       END DO
     END DO               
   ENDDO 
@@ -672,12 +647,12 @@ IF(boundary_flag(5) == 0) THEN
   !$OMP DO COLLAPSE(3) SCHEDULE(STATIC)
   !$ACC LOOP GANG WORKER VECTOR COLLAPSE(3)
   DO l = 1, 3
-    DO k = ny_min_2 - 3, ny_part_2 + 3
-      DO j = nx_min_2 - 3, nx_part_2 + 3
-        prim2(imin2:ibx-1,j,k,nz_min_2-l) = prim2(imin2:ibx-1,j,k,nz_part_2+1-l)           
-        bcell(ibx:ibz,j,k,nz_min_2-l) = bcell(ibx:ibz,j,k,nz_part_2+1-l)               
-        prim2(ibx,j,k,nz_min_2-l) = prim2(ibx,j,k,nz_part_2+1-l)
-        prim2(iby,j,k,nz_min_2-l) = prim2(iby,j,k,nz_part_2+1-l)                   
+    DO k = -2, ny + 3
+      DO j = -2, nx + 3
+        prim(imin:ibx-1,j,k,1-l) = prim(imin:ibx-1,j,k,nz+1-l)           
+        bcell(ibx:ibz,j,k,1-l) = bcell(ibx:ibz,j,k,nz+1-l)               
+        prim(ibx,j,k,1-l) = prim(ibx,j,k,nz+1-l)
+        prim(iby,j,k,1-l) = prim(iby,j,k,nz+1-l)                   
       END DO
     END DO               
   ENDDO 
@@ -688,12 +663,12 @@ ELSEIF(boundary_flag(5) == 1) THEN
   !$OMP DO COLLAPSE(3) SCHEDULE(STATIC)
   !$ACC LOOP GANG WORKER VECTOR COLLAPSE(3)
   DO l = 1, 3
-    DO k = ny_min_2 - 3, ny_part_2 + 3
-      DO j = nx_min_2 - 3, nx_part_2 + 3
-        prim2(imin2:ibx-1,j,k,nz_min_2-l) = prim2(imin2:ibx-1,j,k,nz_min_2)
-        bcell(ibx:ibz,j,k,nz_min_2-l) = bcell(ibx:ibz,j,k,nz_min_2)
-        prim2(ibx,j,k,nz_min_2-l) = prim2(ibx,j,k,nz_min_2)
-        prim2(iby,j,k,nz_min_2-l) = prim2(iby,j,k,nz_min_2)                  
+    DO k = -2, ny + 3
+      DO j = -2, nx + 3
+        prim(imin:ibx-1,j,k,1-l) = prim(imin:ibx-1,j,k,1)
+        bcell(ibx:ibz,j,k,1-l) = bcell(ibx:ibz,j,k,1)
+        prim(ibx,j,k,1-l) = prim(ibx,j,k,1)
+        prim(iby,j,k,1-l) = prim(iby,j,k,1)                  
       END DO
     END DO               
   ENDDO 
@@ -704,12 +679,12 @@ ELSEIF(boundary_flag(5) >= 2) THEN
   !$OMP DO COLLAPSE(3) SCHEDULE(STATIC)
   !$ACC LOOP GANG WORKER VECTOR COLLAPSE(3)
   DO l = 1, 3
-    DO k = ny_min_2 - 3, ny_part_2 + 3
-      DO j = nx_min_2 - 3, nx_part_2 + 3
-        prim2(imin2:ibx-1,j,k,nz_min_2-l) = bfac_zin(imin2:ibx-1) * prim2(imin2:ibx-1,j,k,nz_min_2-1+l)
-        bcell(ibx:ibz,j,k,nz_min_2-l) = bfac_zin(ibx:ibz) * bcell(ibx:ibz,j,k,nz_min_2-1+l)
-        prim2(ibx,j,k,nz_min_2-l) = bfac_zin(ibx) * prim2(ibx,j,k,nz_min_2-1+l)
-        prim2(iby,j,k,nz_min_2-l) = bfac_zin(iby) * prim2(iby,j,k,nz_min_2-1+l)              
+    DO k = -2, ny + 3
+      DO j = -2, nx + 3
+        prim(imin:ibx-1,j,k,1-l) = bfac_zin(imin:ibx-1) * prim(imin:ibx-1,j,k,l)
+        bcell(ibx:ibz,j,k,1-l) = bfac_zin(ibx:ibz) * bcell(ibx:ibz,j,k,l)
+        prim(ibx,j,k,1-l) = bfac_zin(ibx) * prim(ibx,j,k,l)
+        prim(iby,j,k,1-l) = bfac_zin(iby) * prim(iby,j,k,l)              
       END DO
     END DO               
   ENDDO 
@@ -724,12 +699,12 @@ IF(boundary_flag(6) == 0) THEN
   !$OMP DO COLLAPSE(3) SCHEDULE(STATIC)
   !$ACC LOOP GANG WORKER VECTOR COLLAPSE(3)
   DO l = 1, 3
-    DO k = ny_min_2 - 3, ny_part_2 + 3
-      DO j = nx_min_2 - 3, nx_part_2 + 3
-        prim2(imin2:ibx-1,j,k,nz_part_2+l) = prim2(imin2:ibx-1,j,k,nz_min_2-1+l)
-        bcell(ibx:ibz,j,k,nz_part_2+l) = bcell(ibx:ibz,j,k,nz_min_2-1+l)
-        prim2(ibx,j,k,nz_part_2+l) = prim2(ibx,j,k,nz_min_2-1+l)
-        prim2(iby,j,k,nz_part_2+l) = prim2(iby,j,k,nz_min_2-1+l)            
+    DO k = -2, ny + 3
+      DO j = -2, nx + 3
+        prim(imin:ibx-1,j,k,nz+l) = prim(imin:ibx-1,j,k,l)
+        bcell(ibx:ibz,j,k,nz+l) = bcell(ibx:ibz,j,k,l)
+        prim(ibx,j,k,nz+l) = prim(ibx,j,k,l)
+        prim(iby,j,k,nz+l) = prim(iby,j,k,l)            
       END DO
     END DO               
   ENDDO 
@@ -740,12 +715,12 @@ ELSEIF(boundary_flag(6) == 1) THEN
   !$OMP DO COLLAPSE(3) SCHEDULE(STATIC)
   !$ACC LOOP GANG WORKER VECTOR COLLAPSE(3)
   DO l = 1, 3
-    DO k = ny_min_2 - 3, ny_part_2 + 3
-      DO j = nx_min_2 - 3, nx_part_2 + 3
-        prim2(imin2:ibx-1,j,k,nz_part_2+l) = prim2(imin2:ibx-1,j,k,nz_part_2)   
-        bcell(ibx:ibz,j,k,nz_part_2+l) = bcell(ibx:ibz,j,k,nz_part_2)
-        prim2(ibx,j,k,nz_part_2+l) = prim2(ibx,j,k,nz_part_2)
-        prim2(iby,j,k,nz_part_2+l) = prim2(iby,j,k,nz_part_2)         
+    DO k = -2, ny + 3
+      DO j = -2, nx + 3
+        prim(imin:ibx-1,j,k,nz+l) = prim(imin:ibx-1,j,k,nz)   
+        bcell(ibx:ibz,j,k,nz+l) = bcell(ibx:ibz,j,k,nz)
+        prim(ibx,j,k,nz+l) = prim(ibx,j,k,nz)
+        prim(iby,j,k,nz+l) = prim(iby,j,k,nz)         
       END DO
     END DO               
   ENDDO 
@@ -756,12 +731,12 @@ ELSEIF(boundary_flag(6) >= 2) THEN
   !$OMP DO COLLAPSE(3) SCHEDULE(STATIC)
   !$ACC LOOP GANG WORKER VECTOR COLLAPSE(3)
   DO l = 1, 3
-    DO k = ny_min_2 - 3, ny_part_2 + 3
-      DO j = nx_min_2 - 3, nx_part_2 + 3
-        prim2(imin2:ibx-1,j,k,nz_part_2+l) = bfac_zout(imin2:ibx-1) * prim2(imin2:ibx-1,j,k,nz_part_2+1-l)   
-        bcell(ibx:ibz,j,k,nz_part_2+l) = bfac_zout(ibx:ibz) * bcell(ibx:ibz,j,k,nz_part_2+1-l) 
-        prim2(ibx,j,k,nz_part_2+l) = bfac_zout(ibx) * prim2(ibx,j,k,nz_part_2+1-l)
-        prim2(iby,j,k,nz_part_2+l) = bfac_zout(iby) * prim2(iby,j,k,nz_part_2+1-l)       
+    DO k = -2, ny + 3
+      DO j = -2, nx + 3
+        prim(imin:ibx-1,j,k,nz+l) = bfac_zout(imin:ibx-1) * prim(imin:ibx-1,j,k,nz+1-l)   
+        bcell(ibx:ibz,j,k,nz+l) = bfac_zout(ibx:ibz) * bcell(ibx:ibz,j,k,nz+1-l) 
+        prim(ibx,j,k,nz+l) = bfac_zout(ibx) * prim(ibx,j,k,nz+1-l)
+        prim(iby,j,k,nz+l) = bfac_zout(iby) * prim(iby,j,k,nz+1-l)       
       END DO
     END DO               
   ENDDO 

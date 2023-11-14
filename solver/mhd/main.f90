@@ -1,6 +1,6 @@
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !   
-! Welcome to CUMC3D_Ver2022-1.57 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+! Welcome to CUMC3D-Ver1.65 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !
@@ -12,7 +12,7 @@
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 PROGRAM CUMC3D
-USE MHD_module
+USE MHD_MODULE
 USE DEFINITION
 IMPLICIT NONE
 
@@ -28,14 +28,14 @@ rate = REAL(cr)
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 ! Set number of threads !
-CALL OMP_SET_NUM_THREADS(48)
+CALL OMP_SET_NUM_THREADS(4)
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 WRITE(*,*)
-WRITE(*,*) '--------------------------------'
-WRITE(*,*) '-Welcome to CUMC3D_Ver2022-1.57-'
-WRITE(*,*) '--------------------------------'
+WRITE(*,*) '---------------------------'
+WRITE(*,*) '-Welcome to CUMC3D-Ver1.65-'
+WRITE(*,*) '---------------------------'
 WRITE(*,*)
 WRITE(*,*) '-----------------------------------------'
 WRITE(*,*) '- First written by Ka Wing Wong in 2010 -'
@@ -66,9 +66,6 @@ CALL POPULATE_DEVICE
 
 ! do initial updates !
 CALL initial_update
-
-! print grid variables !
-CALL print_grid
 
 ! print primitive profiles !
 CALL print_hydroprofile
@@ -102,6 +99,11 @@ DO while (global_time < total_time)
 
   ! Find time step !
   CALL finddt
+
+  ! Adjust !
+  IF(global_time + dt > total_time) THEN
+    dt = total_time - global_time
+  END IF
 
   ! Rungekutta step ! 
   CALL Rungekutta(n_step)

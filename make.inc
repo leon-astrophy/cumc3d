@@ -1,4 +1,10 @@
-# Want to fix pole? #
+######################################################
+#
+# make.inc file incluing compilation flags for CUMC3D
+#
+######################################################
+
+# Want to fix singularies pole? #
 FIXPOLE = -DFIXPOLE 
 
 # Want to debug? #
@@ -20,7 +26,3 @@ F90=/home/leon/HDF5/bin/h5fc
 # Define F90 flags #
 F90FLAGS= -llapack -lblas -cpp -fastsse -Mipa=fast -O4 -Mvect=simd -Mvect=levels:5 -Msmartalloc -Mstack_arrays -Mprefetch $(MULTICORE) $(COMPILE) $(DEBUG) $(DIVB) $(FIXPOLE)
 LDFLAGS= -llapack -lblas -cpp -fastsse -Mipa=fast -O4 -Mvect=simd -Mvect=levels:5 -Msmartalloc -Mstack_arrays -Mprefetch $(MULTICORE) $(COMPILE) $(DEBUG) $(DIVB) $(FIXPOLE)
-
-# Define HDF5 library location
-HDF5INCS=-I/home/leon/HDF5/include
-HDF5LIBS=-L/home/leon/HDF5/lib

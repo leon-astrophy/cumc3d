@@ -34,7 +34,7 @@ REAL*8, ALLOCATABLE, DIMENSION(:,:,:) :: a_phi
 ! Preperation !
 
 ! Allocate
-Allocate(a_phi(-2:nx_2+3,-2:ny_2+3,-2:nz_2+3))
+Allocate(a_phi(-2:nx+3,-2:ny+3,-2:nz+3))
 
 ! Poisson interpolation coefficient !
 call get_poisson
@@ -44,9 +44,25 @@ call get_poisson
 ! Read parameter !
 OPEN(UNIT=999, FILE = './profile/par.dat', ACTION='READ')
 DO j = 1, 1
-	READ(999,*) ggas2, m_bh
+	READ(999,*) ggas, m_bh, masscgs2code, lengthcgs2code, tcgs2code
 ENDDO
 CLOSE(999)
+
+! Velocity !
+vel2code = (lengthcgs2code/tcgs2code)
+
+! Magnetic field !
+gauss2code = (masscgs2code/lengthcgs2code)**(0.5D0)/tcgs2code
+
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+! Unit conversion
+
+! They are all in params.h !
+s_0 = s_0*lengthcgs2code
+w_0 = w_0/tcgs2code
+b_0 = b_0*gauss2code
+v_crit = v_crit*vel2code
+max_alv = max_alv*vel2code
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
@@ -60,37 +76,37 @@ END DO
 10 CLOSE (999) 
 
 ! Error message !
-IF(nlines .ne. nx_2+6) THEN
+IF(nlines .ne. nx+6) THEN
   WRITE (*,*) 'number of simulation grids from files', nlines
-  WRITE (*,*) 'number of simulation grids in the program', nx_2+6
+  WRITE (*,*) 'number of simulation grids in the program', nx+6
   STOP 'inconsistent number of simulation grids, exit'
 END IF
 
 ! Read !
 OPEN(UNIT=999, FILE = './profile/hydro.dat', ACTION='READ')
-DO j = -2, nx_2 + 3
-	READ(999,*) prim2(irho2,j,1,1), prim2(itau2,j,1,1)
+DO j = -2, nx + 3
+	READ(999,*) prim(irho,j,1,1), prim(itau,j,1,1)
 ENDDO
 CLOSE(999)
 
 ! Assign density profile !
-DO j = -2, nx_2 + 3
-  prim2(irho2,j,:,:) = prim2(irho2,j,1,1)
-  prim2(itau2,j,:,:) = prim2(itau2,j,1,1)
+DO j = -2, nx + 3
+  prim(irho,j,:,:) = prim(irho,j,1,1)
+  prim(itau,j,:,:) = prim(itau,j,1,1)
 END DO
 
 ! Assign internal energy #
-epsilon2(:,:,:) = prim2(itau2,:,:,:)/prim2(irho2,:,:,:)/(ggas2 - 1.0d0)
+epsilon(:,:,:) = prim(itau,:,:,:)/prim(irho,:,:,:)/(ggas - 1.0d0)
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 ! Choose rotation rules !
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 ! Core radius !
-DO j = 1, nx_2
-  IF(prim2(irho2,j-1,1,1) <= prim2(irho2,nx_2,1,1) .AND. &
-     prim2(irho2,j,1,1) > prim2(irho2,nx_2,1,1)) THEN
-    s_core = x2(j)
+DO j = 1, nx
+  IF(prim(irho,j-1,1,1) <= prim(irho,nx,1,1) .AND. &
+     prim(irho,j,1,1) > prim(irho,nx,1,1)) THEN
+    s_core = x(j)
     EXIT
   END IF
 END DO
@@ -100,24 +116,24 @@ END DO
 IF(rotation_rule == 1) THEN
 
   ! Find outer most radius !
-  rmax = MAXVAL(x2)
+  rmax = MAXVAL(x)
 
   ! Find angular velocity !
   omega = v_crit/rmax
 
   ! Assign angular velocity !
-  DO l = 1, nz_2
-    DO k = 1, ny_2
-      DO j = 1, nx_2
+  DO l = 1, nz
+    DO k = 1, ny
+      DO j = 1, nx
 
         ! polar radius !
-        s_eq = x2(j)*sin2(k)
+        s_eq = x(j)*sine(k)
 
         ! Select based on conditions !
-        IF(prim2(irho2,j,k,l) > prim2(irho2,nx_2,1,1)) THEN
-          prim2(ivel2_z,j,k,l) = omega*s_eq
+        IF(prim(irho,j,k,l) > prim(irho,nx,1,1)) THEN
+          prim(ivz,j,k,l) = omega*s_eq
         ELSE
-          prim2(ivel2_z,j,k,l) = 0.0d0                   
+          prim(ivz,j,k,l) = 0.0d0                   
         END IF
         
       END DO
@@ -129,61 +145,66 @@ IF(rotation_rule == 1) THEN
 ELSEIF(rotation_rule == 2) THEN
 
   ! Assign angular velocity !
-  DO l = 1, nz_2
-    DO k = 1, ny_2
-      DO j = 1, nx_2
+  DO l = 1, nz
+    DO k = 1, ny
+      DO j = 1, nx
 
         ! polar radius !
-        s_eq = x2(j)*sin2(k)
+        s_eq = x(j)*sine(k)
 
         ! get omega !
-        omega = w_0*s_core**2/(s_core**2 + x2(j)**2)
+        omega = w_0*s_core**2/(s_core**2 + s_eq**2)
 
         ! Select based on conditions !
-        IF(prim2(irho2,j,k,l) > prim2(irho2,nx_2,1,1)) THEN
-          prim2(ivel2_z,j,k,l) = omega*s_eq
+        IF(prim(irho,j,k,l) > prim(irho,nx,1,1)) THEN
+          prim(ivz,j,k,l) = omega*s_eq
         ELSE
-          prim2(ivel2_z,j,k,l) = 0.0d0                   
+          prim(ivz,j,k,l) = 0.0d0                   
         END IF
-        
+
       END DO
     END DO
   END DO
 
 END IF
+s_core = 5000.0d0
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 ! Magnetic field !
 
 ! vector potential !
-DO l = 0, nz_2
-  DO k = 0, ny_2
-    DO j = 0, nx_2
-      a_phi(j,k,l) = xF2(j)*sin2f(k)*0.5*b_0 !*s_core**3/(s_core**3 + xF2(j)**3)*xF2(j)*sin2f(k)
+DO l = 0, nz
+  DO k = 0, ny
+    DO j = 0, nx
+      a_phi(j,k,l) = xF(j)*sinf(k)*0.5d0 
+      !a_phi(j,k,l) = s_core**3/(s_core**3 + xF(j)**3)*xF(j)*sinf(k)
     END DO
   END DO
 END DO
 
 ! magnetic field !
-prim2(ibx:ibz,:,:,:) = 0.0d0
-DO l = 0, nz_2
-  DO k = 0, ny_2
-    DO j = 0, nx_2
-      prim2(ibx,j,k,l) = (sin2f(k)*a_phi(j,k,l) - sin2f(k-1)*a_phi(j,k-1,l))*xF2(j)/(xF2(j)**2*dcos2(k) + small_num)
-      prim2(iby,j,k,l) = -(xF2(j)*a_phi(j,k,l) - xF2(j-1)*a_phi(j-1,k,l))*sin2f(k)/(0.5d0*dx2_sq(j)*sin2f(k) + small_num)
+prim(ibx:ibz,:,:,:) = 0.0d0
+DO l = 0, nz
+  DO k = 0, ny
+    DO j = 0, nx
+      prim(ibx,j,k,l) = (sinf(k)*a_phi(j,k,l) - sinf(k-1)*a_phi(j,k-1,l))/(xF(j)*dcose(k)+small_num)
+      prim(iby,j,k,l) = - (xF(j)*a_phi(j,k,l) - xF(j-1)*a_phi(j-1,k,l))/(x(j)*dx(j))
     END DO
   END DO
 END DO
 
 ! Find DIVB !
 div_b = 0.0D0
-DO l = nz_min_2, nz_part_2
-  DO k = ny_min_2, ny_part_2
-    DO j = nx_min_2, nx_part_2
-      div_b = (xF2(j)**2*prim2(ibx,j,k,l) - xF2(j-1)**2*prim2(ibx,j-1,k,l))*dcos2(k)*dz2(l) &
-            + (sin2f(k)*prim2(iby,j,k,l) - sin2f(k-1)*prim2(iby,j,k-1,l))*0.5d0*dx2_sq(j)*dz2(l) &
-            + (prim2(ibz,j,k,l) - prim2(ibz,j,k,l-1))*0.5d0*dx2_sq(j)*dy2(k)
-      maxdb = MAX(maxdb, ABS(div_b))
+DO l = 1, nz
+  DO k = 1, ny
+    DO j = 1, nx
+      div_b = (xF(j)*xF(j)*prim(ibx,j,k,l) - xF(j-1)*xF(j-1)*prim(ibx,j-1,k,l))/(dx_cb(j)/3.0d0) &
+
+            + (sinf(k)*prim(iby,j,k,l) - sinf(k-1)*prim(iby,j,k-1,l))*(x(j)*dx(j))/(dx_cb(j)*dcose(k)/3.0d0) &
+      
+            + (prim(ibz,j,k,l) - prim(ibz,j,k,l-1))*(x(j)*dx(j)*dy(k))/(dx_cb(j)*dcose(k)*dz(l)/3.0d0)
+            
+      maxdb = MAX(maxdb, div_b)
     END DO
   END DO
 END DO
@@ -191,16 +212,18 @@ WRITE (*,*)
 WRITE (*,*) 'Maximum initial divergence B', maxdb
 WRITE (*,*)
 
+prim(ibx:ibz,:,:,:) = prim(ibx:ibz,:,:,:)*b_0
+
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 ! Add perturbation to the density !
-DO l = 1, nz_2
-  DO k = 1, ny_2 
-    DO j = 1, nx_2
-      !IF(prim2(irho2,j,k,l) > prim2(irho2,nx_2,1,1)) THEN
-      !  CALL RANDOM_NUMBER(rand)
-      !  prim2(irho2,j,k,l) = prim2(irho2,j,k,l)*(1.0D0 + 1.0d-4*(rand - 0.5D0)/(0.5D0))
-      !END IF
+DO l = 1, nz
+  DO k = 1, ny 
+    DO j = 1, nx
+      IF(prim(irho,j,k,l) > prim(irho,nx,1,1)) THEN
+        CALL RANDOM_NUMBER(rand)
+        prim(irho,j,k,l) = prim(irho,j,k,l)*(1.0D0 + 1.0d-4*(rand - 0.5D0)/(0.5D0))
+      END IF
     END DO
   END DO
 END DO
@@ -213,10 +236,10 @@ Deallocate(a_phi)
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 ! set atmospheric primitive variables !
-prim2_a(:) = 0.0D0
-prim2_a(irho2) = prim2(irho2,nx_2,1,1)
-prim2_a(itau2) = prim2(itau2,nx_2,1,1)
-eps2_a = prim2_a(itau2)/prim2_a(irho2)/(ggas2 - 1.0d0)
+prim_a(:) = 0.0D0
+prim_a(irho) = prim(irho,nx,1,1)
+prim_a(itau) = prim(itau,nx,1,1)
+eps_a = prim_a(itau)/prim_a(irho)/(ggas - 1.0d0)
 
 ! Initialize !
 m_inj = 0.0d0

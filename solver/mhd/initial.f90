@@ -4,30 +4,16 @@
 !
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-SUBROUTINE initial_model
+SUBROUTINE INITIAL_MODEL
 USE DEFINITION
 USE MHD_MODULE
-USE PPM_MODULE
+USE TVD_MODULE
+USE WENO_MODULE
+USE PPMC_MODULE
 USE RIEMANN_MODULE
 IMPLICIT NONE
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
-! Set minimum and maximum domain !
-nx_min_2 = 1
-nx_part_2 = nx_2
-ny_min_2 = 1
-ny_part_2 = ny_2
-nz_min_2 = 1
-nz_part_2 = nz_2
-
-! Set minimum and maximum domain !
-nx_min_1 = 1
-nx_part_1 = nx_1
-ny_min_1 = 1
-ny_part_1 = ny_1
-nz_min_1 = 1
-nz_part_1 = nz_1
 
 ! First build up all database, EOS table and arrays !
 WRITE(*,*) 'We shall now setup everything for the simulations'
@@ -37,7 +23,7 @@ WRITE(*,*)
 ! Section for building arrays !
 
 WRITE(*,*) 'Build hydro equations'
-CALL SETUP_EQN
+CALL SETUP_EQNS
 WRITE(*,*) 'End building hydro equations'
 WRITE(*,*)
 
@@ -47,32 +33,41 @@ WRITE(*,*) 'End building hydro arrays'
 WRITE(*,*)
 
 WRITE(*,*) 'Build riemann solver variables'
-CALL BUILDRIEMANN
+CALL BUILD_RIEMANN
 WRITE(*,*) 'End building riemann solver variables'
 WRITE(*,*)
 
 ! MHD !
 WRITE(*,*) 'Build MHD variables'
-CALL buildMHD
+CALL BUILD_MHD
 WRITE(*,*) 'End building MHD variables'
 WRITE(*,*)
 
 WRITE(*,*) 'Build grid variables'
-CALL GETGRID_NM
+CALL GETGRID
 WRITE(*,*) 'Done building grid variables'
 WRITE(*,*)
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+! Set reconstruction weight !
 
-! Setup PPM weight 
-CALL PPM_WEIGHT
+WRITE(*,*) 'Build reconstruction weight'
+IF(weno_flag) THEN
+  CALL WENO_WEIGHT
+ELSEIF(ppmc_flag) THEN
+  CALL PPM_WEIGHT
+ELSE
+  CALL TVD_WEIGHT
+END IF
+WRITE(*,*) 'Done building reconstruction weight'
+WRITE(*,*)
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 ! Section for setting initial conditions !
 
 ! Set initial conservative/primitive variables !
-cons2 = 0.0D0
-prim2 = 0.0D0
+cons = 0.0D0
+prim = 0.0D0
 
 ! Build initial models !
 WRITE(*,*) 'Now build the initial model'
@@ -88,18 +83,15 @@ END SUBROUTINE
 !
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-SUBROUTINE initial_update
+SUBROUTINE INITIAL_UPDATE
 USE DEFINITION
-USE MHD_MODULE
 IMPLICIT NONE
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 ! prepare everything ... !
 
 ! Check density !
-IF (checkrho_flag) THEN
-	CALL CHECKRHO
-END IF
+CALL CUSTOM_CHECKRHO
 
 WRITE(*,*) 'Build conservative variables'
 CALL FROMRVETOU
@@ -107,11 +99,11 @@ WRITE(*,*) 'Done building initial conservative variables'
 WRITE(*,*)
 
 ! set boundary conditions !
-call BOUNDARY
+CALL BOUNDARY
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 ! Calculate the items needed for SPATIAL
-WRITE(*,*) 'Do Update'
+WRITE(*,*) 'Do update'
 CALL UPDATE (0)
 WRITE(*,*) 'Done initial update'
 WRITE(*,*)

@@ -10,7 +10,6 @@
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 SUBROUTINE UPDATE (p_in)
-USE MHD_MODULE
 USE DEFINITION
 IMPLICIT NONE
 

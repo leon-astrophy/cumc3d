@@ -20,50 +20,28 @@ INTEGER :: bfac_xout(50)
 INTEGER :: bfac_yout(50)
 INTEGER :: bfac_zout(50)
 
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-! Equations identifiers !
-
-! Minimum/Maximum Eq. number for DM
-INTEGER :: imin1
-INTEGER :: imax1
-
-! Identifiers for the DM variables !
-
-! DM density !
-INTEGER :: irho1
-
-! DM x-velocity
-INTEGER :: ivel1_x
-
-! DM y-velocity
-INTEGER :: ivel1_y
-
-! DM z-velocity
-INTEGER :: ivel1_z
-
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 ! Equations identifiers !
 
 ! Minimum/Maximum Eq. number for NM
-INTEGER :: imin2
-INTEGER :: imax2
+INTEGER :: imin
+INTEGER :: imax
 
 ! Identifiers for the NM variables !
-
 ! NM density !
-INTEGER :: irho2
+INTEGER :: irho
 
 ! NM x-velocity
-INTEGER :: ivel2_x
+INTEGER :: ivx
 
 ! NM y-velocity
-INTEGER :: ivel2_y
+INTEGER :: ivy !so 
 
 ! NM z-velocity
-INTEGER :: ivel2_z
+INTEGER :: ivz
 
 ! NM total energy density
-INTEGER :: itau2
+INTEGER :: itau
 
 ! magnetic fields !
 INTEGER :: ibx, iby, ibz
@@ -71,125 +49,56 @@ INTEGER :: ibx, iby, ibz
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\
 ! Grid variables !
 
-! Grid coordinates for DM !
-REAL*8, ALLOCATABLE, DIMENSION (:) :: x1
-REAL*8, ALLOCATABLE, DIMENSION (:) :: y1
-REAL*8, ALLOCATABLE, DIMENSION (:) :: z1
-REAL*8, ALLOCATABLE, DIMENSION (:) :: xF1
-REAL*8, ALLOCATABLE, DIMENSION (:) :: yF1
-REAL*8, ALLOCATABLE, DIMENSION (:) :: zF1
-REAL*8, ALLOCATABLE, DIMENSION (:) :: dx1
-REAL*8, ALLOCATABLE, DIMENSION (:) :: dy1
-REAL*8, ALLOCATABLE, DIMENSION (:) :: dz1
-REAL*8, ALLOCATABLE, DIMENSION (:) :: x1bar
-REAL*8, ALLOCATABLE, DIMENSION (:) :: x1cen
-REAL*8, ALLOCATABLE, DIMENSION (:) :: y1cen
-REAL*8, ALLOCATABLE, DIMENSION (:) :: dx1_sq
-REAL*8, ALLOCATABLE, DIMENSION (:) :: dx1_cb
-REAL*8, ALLOCATABLE, DIMENSION (:) :: dx1_qd
-REAL*8, ALLOCATABLE, DIMENSION (:) :: dsin1
-REAL*8, ALLOCATABLE, DIMENSION (:) :: dcos1
-REAL*8, ALLOCATABLE, DIMENSION (:,:,:) :: vol1
-
 ! R and Z coordinate of the grid for NM !
-REAL*8, ALLOCATABLE, DIMENSION (:) :: x2
-REAL*8, ALLOCATABLE, DIMENSION (:) :: y2
-REAL*8, ALLOCATABLE, DIMENSION (:) :: z2
-REAL*8, ALLOCATABLE, DIMENSION (:) :: xF2
-REAL*8, ALLOCATABLE, DIMENSION (:) :: yF2
-REAL*8, ALLOCATABLE, DIMENSION (:) :: zF2
-REAL*8, ALLOCATABLE, DIMENSION (:) :: dx2
-REAL*8, ALLOCATABLE, DIMENSION (:) :: dy2
-REAL*8, ALLOCATABLE, DIMENSION (:) :: dz2
-REAL*8, ALLOCATABLE, DIMENSION (:) :: x2cen
-REAL*8, ALLOCATABLE, DIMENSION (:) :: y2cen
-REAL*8, ALLOCATABLE, DIMENSION (:) :: x2bar
-REAL*8, ALLOCATABLE, DIMENSION (:) :: dx2_sq
-REAL*8, ALLOCATABLE, DIMENSION (:) :: dx2_cb
-REAL*8, ALLOCATABLE, DIMENSION (:) :: dx2_qd
-REAL*8, ALLOCATABLE, DIMENSION (:) :: sin2
-REAL*8, ALLOCATABLE, DIMENSION (:) :: sin2f
-REAL*8, ALLOCATABLE, DIMENSION (:) :: dsin2
-REAL*8, ALLOCATABLE, DIMENSION (:) :: dcos2
-REAL*8, ALLOCATABLE, DIMENSION (:,:,:) :: vol2
+REAL*8, ALLOCATABLE, DIMENSION (:) :: x
+REAL*8, ALLOCATABLE, DIMENSION (:) :: y
+REAL*8, ALLOCATABLE, DIMENSION (:) :: z
+REAL*8, ALLOCATABLE, DIMENSION (:) :: xF
+REAL*8, ALLOCATABLE, DIMENSION (:) :: yF
+REAL*8, ALLOCATABLE, DIMENSION (:) :: zF
+REAL*8, ALLOCATABLE, DIMENSION (:) :: dx
+REAL*8, ALLOCATABLE, DIMENSION (:) :: dy
+REAL*8, ALLOCATABLE, DIMENSION (:) :: dz
+REAL*8, ALLOCATABLE, DIMENSION (:) :: xbar
+REAL*8, ALLOCATABLE, DIMENSION (:) :: dx_cb
+REAL*8, ALLOCATABLE, DIMENSION (:) :: sine
+REAL*8, ALLOCATABLE, DIMENSION (:) :: sinf
+REAL*8, ALLOCATABLE, DIMENSION (:) :: dsine
+REAL*8, ALLOCATABLE, DIMENSION (:) :: dcose
+REAL*8, ALLOCATABLE, DIMENSION (:,:,:) :: vol
 
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-! Hydrodynamical variables
-
-! DM atmospheric primitive variables !
-REAL*8, ALLOCATABLE, DIMENSION (:) :: prim1_a
-
-! DM primitive and conservative variables !
-REAL*8, ALLOCATABLE, DIMENSION (:,:,:,:) :: prim1
-REAL*8, ALLOCATABLE, DIMENSION (:,:,:,:) :: cons1
-
-! DM pressure, speed of sound, and pressure derivatives !
-REAL*8, ALLOCATABLE, DIMENSION (:,:,:) :: p1
-REAL*8, ALLOCATABLE, DIMENSION (:,:,:) :: cs1
-REAL*8, ALLOCATABLE, DIMENSION (:,:,:) :: dpdrho1
-REAL*8, ALLOCATABLE, DIMENSION (:,:,:) :: dpdeps1
-
-! DM internal energy !
-REAL*8, ALLOCATABLE, DIMENSION (:,:,:) :: epsilon1
+! Reconstruction weight !
+REAL*8, ALLOCATABLE, DIMENSION (:,:) :: wx
+REAL*8, ALLOCATABLE, DIMENSION (:,:) :: wy
+REAL*8, ALLOCATABLE, DIMENSION (:,:) :: wz
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 ! The following are the hydro set for NM sector
 
-! NM atmospheric primitive variables !
-REAL*8, ALLOCATABLE, DIMENSION (:) :: prim2_a
-
 ! NM primitive and conservative variables !
-REAL*8, ALLOCATABLE, DIMENSION (:,:,:,:) :: prim2
-REAL*8, ALLOCATABLE, DIMENSION (:,:,:,:) :: cons2
+REAL*8, ALLOCATABLE, DIMENSION (:,:,:,:) :: prim
+REAL*8, ALLOCATABLE, DIMENSION (:,:,:,:) :: cons
 
 ! NM speed of sound, and pressure derivatives !
-REAL*8, ALLOCATABLE, DIMENSION (:,:,:) :: cs2
-REAL*8, ALLOCATABLE, DIMENSION (:,:,:) :: dpdrho2
-REAL*8, ALLOCATABLE, DIMENSION (:,:,:) :: dpdeps2
+REAL*8, ALLOCATABLE, DIMENSION (:,:,:) :: cs
+REAL*8, ALLOCATABLE, DIMENSION (:,:,:) :: dpdrho
+REAL*8, ALLOCATABLE, DIMENSION (:,:,:) :: dpdeps
 
 ! NM internal energy !
-REAL*8, ALLOCATABLE, DIMENSION (:,:,:) :: epsilon2
-
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-! Reconstruction weight !
-
-! h-parameter for PPM !
-REAL*8, ALLOCATABLE, DIMENSION (:) :: hpx, hpy, hpz
-REAL*8, ALLOCATABLE, DIMENSION (:) :: hmx, hmy, hmz
-
-! NM along the x, y, z direction !
-REAL*8, ALLOCATABLE, DIMENSION (:) :: lxm2, lxm1, lxc, lxp1, lxp2
-REAL*8, ALLOCATABLE, DIMENSION (:) :: lym2, lym1, lyc, lyp1, lyp2
-REAL*8, ALLOCATABLE, DIMENSION (:) :: lzm2, lzm1, lzc, lzp1, lzp2
-REAL*8, ALLOCATABLE, DIMENSION (:) :: rxm2, rxm1, rxc, rxp1, rxp2
-REAL*8, ALLOCATABLE, DIMENSION (:) :: rym2, rym1, ryc, ryp1, ryp2
-REAL*8, ALLOCATABLE, DIMENSION (:) :: rzm2, rzm1, rzc, rzp1, rzp2
+REAL*8, ALLOCATABLE, DIMENSION (:,:,:) :: epsilon
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 ! Section for time-evolution !
 
 ! For RK-Time evolution 
-REAL*8, ALLOCATABLE, DIMENSION (:,:,:,:) :: l1, u_old1
-REAL*8, ALLOCATABLE, DIMENSION (:,:,:,:) :: l2, u_old2
-
-! The auxillary array for the flux term, DM
-REAL*8, allocatable, DIMENSION (:,:,:,:) :: sc1
-REAL*8, allocatable, DIMENSION (:,:,:,:) :: flux_1
+REAL*8, ALLOCATABLE, DIMENSION (:,:,:,:) :: l_rk, u_old
 
 ! Flux arrays for NM !
-REAL*8, allocatable, DIMENSION (:,:,:,:) :: sc2
-REAL*8, allocatable, DIMENSION (:,:,:,:) :: flux_2
+REAL*8, allocatable, DIMENSION (:,:,:,:) :: sc
+REAL*8, allocatable, DIMENSION (:,:,:,:) :: flux
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 ! Real/integer variable scalars !
-
-! The number of highest grid along three axis !
-INTEGER :: nx_part_1, ny_part_1, nz_part_1
-INTEGER :: nx_part_2, ny_part_2, nz_part_2
-							
-! The number of lowest grid along three axis !
-INTEGER :: nx_min_1, ny_min_1, nz_min_1
-INTEGER :: nx_min_2, ny_min_2, nz_min_2
 
 ! Time step !
 REAL*8 :: dt
@@ -201,20 +110,16 @@ INTEGER :: n_step
 INTEGER :: n_iter
 
 ! Polytropic index !
-REAL*8 :: kgas1, ggas1
-REAL*8 :: kgas2, ggas2
+REAL*8 :: kgas, ggas
 
 ! for openacc !
 #ifdef GPU
-!$acc declare create (kgas2)
-!$acc declare create (ggas2)
+!$acc declare create (kgas)
+!$acc declare create (ggas)
 #endif
 
 ! Global simulation time !
 REAL*8 :: global_time
-
-! Atmospheric epsilon !
-REAL*8 :: eps1_a, eps2_a
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 

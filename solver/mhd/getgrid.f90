@@ -10,7 +10,7 @@
 !
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-SUBROUTINE GetGrid_NM
+SUBROUTINE GetGrid
 USE definition
 IMPLICIT NONE
 
@@ -23,14 +23,14 @@ INTEGER :: j, k, l
 ! Grid position of motherboard
 
 ! Then, get interface coordinate !
-DO j = -3, nx_2 + 3
-	xF2(j) = x2_start + DBLE(j)*dx2_ini
+DO j = -3, nx + 3
+	xF(j) = x_start + DBLE(j)*dx_ini
 END DO
-DO j = -3, ny_2 + 3
-	yF2(j) = y2_start + DBLE(j)*dy2_ini
+DO j = -3, ny + 3
+	yF(j) = y_start + DBLE(j)*dy_ini
 END DO
-DO j = -3, nz_2 + 3
-	zF2(j) = z2_start + DBLE(j)*dz2_ini
+DO j = -3, nz + 3
+	zF(j) = z_start + DBLE(j)*dz_ini
 END DO
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -41,85 +41,60 @@ CALL CUSTOM_GRID
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 ! First, assign grid size !
-DO j = -2, nx_2 + 3
-	dx2(j) = xF2(j) - xF2(j-1)
+DO j = -2, nx + 3
+	dx(j) = xF(j) - xF(j-1)
 END DO
-DO j = -2, ny_2 + 3
-	dy2(j) = yF2(j) - yF2(j-1)
+DO j = -2, ny + 3
+	dy(j) = yF(j) - yF(j-1)
 END DO
-DO j = -2, nz_2 + 3
-	dz2(j) = zF2(j) - zF2(j-1)
+DO j = -2, nz + 3
+	dz(j) = zF(j) - zF(j-1)
 END DO
 
 ! Now assign distance !
-DO j = -2, nx_2 + 3
-	x2(j) = (xF2(j) + xF2(j-1))/2
+DO j = -2, nx + 3
+	x(j) = (xF(j) + xF(j-1))/2
 END DO
-DO j = -2, ny_2 + 3
-	y2(j) = (yF2(j) + yF2(j-1))/2
+DO j = -2, ny + 3
+	y(j) = (yF(j) + yF(j-1))/2
 END DO
-DO j = -2, nz_2 + 3
-	z2(j) = (zF2(j) + zF2(j-1))/2
+DO j = -2, nz + 3
+	z(j) = (zF(j) + zF(j-1))/2
 END DO
-
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-! Centroid 
-
-! Along the first direction !
-IF(coordinate_flag == 0) THEN
-	DO j = -2, nx_2 + 3
-		x2cen(j) = x2(j)
-	END DO
-ELSEIF(coordinate_flag == 1) THEN
-	DO j = -2, nx_2 + 3
-		x2cen(j) = x2(j) + dx2(j)**2/(12.0d0*x2(j))
-	END DO
-ELSEIF(coordinate_flag == 2) THEN
-	DO j = -2, nx_2 + 3
-		x2cen(j) = x2(j) + 2.0d0*x2(j)*dx2(j)**2/(12.0d0*x2(j)**2 + dx2(j)**2)
-	END DO
-END IF
-
-! Along the second direction !
-IF(coordinate_flag == 2) THEN
-	DO k = -2, ny_2 + 3
-		y2cen(k) = (yF2(k-1)*DCOS(yF2(k-1)) - yF2(k)*DCOS(yF2(k)) + DSIN(yF2(k)) - DSIN(yF2(k-1))) & 
-						 / (DCOS(yF2(k-1)) - DCOS(yF2(k)))
-	END DO
-ELSE
-	DO k = -2, ny_2 + 3
-		y2cen(k) = y2(k)
-	END DO
-END IF
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 ! These are dx square and cube
 
-DO j = -1, nx_2 + 3
-	dx2_sq(j) = xF2(j)**2 - xF2(j-1)**2
-	dx2_cb(j) = xF2(j)**3 - xF2(j-1)**3
-	dx2_qd(j) = xF2(j)**4 - xF2(j-1)**4
-	x2bar(j) = (2.0D0/3.0D0)*(dx2_cb(j))/(dx2_sq(j))
+DO j = -1, nx + 3
+	dx_cb(j) = xF(j)**3 - xF(j-1)**3
+	xbar(j) = (dx_cb(j)/3.0D0)/(x(j)*dx(j))
 END DO
-DO k = -1, ny_2 + 3
-	dcos2(k) = - (DCOS(yF2(k)) - DCOS(yF2(k-1)))
-	dsin2(k) = (DSIN(yF2(k)) - DSIN(yF2(k-1)))
+DO k = -1, ny + 3
+	dcose(k) = - (DCOS(yF(k)) - DCOS(yF(k-1)))
+	dsine(k) = (DSIN(yF(k)) - DSIN(yF(k-1)))
 END DO
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 ! sine !
 
 ! sine at cell center and surface !
-DO k = -2, ny_2 + 3
-	sin2(k) = DSIN(y2(k))
+DO k = -2, ny + 3
+	sine(k) = DSIN(y(k))
 END DO
-DO k = -3, ny_2 + 3
-	sin2f(k) = DSIN(yF2(k))
+DO k = -3, ny + 3
+	sinf(k) = DSIN(yF(k))
 END DO
 
-! fix the SINE at pi !
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+! fix the angle and sine at coordinate axis !
 #ifdef FIXPOLE
-sin2f(ny_2) = 0.0D0
+IF(coordinate_flag == 2) THEN
+	yF(0) = 0.0d0
+	yF(ny) = pi
+	sinf(0) = 0.0D0
+	sinf(ny) = 0.0D0
+END IF
 #endif
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -127,26 +102,26 @@ sin2f(ny_2) = 0.0D0
 
 ! Get the volume, assuming full box simulation ! 
 IF(coordinate_flag == 0) THEN
-	DO l = -1, nz_2 + 3
-		DO k = -1, ny_2 + 3
-			DO j = -1, nx_2 + 3
-				vol2(j,k,l) = dx2(j)*dy2(k)*dz2(l)
+	DO l = -1, nz + 3
+		DO k = -1, ny + 3
+			DO j = -1, nx + 3
+				vol(j,k,l) = dx(j)*dy(k)*dz(l)
 			END DO
 		END DO
 	END DO
 ELSEIF(coordinate_flag == 1) THEN
-	DO l = -1, nz_2 + 3
-		DO k = -1, ny_2 + 3
-			DO j = -1, nx_2 + 3
-				vol2(j,k,l) = 0.5D0*(xF2(j)**2 - xF2(j-1)**2)*dy2(k)*dz2(l)
+	DO l = -1, nz + 3
+		DO k = -1, ny + 3
+			DO j = -1, nx + 3
+				vol(j,k,l) = 0.5D0*(xF(j)**2 - xF(j-1)**2)*dy(k)*dz(l)
 			END DO
 		END DO
 	END DO
 ELSEIF(coordinate_flag == 2) THEN
-	DO l = -1, nz_2 + 3
-		DO k = -1, ny_2 + 3
-			DO j = -1, nx_2 + 3
-				vol2(j,k,l) = (xF2(j)**3 - xF2(j-1)**3)*ABS(DCOS(yF2(k)) - DCOS(yF2(k-1)))*dz2(l)/3.0D0
+	DO l = -1, nz + 3
+		DO k = -1, ny + 3
+			DO j = -1, nx + 3
+				vol(j,k,l) = (xF(j)**3 - xF(j-1)**3)*ABS(DCOS(yF(k)) - DCOS(yF(k-1)))*dz(l)/3.0D0
 			END DO
 		END DO
 	END DO
@@ -156,28 +131,28 @@ END IF
 
 ! Special treatment for full box simulation !
 IF(NOT(fullx_flag)) THEN
-	DO l = -2, nz_2 + 3
-		DO k = -2, ny_2 + 3
-			DO j = -2, nx_2 + 3
-				vol2(j,k,l) = vol2(j,k,l)*2.0D0
+	DO l = -2, nz + 3
+		DO k = -2, ny + 3
+			DO j = -2, nx + 3
+				vol(j,k,l) = vol(j,k,l)*2.0D0
 			END DO
 		END DO
 	END DO
 END IF
 IF(NOT(fully_flag)) THEN
-	DO l = -2, nz_2 + 3
-		DO k = -2, ny_2 + 3
-			DO j = -2, nx_2 + 3
-				vol2(j,k,l) = vol2(j,k,l)*2.0D0
+	DO l = -2, nz + 3
+		DO k = -2, ny + 3
+			DO j = -2, nx + 3
+				vol(j,k,l) = vol(j,k,l)*2.0D0
 			END DO
 		END DO
 	END DO
 END IF
 IF(NOT(fullz_flag)) THEN
-	DO l = -2, nz_2 + 3
-		DO k = -2, ny_2 + 3
-			DO j = -2, nx_2 + 3
-				vol2(j,k,l) = vol2(j,k,l)*2.0D0
+	DO l = -2, nz + 3
+		DO k = -2, ny + 3
+			DO j = -2, nx + 3
+				vol(j,k,l) = vol(j,k,l)*2.0D0
 			END DO
 		END DO
 	END DO
@@ -186,7 +161,7 @@ END IF
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 ! volume and surface element cannot be negative
 
-vol2(:,:,:) = ABS(vol2(:,:,:))
+vol(:,:,:) = ABS(vol(:,:,:))
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 

@@ -13,22 +13,15 @@ REAL*8, ALLOCATABLE, DIMENSION(:) :: usstarL, usstarR
 REAL*8, ALLOCATABLE, DIMENSION(:) :: pstarL, pstarR
 REAL*8, ALLOCATABLE, DIMENSION(:) :: psstarL, psstarR
 
-! Pressure !
-REAL*8, ALLOCATABLE, DIMENSION(:,:,:) :: p1L, p1R
-
 ! Left and right hydro-states for DM/NM !
-REAL*8, ALLOCATABLE, DIMENSION(:,:,:) :: eps1R, eps1L 
-REAL*8, ALLOCATABLE, DIMENSION(:,:,:) :: eps2R, eps2L
+REAL*8, ALLOCATABLE, DIMENSION(:,:,:) :: epsR, epsL
 
 ! Speed of sound !
-REAL*8, ALLOCATABLE, DIMENSION(:,:,:) :: cs1L, cs1R
-REAL*8, ALLOCATABLE, DIMENSION(:,:,:) :: cs2L, cs2R
+REAL*8, ALLOCATABLE, DIMENSION(:,:,:) :: csL, csR
 
 ! Left and right fluxes, conserved quantity !
-REAL*8, ALLOCATABLE, DIMENSION(:,:,:,:) :: primL1, primR1
-REAL*8, ALLOCATABLE, DIMENSION(:,:,:,:) :: primL2, primR2
-REAL*8, ALLOCATABLE, DIMENSION(:,:,:,:) :: fluxL1, fluxR1, uL1, uR1
-REAL*8, ALLOCATABLE, DIMENSION(:,:,:,:) :: fluxL2, fluxR2, uL2, uR2
+REAL*8, ALLOCATABLE, DIMENSION(:,:,:,:) :: primL, primR
+REAL*8, ALLOCATABLE, DIMENSION(:,:,:,:) :: fluxL, fluxR, uL, uR
 
 contains
 
@@ -49,7 +42,9 @@ contains
 	b2t2_mhd = (bt2*bt2/rho)
 	b2_mhd = b2n_mhd + b2t1_mhd + b2t2_mhd
 	b4_mhd = b2_mhd*b2_mhd
-	compute_signalspeed = DSQRT(0.5D0*(a2_mhd + b2_mhd + DSQRT(MAX((a4_mhd + b4_mhd + 2.0d0*b2_mhd*a2_mhd) - 4.0D0*a2_mhd*b2n_mhd, 0.0d0))))
+	compute_signalspeed = DSQRT(0.5D0*(a2_mhd + b2_mhd + & 
+	                      DSQRT(MAX((a4_mhd + b4_mhd + 2.0d0*b2_mhd*a2_mhd) & 
+												- 4.0D0*a2_mhd*b2n_mhd, 0.0d0))))
 	end function
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -92,42 +87,43 @@ contains
 	!$ACC ROUTINE SEQ
 	implicit none
 	REAL*8 :: pl, pr, rhol, rhor, vl, vr, sl, sr, bl, br
-	compute_sstar_hllc = (rhor*vr*(sr - vr) - rhol*vl*(sl-vl) + pl - pr + br*br - bl*bl) / &
-									(rhor*(sr-vr) - rhol*(sl-vl))
+	compute_sstar_hllc = (rhor*vr*(sr - vr) - rhol*vl*(sl-vl) + & 
+												pl - pr + br*br - bl*bl) / &
+												(rhor*(sr-vr) - rhol*(sl-vl))
 	end function
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 ! Assign left and right states and fluxes for riemann problem !
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-SUBROUTINE BUILDRIEMANN
+SUBROUTINE BUILD_RIEMANN
 USE DEFINITION 
 IMPLICIT NONE
 
 ! HLLC variables !
-ALLOCATE(ustarL(imin2:imax2))
-ALLOCATE(ustarR(imin2:imax2))
-ALLOCATE(pstarL(imin2:imax2))
-ALLOCATE(pstarR(imin2:imax2))
-ALLOCATE(u_hll(imin2:imax2))
-ALLOCATE(p_hll(imin2:imax2))
+ALLOCATE(ustarL(imin:imax))
+ALLOCATE(ustarR(imin:imax))
+ALLOCATE(pstarL(imin:imax))
+ALLOCATE(pstarR(imin:imax))
+ALLOCATE(u_hll(imin:imax))
+ALLOCATE(p_hll(imin:imax))
 
 ! HLLD variables !
-ALLOCATE(usstarL(imin2:imax2))
-ALLOCATE(usstarR(imin2:imax2))
-ALLOCATE(psstarL(imin2:imax2))
-ALLOCATE(psstarR(imin2:imax2))
+ALLOCATE(usstarL(imin:imax))
+ALLOCATE(usstarR(imin:imax))
+ALLOCATE(psstarL(imin:imax))
+ALLOCATE(psstarR(imin:imax))
 
 ! NM !
-ALLOCATE(eps2L(-2:nx_2+3,-2:ny_2+3,-2:nz_2+3))
-ALLOCATE(eps2R(-2:nx_2+3,-2:ny_2+3,-2:nz_2+3))
-ALLOCATE(cs2L(-2:nx_2+3,-2:ny_2+3,-2:nz_2+3))
-ALLOCATE(cs2R(-2:nx_2+3,-2:ny_2+3,-2:nz_2+3))
-ALLOCATE(fluxL2(imin2:imax2,-2:nx_2+3,-2:ny_2+3,-2:nz_2+3))
-ALLOCATE(fluxR2(imin2:imax2,-2:nx_2+3,-2:ny_2+3,-2:nz_2+3))
-ALLOCATE(uL2(imin2:imax2,-2:nx_2+3,-2:ny_2+3,-2:nz_2+3))
-ALLOCATE(uR2(imin2:imax2,-2:nx_2+3,-2:ny_2+3,-2:nz_2+3))
-ALLOCATE(primL2(imin2:imax2,-2:nx_2+3,-2:ny_2+3,-2:nz_2+3))
-ALLOCATE(primR2(imin2:imax2,-2:nx_2+3,-2:ny_2+3,-2:nz_2+3))
+ALLOCATE(epsL(-2:nx+3,-2:ny+3,-2:nz+3))
+ALLOCATE(epsR(-2:nx+3,-2:ny+3,-2:nz+3))
+ALLOCATE(csL(-2:nx+3,-2:ny+3,-2:nz+3))
+ALLOCATE(csR(-2:nx+3,-2:ny+3,-2:nz+3))
+ALLOCATE(fluxL(imin:imax,-2:nx+3,-2:ny+3,-2:nz+3))
+ALLOCATE(fluxR(imin:imax,-2:nx+3,-2:ny+3,-2:nz+3))
+ALLOCATE(uL(imin:imax,-2:nx+3,-2:ny+3,-2:nz+3))
+ALLOCATE(uR(imin:imax,-2:nx+3,-2:ny+3,-2:nz+3))
+ALLOCATE(primL(imin:imax,-2:nx+3,-2:ny+3,-2:nz+3))
+ALLOCATE(primR(imin:imax,-2:nx+3,-2:ny+3,-2:nz+3))
 
 END SUBROUTINE
 
@@ -175,19 +171,19 @@ IF(dir_in == x_dir) THEN
 	ibn = ibx 
 	ibt1 = iby
 	ibt2 = ibz
-	ivn = ivel2_x
+	ivn = ivx
 	kx = 0
 ELSEIF(dir_in == y_dir) THEN
 	ibn = iby
 	ibt1 = ibz
 	ibt2 = ibx
-	ivn = ivel2_y
+	ivn = ivy
 	ky = 0
 ELSEIF(dir_in == z_dir) THEN
 	ibn = ibz
 	ibt1 = ibx
 	ibt2 = iby
-	ivn = ivel2_z
+	ivn = ivz
 	kz = 0
 END IF
 
@@ -196,19 +192,19 @@ END IF
 ! For NM !
 !$OMP PARALLEL DO PRIVATE(cfsL, cfsR, sL, sR, splus) COLLAPSE(3) SCHEDULE(STATIC)
 !$ACC PARALLEL LOOP GANG WORKER VECTOR COLLAPSE(3) DEFAULT(PRESENT) PRIVATE(cfsL, cfsR, sL, sR, splus)
-DO l = nz_min_2 - 1, nz_part_2 + kz
-	DO k = ny_min_2 - 1, ny_part_2 + ky
-		DO j = nx_min_2 - 1, nx_part_2 + kx
+DO l = kz, nz 
+	DO k = ky, ny
+		DO j = kx, nx
 
 			! Signal speed !
-			cfsL = compute_signalspeed(cs2L(j,k,l), primL2(ibn,j,k,l), primL2(ibt1,j,k,l), primL2(ibt2,j,k,l), primL2(irho2,j,k,l))
-			cfsR = compute_signalspeed(cs2R(j,k,l), primR2(ibn,j,k,l), primR2(ibt1,j,k,l), primR2(ibt2,j,k,l), primR2(irho2,j,k,l))
-			sL = ABS(primL2(ivn,j,k,l)) + cfsL
-			sR = ABS(primR2(ivn,j,k,l)) + cfsR
+			cfsL = compute_signalspeed(csL(j,k,l), primL(ibn,j,k,l), primL(ibt1,j,k,l), primL(ibt2,j,k,l), primL(irho,j,k,l))
+			cfsR = compute_signalspeed(csR(j,k,l), primR(ibn,j,k,l), primR(ibt1,j,k,l), primR(ibt2,j,k,l), primR(irho,j,k,l))
+			sL = ABS(primL(ivn,j,k,l)) + cfsL
+			sR = ABS(primR(ivn,j,k,l)) + cfsR
 			splus = MAX(sL, sR)
 
 			! fluxes !
-			flux_2(imin2:imax2,j,k,l) = 0.5D0 * (fluxL2 (imin2:imax2,j,k,l) + fluxR2 (imin2:imax2,j,k,l) - splus * (uR2(imin2:imax2,j,k,l) - uL2 (imin2:imax2,j,k,l)))
+			flux(imin:imax,j,k,l) = 0.5D0 * (fluxL (imin:imax,j,k,l) + fluxR (imin:imax,j,k,l) - splus * (uR(imin:imax,j,k,l) - uL (imin:imax,j,k,l)))
 
 		END DO
 	END DO
@@ -270,19 +266,19 @@ IF(dir_in == x_dir) THEN
 	ibn = ibx 
 	ibt1 = iby
 	ibt2 = ibz
-	ivn = ivel2_x
+	ivn = ivx
 	kx = 0
 ELSEIF(dir_in == y_dir) THEN
 	ibn = iby
 	ibt1 = ibz
 	ibt2 = ibx
-	ivn = ivel2_y
+	ivn = ivy
 	ky = 0
 ELSEIF(dir_in == z_dir) THEN
 	ibn = ibz
 	ibt1 = ibx
 	ibt2 = iby
-	ivn = ivel2_z
+	ivn = ivz
 	kz = 0
 END IF
 
@@ -291,27 +287,27 @@ END IF
 ! For NM !
 !$OMP PARALLEL DO PRIVATE (sL, sR, cfsL, cfsR, ubar, cbar) COLLAPSE(3) SCHEDULE(STATIC) 
 !$ACC PARALLEL LOOP GANG WORKER VECTOR COLLAPSE(3) DEFAULT(PRESENT) PRIVATE (sL, sR, cfsL, cfsR, ubar, cbar) 
-DO l = nz_min_2 - 1, nz_part_2 + kz
-	DO k = ny_min_2 - 1, ny_part_2 + ky
-		DO j = nx_min_2 - 1, nx_part_2 + kx
+DO l = kz, nz 
+	DO k = ky, ny
+		DO j = kx, nx
 
 			! Signal speed !
-			cfsL = compute_signalspeed(cs2L(j,k,l), primL2(ibn,j,k,l), primL2(ibt1,j,k,l), primL2(ibt2,j,k,l), primL2(irho2,j,k,l))
-			cfsR = compute_signalspeed(cs2R(j,k,l), primR2(ibn,j,k,l), primR2(ibt1,j,k,l), primR2(ibt2,j,k,l), primR2(irho2,j,k,l))
-			ubar = compute_roe(primL2(ivn,j,k,l),primR2(ivn,j,k,l),primL2(irho2,j,k,l),primR2(irho2,j,k,l))
-			cbar = compute_roe(cfsL,cfsR,primL2(irho2,j,k,l),primR2(irho2,j,k,l))
-			sL = min(primL2(ivn,j,k,l) - cfsL, ubar - cbar)
-			sR = max(primR2(ivn,j,k,l) + cfsR, ubar + cbar)
+			cfsL = compute_signalspeed(csL(j,k,l), primL(ibn,j,k,l), primL(ibt1,j,k,l), primL(ibt2,j,k,l), primL(irho,j,k,l))
+			cfsR = compute_signalspeed(csR(j,k,l), primR(ibn,j,k,l), primR(ibt1,j,k,l), primR(ibt2,j,k,l), primR(irho,j,k,l))
+			ubar = compute_roe(primL(ivn,j,k,l),primR(ivn,j,k,l),primL(irho,j,k,l),primR(irho,j,k,l))
+			cbar = compute_roe(cfsL,cfsR,primL(irho,j,k,l),primR(irho,j,k,l))
+			sL = min(primL(ivn,j,k,l) - cfsL, ubar - cbar)
+			sR = max(primR(ivn,j,k,l) + cfsR, ubar + cbar)
 
 			! Find the flux !
 			IF(sL >= 0.0D0) THEN
-				flux_2(imin2:imax2,j,k,l) = fluxL2(imin2:imax2,j,k,l)
+				flux(imin:imax,j,k,l) = fluxL(imin:imax,j,k,l)
 			ELSEIF(sL <= 0.0D0 .AND. sR >= 0.0D0) THEN
-				DO i = imin2, imax2
-					flux_2(i,j,k,l) = compute_fluxhll(fluxL2(i,j,k,l),fluxR2(i,j,k,l),uL2(i,j,k,l),uR2(i,j,k,l),sL,sR)
+				DO i = imin, imax
+					flux(i,j,k,l) = compute_fluxhll(fluxL(i,j,k,l),fluxR(i,j,k,l),uL(i,j,k,l),uR(i,j,k,l),sL,sR)
 				END DO
 			ELSEIF(sR <= 0.0D0) THEN
-				flux_2(imin2:imax2,j,k,l) = fluxR2(imin2:imax2,j,k,l)
+				flux(imin:imax,j,k,l) = fluxR(imin:imax,j,k,l)
 			END IF
 
 		END DO
@@ -378,25 +374,25 @@ IF(dir_in == x_dir) THEN
 	ibn = ibx 
 	ibt1 = iby
 	ibt2 = ibz
-	ivn = ivel2_x
-	ivt1 = ivel2_y
-	ivt2 = ivel2_z
+	ivn = ivx
+	ivt1 = ivy
+	ivt2 = ivz
 	kx = 0
 ELSEIF(dir_in == y_dir) THEN
 	ibn = iby
 	ibt1 = ibz
 	ibt2 = ibx
-	ivn = ivel2_y
-	ivt1 = ivel2_z
-	ivt2 = ivel2_x
+	ivn = ivy
+	ivt1 = ivz
+	ivt2 = ivx
 	ky = 0
 ELSEIF(dir_in == z_dir) THEN
 	ibn = ibz
 	ibt1 = ibx
 	ibt2 = iby
-	ivn = ivel2_z
-	ivt1 = ivel2_x
-	ivt2 = ivel2_y
+	ivn = ivz
+	ivt1 = ivx
+	ivt2 = ivy
 	kz = 0
 END IF
 
@@ -407,94 +403,96 @@ END IF
 !$OMP sstar, pLs, pRs, ustarL, ustarR, u_hll, p_hll, vb, vbhll) COLLAPSE(3) SCHEDULE(STATIC)
 !$ACC PARALLEL LOOP GANG WORKER VECTOR COLLAPSE(3) DEFAULT(PRESENT) PRIVATE (pLt, pRt, b2L, b2R, &
 !$ACC sL, sR, cfsL, cfsR, ubar, cbar, sstar, pLs, pRs, ustarL, ustarR, u_hll, p_hll, vb, vbhll)
-DO l = nz_min_2 - 1, nz_part_2 + kz
-	DO k = ny_min_2 - 1, ny_part_2 + ky
-		DO j = nx_min_2 - 1, nx_part_2 + kx
+DO l = kz, nz 
+	DO k = ky, ny
+		DO j = kx, nx
 
 			! Signal speed !
-			cfsL = compute_signalspeed(cs2L(j,k,l), primL2(ibn,j,k,l), primL2(ibt1,j,k,l), primL2(ibt2,j,k,l), primL2(irho2,j,k,l))
-			cfsR = compute_signalspeed(cs2R(j,k,l), primR2(ibn,j,k,l), primR2(ibt1,j,k,l), primR2(ibt2,j,k,l), primR2(irho2,j,k,l))
-			ubar = compute_roe(primL2(ivn,j,k,l),primR2(ivn,j,k,l),primL2(irho2,j,k,l),primR2(irho2,j,k,l))
-			cbar = compute_roe(cfsL,cfsR,primL2(irho2,j,k,l),primR2(irho2,j,k,l))
-			sL = min(primL2(ivn,j,k,l) - cfsL, ubar - cbar)
-			sR = max(primR2(ivn,j,k,l) + cfsR, ubar + cbar)
+			cfsL = compute_signalspeed(csL(j,k,l), primL(ibn,j,k,l), primL(ibt1,j,k,l), primL(ibt2,j,k,l), primL(irho,j,k,l))
+			cfsR = compute_signalspeed(csR(j,k,l), primR(ibn,j,k,l), primR(ibt1,j,k,l), primR(ibt2,j,k,l), primR(irho,j,k,l))
+			ubar = compute_roe(primL(ivn,j,k,l),primR(ivn,j,k,l),primL(irho,j,k,l),primR(irho,j,k,l))
+			cbar = compute_roe(cfsL,cfsR,primL(irho,j,k,l),primR(irho,j,k,l))
+			sL = min(primL(ivn,j,k,l) - cfsL, ubar - cbar)
+			sR = max(primR(ivn,j,k,l) + cfsR, ubar + cbar)
 
 			! Compute state accordingly !
 			IF(sL >= 0.0d0) THEN
-				flux_2(imin2:imax2,j,k,l) = fluxL2(imin2:imax2,j,k,l)
+				flux(imin:imax,j,k,l) = fluxL(imin:imax,j,k,l)
 			ELSEIF(sR <= 0.0d0) THEN
-				flux_2(imin2:imax2,j,k,l) = fluxR2(imin2:imax2,j,k,l)
+				flux(imin:imax,j,k,l) = fluxR(imin:imax,j,k,l)
 			ELSE
 
 				! bsquare !
-				b2L = dot_product(primL2(ibx:ibz,j,k,l), primL2(ibx:ibz,j,k,l))
-				b2R = dot_product(primR2(ibx:ibz,j,k,l), primR2(ibx:ibz,j,k,l))
-				pLt = primL2(itau2,j,k,l) + 0.5D0*b2L
-				pRt = primR2(itau2,j,k,l) + 0.5D0*b2R
+				b2L = dot_product(primL(ibx:ibz,j,k,l), primL(ibx:ibz,j,k,l))
+				b2R = dot_product(primR(ibx:ibz,j,k,l), primR(ibx:ibz,j,k,l))
+				pLt = primL(itau,j,k,l) + 0.5D0*b2L
+				pRt = primR(itau,j,k,l) + 0.5D0*b2R
 
 				! Middle speed !
-				sstar = compute_sstar_hllc(pLt,pRt,primL2(irho2,j,k,l),primR2(irho2,j,k,l),primL2(ivn,j,k,l), &
-																		primR2(ivn,j,k,l),sL,sR,primL2(ibn,j,k,l),primR2(ibn,j,k,l))															
+				sstar = compute_sstar_hllc(pLt,pRt,primL(irho,j,k,l),primR(irho,j,k,l),primL(ivn,j,k,l), &
+																		primR(ivn,j,k,l),sL,sR,primL(ibn,j,k,l),primR(ibn,j,k,l))															
 
 				! Get HLL state !
-				u_hll(ibn) = primL2(ibn,j,k,l) ! or primR2, doesn't matter !
-				u_hll(ibt1) = compute_hll(primL2(ibt1,j,k,l),primR2(ibt1,j,k,l),fluxL2(ibt1,j,k,l),fluxR2(ibt1,j,k,l),sL,sR)
-				u_hll(ibt2) = compute_hll(primL2(ibt2,j,k,l),primR2(ibt2,j,k,l),fluxL2(ibt2,j,k,l),fluxR2(ibt2,j,k,l),sL,sR)
-				u_hll(irho2) = compute_hll(primL2(irho2,j,k,l),primR2(irho2,j,k,l),fluxL2(irho2,j,k,l),fluxR2(irho2,j,k,l),sL,sR)
-				u_hll(ivt1) = compute_hll(uL2(ivt1,j,k,l),uR2(ivt1,j,k,l),fluxL2(ivt1,j,k,l),fluxR2(ivt1,j,k,l),sL,sR)
-				u_hll(ivt2) = compute_hll(uL2(ivt2,j,k,l),uR2(ivt2,j,k,l),fluxL2(ivt2,j,k,l),fluxR2(ivt2,j,k,l),sL,sR)
+				u_hll(ibn) = primL(ibn,j,k,l) ! or primR, doesn't matter !
+				u_hll(ibt1) = compute_hll(primL(ibt1,j,k,l),primR(ibt1,j,k,l),fluxL(ibt1,j,k,l),fluxR(ibt1,j,k,l),sL,sR)
+				u_hll(ibt2) = compute_hll(primL(ibt2,j,k,l),primR(ibt2,j,k,l),fluxL(ibt2,j,k,l),fluxR(ibt2,j,k,l),sL,sR)
+				u_hll(irho) = compute_hll(primL(irho,j,k,l),primR(irho,j,k,l),fluxL(irho,j,k,l),fluxR(irho,j,k,l),sL,sR)
+				u_hll(ivt1) = compute_hll(uL(ivt1,j,k,l),uR(ivt1,j,k,l),fluxL(ivt1,j,k,l),fluxR(ivt1,j,k,l),sL,sR)
+				u_hll(ivt2) = compute_hll(uL(ivt2,j,k,l),uR(ivt2,j,k,l),fluxL(ivt2,j,k,l),fluxR(ivt2,j,k,l),sL,sR)
 				p_hll(ivn) = sstar
-				p_hll(ivt1) = u_hll(ivt1)/u_hll(irho2)
-				p_hll(ivt2) = u_hll(ivt2)/u_hll(irho2)
+				p_hll(ivt1) = u_hll(ivt1)/u_hll(irho)
+				p_hll(ivt2) = u_hll(ivt2)/u_hll(irho)
 
 				! Star state !
 				IF(sstar >= 0.0D0) THEN
 
 					! initialize star state !
-					ustarL(imin2:imax2) = uL2(imin2:imax2,j,k,l)*(sL - primL2(ivn,j,k,l))/(sL - sstar)
+					ustarL(irho) = uL(irho,j,k,l)*(sL - primL(ivn,j,k,l))/(sL - sstar)
+					ustarL(itau+1:ibx-1) = uL(itau+1:ibx-1,j,k,l)*(sL - primL(ivn,j,k,l))/(sL - sstar)
 
 					! dot product !
-					vb = dot_product(primL2(ibx:ibz,j,k,l), primL2(ivel2_x:ivel2_z,j,k,l))
-					vbhll = dot_product(u_hll(ibx:ibz), p_hll(ivel2_x:ivel2_z))
+					vb = dot_product(primL(ibx:ibz,j,k,l), primL(ivx:ivz,j,k,l))
+					vbhll = dot_product(u_hll(ibx:ibz), p_hll(ivx:ivz))
 		
 					! Star pressure !
-					pLs = primL2(irho2,j,k,l)*(sL - primL2(ivn,j,k,l))*(sstar - primL2(ivn,j,k,l)) + pLt
+					pLs = primL(irho,j,k,l)*(sL - primL(ivn,j,k,l))*(sstar - primL(ivn,j,k,l)) + pLt
 					
 					! left star state, note we follow castro to treat rhooeps as a scalar !
 					ustarL(ibn) = u_hll(ibn)
 					ustarL(ibt1) = u_hll(ibt1)
 					ustarL(ibt2) = u_hll(ibt2)
-					ustarL(ivn) = ustarL(irho2)*sstar
-					ustarL(ivt1) = (uL2(ivt1,j,k,l)*(sL - primL2(ivn,j,k,l)) - (ustarL(ibn)*ustarL(ibt1) - primL2(ibn,j,k,l)*primL2(ibt1,j,k,l)))/(sL - sstar)
-					ustarL(ivt2) = (uL2(ivt2,j,k,l)*(sL - primL2(ivn,j,k,l)) - (ustarL(ibn)*ustarL(ibt2) - primL2(ibn,j,k,l)*primL2(ibt2,j,k,l)))/(sL - sstar)
-					ustarL(itau2) = (uL2(itau2,j,k,l)*(sL - primL2(ivn,j,k,l)) + (pLs*sstar - pLt*primL2(ivn,j,k,l)) - ((vbhll*ustarL(ibn) - vb*primL2(ibn,j,k,l))))/(sL - sstar)
+					ustarL(ivn) = ustarL(irho)*sstar
+					ustarL(ivt1) = (uL(ivt1,j,k,l)*(sL - primL(ivn,j,k,l)) - (ustarL(ibn)*ustarL(ibt1) - primL(ibn,j,k,l)*primL(ibt1,j,k,l)))/(sL - sstar)
+					ustarL(ivt2) = (uL(ivt2,j,k,l)*(sL - primL(ivn,j,k,l)) - (ustarL(ibn)*ustarL(ibt2) - primL(ibn,j,k,l)*primL(ibt2,j,k,l)))/(sL - sstar)
+					ustarL(itau) = (uL(itau,j,k,l)*(sL - primL(ivn,j,k,l)) + (pLs*sstar - pLt*primL(ivn,j,k,l)) - ((vbhll*ustarL(ibn) - vb*primL(ibn,j,k,l))))/(sL - sstar)
 
 					! Compute fluxes !
-					flux_2(imin2:imax2,j,k,l) = fluxL2(imin2:imax2,j,k,l) + sL*(ustarL(imin2:imax2) - uL2(imin2:imax2,j,k,l))
+					flux(imin:imax,j,k,l) = fluxL(imin:imax,j,k,l) + sL*(ustarL(imin:imax) - uL(imin:imax,j,k,l))
 
 				ELSE
 
 					! initialize star state !
-					ustarR(imin2:imax2) = uR2(imin2:imax2,j,k,l)*(sR - primR2(ivn,j,k,l))/(sR - sstar)
+					ustarR(irho) = uR(irho,j,k,l)*(sR - primR(ivn,j,k,l))/(sR - sstar)
+					ustarR(itau+1:ibx-1) = uR(itau+1:ibx-1,j,k,l)*(sR - primR(ivn,j,k,l))/(sR - sstar)
 
 					! dot product !
-					vb = dot_product(primR2(ibx:ibz,j,k,l), primR2(ivel2_x:ivel2_z,j,k,l))
-					vbhll = dot_product(u_hll(ibx:ibz), p_hll(ivel2_x:ivel2_z))
+					vb = dot_product(primR(ibx:ibz,j,k,l), primR(ivx:ivz,j,k,l))
+					vbhll = dot_product(u_hll(ibx:ibz), p_hll(ivx:ivz))
 		
 					! Star pressure !
-					pRs = primR2(irho2,j,k,l)*(sR - primR2(ivn,j,k,l))*(sstar - primR2(ivn,j,k,l)) + pRt
+					pRs = primR(irho,j,k,l)*(sR - primR(ivn,j,k,l))*(sstar - primR(ivn,j,k,l)) + pRt
 					
 					! right star state, note we follow castro to treat rhooeps as a scalar !
 					ustarR(ibn) = u_hll(ibn)
 					ustarR(ibt1) = u_hll(ibt1)
 					ustarR(ibt2) = u_hll(ibt2)
-					ustarR(ivn) = ustarR(irho2)*sstar
-					ustarR(ivt1) = (uR2(ivt1,j,k,l)*(sR - primR2(ivn,j,k,l)) - (ustarR(ibn)*ustarR(ibt1) - primR2(ibn,j,k,l)*primR2(ibt1,j,k,l)))/(sR - sstar)
-					ustarR(ivt2) = (uR2(ivt2,j,k,l)*(sR - primR2(ivn,j,k,l)) - (ustarR(ibn)*ustarR(ibt2) - primR2(ibn,j,k,l)*primR2(ibt2,j,k,l)))/(sR - sstar)
-					ustarR(itau2) = (uR2(itau2,j,k,l)*(sR - primR2(ivn,j,k,l)) + (pRs*sstar - pRt*primR2(ivn,j,k,l)) - ((vbhll*ustarR(ibn) - vb*primR2(ibn,j,k,l))))/(sR - sstar)					
+					ustarR(ivn) = ustarR(irho)*sstar
+					ustarR(ivt1) = (uR(ivt1,j,k,l)*(sR - primR(ivn,j,k,l)) - (ustarR(ibn)*ustarR(ibt1) - primR(ibn,j,k,l)*primR(ibt1,j,k,l)))/(sR - sstar)
+					ustarR(ivt2) = (uR(ivt2,j,k,l)*(sR - primR(ivn,j,k,l)) - (ustarR(ibn)*ustarR(ibt2) - primR(ibn,j,k,l)*primR(ibt2,j,k,l)))/(sR - sstar)
+					ustarR(itau) = (uR(itau,j,k,l)*(sR - primR(ivn,j,k,l)) + (pRs*sstar - pRt*primR(ivn,j,k,l)) - ((vbhll*ustarR(ibn) - vb*primR(ibn,j,k,l))))/(sR - sstar)					
 
 					! Compute fluxes !
-					flux_2(imin2:imax2,j,k,l) = fluxR2(imin2:imax2,j,k,l) + sR*(ustarR(imin2:imax2) - uR2(imin2:imax2,j,k,l))
+					flux(imin:imax,j,k,l) = fluxR(imin:imax,j,k,l) + sR*(ustarR(imin:imax) - uR(imin:imax,j,k,l))
 
 				END IF
 
@@ -529,7 +527,7 @@ INTEGER, INTENT(IN) :: dir_in
 INTEGER :: i, j, k, l
 
 ! Signal speeds !
-REAL*8 :: b2l, b2r
+REAL*8 :: b2L, b2R
 REAL*8 :: cfsl, cfsr
 REAL*8 :: ubar, cbar
 REAL*8 :: fac_1, fac_2
@@ -564,82 +562,82 @@ IF(dir_in == x_dir) THEN
 	ibn = ibx 
 	ibt1 = iby
 	ibt2 = ibz
-	ivn = ivel2_x
-	ivt1 = ivel2_y
-	ivt2 = ivel2_z
+	ivn = ivx
+	ivt1 = ivy
+	ivt2 = ivz
 	kx = 0
 ELSEIF(dir_in == y_dir) THEN
 	ibn = iby
 	ibt1 = ibz
 	ibt2 = ibx
-	ivn = ivel2_y
-	ivt1 = ivel2_z
-	ivt2 = ivel2_x
+	ivn = ivy
+	ivt1 = ivz
+	ivt2 = ivx
 	ky = 0
 ELSEIF(dir_in == z_dir) THEN
 	ibn = ibz
 	ibt1 = ibx
 	ibt2 = iby
-	ivn = ivel2_z
-	ivt1 = ivel2_x
-	ivt2 = ivel2_y
+	ivn = ivz
+	ivt1 = ivx
+	ivt2 = ivy
 	kz = 0
 END IF
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 ! For NM !
-!$OMP PARALLEL DO PRIVATE (ubar, cbar, cfsl, cfsr, b2l, b2r, plt, prt, pls, prs, &
+!$OMP PARALLEL DO PRIVATE (ubar, cbar, cfsl, cfsr, b2L, b2R, plt, prt, pls, prs, &
 !$OMP sstarl, sstarr, bdotu, bdotus, bdotuss, sl, sr, sm, fac_1, fac_2, & 
 !$OMP ustarL, ustarR, usstarL, usstarR, pstarL, pstarR, psstarL, psstarR) COLLAPSE(3) SCHEDULE(STATIC) 
 !$ACC PARALLEL LOOP GANG WORKER VECTOR COLLAPSE(3) DEFAULT(PRESENT) PRIVATE (ubar, cbar, cfsl, cfsr, & 
-!$ACC b2l, b2r, plt, prt, pls, prs, sstarl, sstarr, bdotu, bdotus, bdotuss, sl, sr, sm, fac_1, fac_2, & 
+!$ACC b2L, b2R, plt, prt, pls, prs, sstarl, sstarr, bdotu, bdotus, bdotuss, sl, sr, sm, fac_1, fac_2, & 
 !$ACC ustarL, ustarR, usstarL, usstarR, pstarL, pstarR, psstarL, psstarR)
-DO l = nz_min_2 - 1, nz_part_2 + kz
-	DO k = ny_min_2 - 1, ny_part_2 + ky
-		DO j = nx_min_2 - 1, nx_part_2 + kx
+DO l = kz, nz 
+	DO k = ky, ny
+		DO j = kx, nx
 
 			! Signal speed !
-			cfsL = compute_signalspeed(cs2L(j,k,l), primL2(ibn,j,k,l), primL2(ibt1,j,k,l), primL2(ibt2,j,k,l), primL2(irho2,j,k,l))
-			cfsR = compute_signalspeed(cs2R(j,k,l), primR2(ibn,j,k,l), primR2(ibt1,j,k,l), primR2(ibt2,j,k,l), primR2(irho2,j,k,l))
-			ubar = compute_roe(primL2(ivn,j,k,l),primR2(ivn,j,k,l),primL2(irho2,j,k,l),primR2(irho2,j,k,l))
-			cbar = compute_roe(cfsL,cfsR,primL2(irho2,j,k,l),primR2(irho2,j,k,l))
-			sL = min(primL2(ivn,j,k,l) - cfsL, ubar - cbar)
-			sR = max(primR2(ivn,j,k,l) + cfsR, ubar + cbar)
+			cfsL = compute_signalspeed(csL(j,k,l), primL(ibn,j,k,l), primL(ibt1,j,k,l), primL(ibt2,j,k,l), primL(irho,j,k,l))
+			cfsR = compute_signalspeed(csR(j,k,l), primR(ibn,j,k,l), primR(ibt1,j,k,l), primR(ibt2,j,k,l), primR(irho,j,k,l))
+			ubar = compute_roe(primL(ivn,j,k,l),primR(ivn,j,k,l),primL(irho,j,k,l),primR(irho,j,k,l))
+			cbar = compute_roe(cfsL,cfsR,primL(irho,j,k,l),primR(irho,j,k,l))
+			sL = min(primL(ivn,j,k,l) - cfsL, ubar - cbar)
+			sR = max(primR(ivn,j,k,l) + cfsR, ubar + cbar)
 
 			! Compute state accordingly !
 			IF(sL >= 0.0d0) THEN
-				flux_2(imin2:imax2,j,k,l) = fluxL2(imin2:imax2,j,k,l)
+				flux(imin:imax,j,k,l) = fluxL(imin:imax,j,k,l)
 			ELSEIF(sR <= 0.0d0) THEN
-				flux_2(imin2:imax2,j,k,l) = fluxR2(imin2:imax2,j,k,l)
+				flux(imin:imax,j,k,l) = fluxR(imin:imax,j,k,l)
 			ELSE
 
 				! bsquare !
-				b2L = dot_product(primL2(ibx:ibz,j,k,l), primL2(ibx:ibz,j,k,l))
-				b2R = dot_product(primR2(ibx:ibz,j,k,l), primR2(ibx:ibz,j,k,l))
-				pLt = primL2(itau2,j,k,l) + 0.5D0*b2L
-				pRt = primR2(itau2,j,k,l) + 0.5D0*b2R
+				b2L = dot_product(primL(ibx:ibz,j,k,l), primL(ibx:ibz,j,k,l))
+				b2R = dot_product(primR(ibx:ibz,j,k,l), primR(ibx:ibz,j,k,l))
+				pLt = primL(itau,j,k,l) + 0.5D0*b2L
+				pRt = primR(itau,j,k,l) + 0.5D0*b2R
 
 				! star-state wave speed !
-				sM = compute_sstar_hllc(pLt,pRt,primL2(irho2,j,k,l),primR2(irho2,j,k,l),primL2(ivn,j,k,l),&
-																primR2(ivn,j,k,l),sL,sR,primL2(ibn,j,k,l),primR2(ibn,j,k,l))
+				sM = compute_sstar_hllc(pLt,pRt,primL(irho,j,k,l),primR(irho,j,k,l),primL(ivn,j,k,l),&
+																primR(ivn,j,k,l),sL,sR,primL(ibn,j,k,l),primR(ibn,j,k,l))
 
 				! initialize star state !
-				ustarL(imin2:imax2) = uL2(imin2:imax2,j,k,l)*(sL - primL2(ivn,j,k,l))/(sL - sM)
-				ustarR(imin2:imax2) = uR2(imin2:imax2,j,k,l)*(sR - primR2(ivn,j,k,l))/(sR - sM)
+				ustarL(irho:ibx-1) = uL(irho:ibx-1,j,k,l)*(sL - primL(ivn,j,k,l))/(sL - sM)
+				ustarR(irho:ibx-1) = uR(irho:ibx-1,j,k,l)*(sR - primR(ivn,j,k,l))/(sR - sM)
 				
 				! Multi-state wave speed !
-				sstarL = sM - ABS(primL2(ibn,j,k,l))/DSQRT(ustarL(irho2))
-				sstarR = sM + ABS(primR2(ibn,j,k,l))/DSQRT(ustarR(irho2))
+				sstarL = sM - ABS(primL(ibn,j,k,l))/DSQRT(ustarL(irho))
+				sstarR = sM + ABS(primR(ibn,j,k,l))/DSQRT(ustarR(irho))
 
 				! Condition to revert to HLLC, copied from pluto !
-				IF (((sstarL - sL) <  1.e-4*(sM - sL)) .OR. ((sstarR - sR) > -1.e-4*(sR - sM))) THEN
+				IF (((sstarL - sL) <  1.0d-4*(sM - sL)) .OR. ((sstarR - sR) > - 1.0d-4*(sR - sM))) THEN
 
 					! HLLC state !
-					ustarL(ibn) = primL2(ibn,j,k,l)
-					ustarL(ibt1) = compute_hll(primL2(ibt1,j,k,l),primR2(ibt1,j,k,l),fluxL2(ibt1,j,k,l),fluxR2(ibt1,j,k,l),sL,sR)
-					ustarL(ibt2) = compute_hll(primL2(ibt2,j,k,l),primR2(ibt2,j,k,l),fluxL2(ibt2,j,k,l),fluxR2(ibt2,j,k,l),sL,sR)
-					ustarR(ibn) = primR2(ibn,j,k,l)
+					ustarL(ibn) = primL(ibn,j,k,l)
+					ustarL(ibt1) = compute_hll(primL(ibt1,j,k,l),primR(ibt1,j,k,l),fluxL(ibt1,j,k,l),fluxR(ibt1,j,k,l),sL,sR)
+					ustarL(ibt2) = compute_hll(primL(ibt2,j,k,l),primR(ibt2,j,k,l),fluxL(ibt2,j,k,l),fluxR(ibt2,j,k,l),sL,sR)
+					ustarR(ibn) = primR(ibn,j,k,l)
 					ustarR(ibt1) = ustarL(ibt1)
 					ustarR(ibt2) = ustarL(ibt2)
 
@@ -650,80 +648,82 @@ DO l = nz_min_2 - 1, nz_part_2 + kz
 				ELSE
 
 					! left states !
-					fac_1 = (primL2(irho2,j,k,l)*(sL - primL2(ivn,j,k,l))*(sL - sM) - primL2(ibn,j,k,l)*primL2(ibn,j,k,l))
-					ustarL(ibn) = primL2(ibn,j,k,l)
-					ustarL(ibt1) = (primL2(ibt1,j,k,l)*(primL2(irho2,j,k,l)*(sL - primL2(ivn,j,k,l))*(sL - primL2(ivn,j,k,l)) - primL2(ibn,j,k,l)*primL2(ibn,j,k,l)))/fac_1
-					ustarL(ibt2) = (primL2(ibt2,j,k,l)*(primL2(irho2,j,k,l)*(sL - primL2(ivn,j,k,l))*(sL - primL2(ivn,j,k,l)) - primL2(ibn,j,k,l)*primL2(ibn,j,k,l)))/fac_1
+					fac_1 = (primL(irho,j,k,l)*(sL - primL(ivn,j,k,l))*(sL - sM) - primL(ibn,j,k,l)*primL(ibn,j,k,l))
+					ustarL(ibn) = primL(ibn,j,k,l)
+					ustarL(ibt1) = (primL(ibt1,j,k,l)*(primL(irho,j,k,l)*(sL - primL(ivn,j,k,l))*(sL - primL(ivn,j,k,l)) - primL(ibn,j,k,l)*primL(ibn,j,k,l)))/fac_1
+					ustarL(ibt2) = (primL(ibt2,j,k,l)*(primL(irho,j,k,l)*(sL - primL(ivn,j,k,l))*(sL - primL(ivn,j,k,l)) - primL(ibn,j,k,l)*primL(ibn,j,k,l)))/fac_1
 
 					! right states !
-					fac_1 = (primR2(irho2,j,k,l)*(sR - primR2(ivn,j,k,l))*(sR - sM) - primR2(ibn,j,k,l)*primR2(ibn,j,k,l))
-					ustarR(ibn) = primR2(ibn,j,k,l)
-					ustarR(ibt1) = (primR2(ibt1,j,k,l)*(primR2(irho2,j,k,l)*(sR - primR2(ivn,j,k,l))*(sR - primR2(ivn,j,k,l)) - primR2(ibn,j,k,l)*primR2(ibn,j,k,l)))/fac_1
-					ustarR(ibt2) = (primR2(ibt2,j,k,l)*(primR2(irho2,j,k,l)*(sR - primR2(ivn,j,k,l))*(sR - primR2(ivn,j,k,l)) - primR2(ibn,j,k,l)*primR2(ibn,j,k,l)))/fac_1
+					fac_1 = (primR(irho,j,k,l)*(sR - primR(ivn,j,k,l))*(sR - sM) - primR(ibn,j,k,l)*primR(ibn,j,k,l))
+					ustarR(ibn) = primR(ibn,j,k,l)
+					ustarR(ibt1) = (primR(ibt1,j,k,l)*(primR(irho,j,k,l)*(sR - primR(ivn,j,k,l))*(sR - primR(ivn,j,k,l)) - primR(ibn,j,k,l)*primR(ibn,j,k,l)))/fac_1
+					ustarR(ibt2) = (primR(ibt2,j,k,l)*(primR(irho,j,k,l)*(sR - primR(ivn,j,k,l))*(sR - primR(ivn,j,k,l)) - primR(ibn,j,k,l)*primR(ibn,j,k,l)))/fac_1
 
 				END IF
 
 				! Momentum !
-				ustarL(ivn) = ustarL(irho2)*sM
-				ustarL(ivt1) = ustarL(ivt1) - (ustarL(ibn)*ustarL(ibt1) - primL2(ibn,j,k,l)*primL2(ibt1,j,k,l))/(sL - sM)
-				ustarL(ivt2) = ustarL(ivt2) - (ustarL(ibn)*ustarL(ibt2) - primL2(ibn,j,k,l)*primL2(ibt2,j,k,l))/(sL - sM)
+				ustarL(ivn) = ustarL(irho)*sM
+				ustarL(ivt1) = ustarL(ivt1) - (ustarL(ibn)*ustarL(ibt1) - primL(ibn,j,k,l)*primL(ibt1,j,k,l))/(sL - sM)
+				ustarL(ivt2) = ustarL(ivt2) - (ustarL(ibn)*ustarL(ibt2) - primL(ibn,j,k,l)*primL(ibt2,j,k,l))/(sL - sM)
 
 				! Momentum !
-				ustarR(ivn) = ustarR(irho2)*sM
-				ustarR(ivt1) = ustarR(ivt1) - (ustarR(ibn)*ustarR(ibt1) - primR2(ibn,j,k,l)*primR2(ibt1,j,k,l))/(sR - sM)
-				ustarR(ivt2) = ustarR(ivt2) - (ustarR(ibn)*ustarR(ibt2) - primR2(ibn,j,k,l)*primR2(ibt2,j,k,l))/(sR - sM)
+				ustarR(ivn) = ustarR(irho)*sM
+				ustarR(ivt1) = ustarR(ivt1) - (ustarR(ibn)*ustarR(ibt1) - primR(ibn,j,k,l)*primR(ibt1,j,k,l))/(sR - sM)
+				ustarR(ivt2) = ustarR(ivt2) - (ustarR(ibn)*ustarR(ibt2) - primR(ibn,j,k,l)*primR(ibt2,j,k,l))/(sR - sM)
 
 				! Velocity !
 				pstarL(ivn) = sM
-				pstarL(ivt1) = ustarL(ivt1)/ustarL(irho2)
-				pstarL(ivt2) = ustarL(ivt2)/ustarL(irho2)
+				pstarL(ivt1) = ustarL(ivt1)/ustarL(irho)
+				pstarL(ivt2) = ustarL(ivt2)/ustarL(irho)
 				pstarR(ivn) = sM
-				pstarR(ivt1) = ustarR(ivt1)/ustarR(irho2)
-				pstarR(ivt2) = ustarR(ivt2)/ustarR(irho2)
+				pstarR(ivt1) = ustarR(ivt1)/ustarR(irho)
+				pstarR(ivt2) = ustarR(ivt2)/ustarR(irho)
 
 				! Presure !
-				pLs = primL2(irho2,j,k,l)*(sL - primL2(ivn,j,k,l))*(sM - primL2(ivn,j,k,l)) + pLt
-				pRs = primR2(irho2,j,k,l)*(sR - primR2(ivn,j,k,l))*(sM - primR2(ivn,j,k,l)) + pRt
+				pLs = primL(irho,j,k,l)*(sL - primL(ivn,j,k,l))*(sM - primL(ivn,j,k,l)) + pLt
+				pRs = primR(irho,j,k,l)*(sR - primR(ivn,j,k,l))*(sM - primR(ivn,j,k,l)) + pRt
 				
 				! Internal energy !
-				bdotu = dot_product(primL2(ibx:ibz,j,k,l), primL2(ivel2_x:ivel2_z,j,k,l))
-				bdotus = dot_product(ustarL(ibx:ibz), pstarL(ivel2_x:ivel2_z))
-				ustarL(itau2) = ustarL(itau2) + ((pLs*sM - pLt*primL2(ivn,j,k,l)) - (bdotus - bdotu)*primL2(ibn,j,k,l))/(sL - sM)
+				bdotu = dot_product(primL(ibx:ibz,j,k,l), primL(ivx:ivz,j,k,l))
+				bdotus = dot_product(ustarL(ibx:ibz), pstarL(ivx:ivz))
+				ustarL(itau) = ustarL(itau) + ((pLs*sM - pLt*primL(ivn,j,k,l)) - (bdotus - bdotu)*primL(ibn,j,k,l))/(sL - sM)
 
 				! Right state !
-				bdotu = dot_product(primR2(ibx:ibz,j,k,l), primR2(ivel2_x:ivel2_z,j,k,l))
-				bdotus = dot_product(ustarR(ibx:ibz), pstarR(ivel2_x:ivel2_z))
-				ustarR(itau2) = ustarR(itau2) + ((pRs*sM - pRt*primR2(ivn,j,k,l)) - (bdotus - bdotu)*primR2(ibn,j,k,l))/(sR - sM)
+				bdotu = dot_product(primR(ibx:ibz,j,k,l), primR(ivx:ivz,j,k,l))
+				bdotus = dot_product(ustarR(ibx:ibz), pstarR(ivx:ivz))
+				ustarR(itau) = ustarR(itau) + ((pRs*sM - pRt*primR(ivn,j,k,l)) - (bdotus - bdotu)*primR(ibn,j,k,l))/(sR - sM)
 
 				! Choose state !
 				IF(sstarL >= 0.0d0) THEN
-					flux_2(imin2:imax2,j,k,l) = fluxL2(imin2:imax2,j,k,l) + sL*(ustarL(imin2:imax2) - uL2(imin2:imax2,j,k,l))
+					flux(imin:imax,j,k,l) = fluxL(imin:imax,j,k,l) + sL*(ustarL(imin:imax) - uL(imin:imax,j,k,l))
 				ELSEIF(sstarR <= 0.0d0) THEN
-					flux_2(imin2:imax2,j,k,l) = fluxR2(imin2:imax2,j,k,l) + sR*(ustarR(imin2:imax2) - uR2(imin2:imax2,j,k,l))
+					flux(imin:imax,j,k,l) = fluxR(imin:imax,j,k,l) + sR*(ustarR(imin:imax) - uR(imin:imax,j,k,l))
 				ELSE
 
 					! initialize star state !
-					usstarL(imin2:imax2) = ustarL(imin2:imax2)
-					usstarR(imin2:imax2) = ustarR(imin2:imax2)
+					usstarL(irho) = ustarL(irho)
+					usstarL(itau+1:ibx-1) = ustarL(itau+1:ibx-1)
+					usstarR(irho) = ustarR(irho)
+					usstarR(itau+1:ibx-1) = ustarR(itau+1:ibx-1)
 
 					! factor !
-					fac_1 = 1.0d0 / (DSQRT(ustarL(irho2)) + DSQRT(ustarR(irho2)))
-					fac_2 = SIGN(1.0d0,primL2(ibn,j,k,l))
+					fac_1 = 1.0d0 / (DSQRT(ustarL(irho)) + DSQRT(ustarR(irho)))
+					fac_2 = SIGN(1.0d0,primL(ibn,j,k,l))
 
 					! left states !
 					psstarL(ivn) = sM 
-					psstarL(ivt1) = fac_1*(DSQRT(ustarL(irho2))*pstarL(ivt1) + DSQRT(ustarR(irho2))*pstarR(ivt1) + (ustarR(ibt1) - ustarL(ibt1))*fac_2)
-					psstarL(ivt2) = fac_1*(DSQRT(ustarL(irho2))*pstarL(ivt2) + DSQRT(ustarR(irho2))*pstarR(ivt2) + (ustarR(ibt2) - ustarL(ibt2))*fac_2)
-					usstarL(ibt1) = fac_1*(DSQRT(ustarL(irho2))*ustarR(ibt1) + DSQRT(ustarR(irho2))*ustarL(ibt1) + DSQRT(ustarL(irho2)*ustarR(irho2))*(pstarR(ivt1) - pstarL(ivt1))*fac_2)
-					usstarL(ibt2) = fac_1*(DSQRT(ustarL(irho2))*ustarR(ibt2) + DSQRT(ustarR(irho2))*ustarL(ibt2) + DSQRT(ustarL(irho2)*ustarR(irho2))*(pstarR(ivt2) - pstarL(ivt2))*fac_2)
+					psstarL(ivt1) = fac_1*(DSQRT(ustarL(irho))*pstarL(ivt1) + DSQRT(ustarR(irho))*pstarR(ivt1) + (ustarR(ibt1) - ustarL(ibt1))*fac_2)
+					psstarL(ivt2) = fac_1*(DSQRT(ustarL(irho))*pstarL(ivt2) + DSQRT(ustarR(irho))*pstarR(ivt2) + (ustarR(ibt2) - ustarL(ibt2))*fac_2)
+					usstarL(ibt1) = fac_1*(DSQRT(ustarL(irho))*ustarR(ibt1) + DSQRT(ustarR(irho))*ustarL(ibt1) + DSQRT(ustarL(irho)*ustarR(irho))*(pstarR(ivt1) - pstarL(ivt1))*fac_2)
+					usstarL(ibt2) = fac_1*(DSQRT(ustarL(irho))*ustarR(ibt2) + DSQRT(ustarR(irho))*ustarL(ibt2) + DSQRT(ustarL(irho)*ustarR(irho))*(pstarR(ivt2) - pstarL(ivt2))*fac_2)
 
 					! Momentum and internal energy !
-					usstarL(ivn) = usstarL(irho2)*psstarL(ivn)
-					usstarL(ivt1) = usstarL(irho2)*psstarL(ivt1)
-					usstarL(ivt2) = usstarL(irho2)*psstarL(ivt2)
-					bdotus = dot_product(ustarL(ibx:ibz), pstarL(ivel2_x:ivel2_z))
-					bdotuss = dot_product(usstarL(ibx:ibz), psstarL(ivel2_x:ivel2_z))
-					usstarL(itau2) = ustarL(itau2) - DSQRT(ustarL(irho2))*(bdotus - bdotuss)*fac_2
+					usstarL(ivn) = usstarL(irho)*psstarL(ivn)
+					usstarL(ivt1) = usstarL(irho)*psstarL(ivt1)
+					usstarL(ivt2) = usstarL(irho)*psstarL(ivt2)
+					bdotus = dot_product(ustarL(ibx:ibz), pstarL(ivx:ivz))
+					bdotuss = dot_product(usstarL(ibx:ibz), psstarL(ivx:ivz))
+					usstarL(itau) = ustarL(itau) - DSQRT(ustarL(irho))*(bdotus - bdotuss)*fac_2
 					
 					! Right state
 					psstarR(ivn) = sM
@@ -733,18 +733,18 @@ DO l = nz_min_2 - 1, nz_part_2 + kz
 					usstarR(ibt2) = usstarL(ibt2)
 
 					! Momentum and internal energy !
-					usstarR(ivn) = usstarR(irho2)*psstarR(ivn)
-					usstarR(ivt1) = usstarR(irho2)*psstarR(ivt1)
-					usstarR(ivt2) = usstarR(irho2)*psstarR(ivt2)
-					bdotus = dot_product(ustarR(ibx:ibz), pstarR(ivel2_x:ivel2_z))
-					bdotuss = dot_product(usstarR(ibx:ibz), psstarR(ivel2_x:ivel2_z))
-					usstarR(itau2) = ustarR(itau2) + DSQRT(ustarR(irho2))*(bdotus - bdotuss)*fac_2
+					usstarR(ivn) = usstarR(irho)*psstarR(ivn)
+					usstarR(ivt1) = usstarR(irho)*psstarR(ivt1)
+					usstarR(ivt2) = usstarR(irho)*psstarR(ivt2)
+					bdotus = dot_product(ustarR(ibx:ibz), pstarR(ivx:ivz))
+					bdotuss = dot_product(usstarR(ibx:ibz), psstarR(ivx:ivz))
+					usstarR(itau) = ustarR(itau) + DSQRT(ustarR(irho))*(bdotus - bdotuss)*fac_2
 
 					! Choose state !
 					IF(sM >= 0.0d0) THEN
-						flux_2(imin2:imax2,j,k,l) = fluxL2(imin2:imax2,j,k,l) + sL*(ustarL(imin2:imax2) - uL2(imin2:imax2,j,k,l)) + sstarL*(usstarL(imin2:imax2) - ustarL(imin2:imax2))
+						flux(imin:imax,j,k,l) = fluxL(imin:imax,j,k,l) + sL*(ustarL(imin:imax) - uL(imin:imax,j,k,l)) + sstarL*(usstarL(imin:imax) - ustarL(imin:imax))
 					ELSE
-						flux_2(imin2:imax2,j,k,l) = fluxR2(imin2:imax2,j,k,l) + sR*(ustarR(imin2:imax2) - uR2(imin2:imax2,j,k,l)) + sstarR*(usstarR(imin2:imax2) - ustarR(imin2:imax2))
+						flux(imin:imax,j,k,l) = fluxR(imin:imax,j,k,l) + sR*(ustarR(imin:imax) - uR(imin:imax,j,k,l)) + sstarR*(usstarR(imin:imax) - ustarR(imin:imax))
 					END IF
 
 				END IF

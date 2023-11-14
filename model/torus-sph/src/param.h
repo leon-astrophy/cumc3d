@@ -6,14 +6,11 @@
 ! Magnetic field properties !
 
 ! Magnetisation parameter !
-REAL*8, PARAMETER :: p_beta = 100.0
+REAL*8, PARAMETER :: p_beta = 350.0
 
 ! magnetic field normalization mode !
 LOGICAL, PARAMETER :: normalize_by_vol = .false.
 LOGICAL, PARAMETER :: normalize_by_minbeta = .true.
-
-! use refined gird? !
-LOGICAL, PARAMETER :: refined_grid = .false.
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 ! Torus physical properties !
@@ -31,19 +28,25 @@ REAL*8, PARAMETER :: q_grad = 2.0d0
 ! Torus size, and computational grid !
 
 ! inner (equatorial) radius of the torus !
-REAL*8, PARAMETER :: s_0 = 3.0d0
+REAL*8, PARAMETER :: s_in = 3.0d0
 
 ! (equatorial) radius where the density is at maximum !
 REAL*8, PARAMETER :: s_max = 4.7d0
 
-! outer (equatorial) radius of the torus !
-REAL*8, PARAMETER :: s_1 = 8.0d0
+! Custom grid? !
+LOGICAL, PARAMETER :: refine_grid = .true. 
 
-! Outer domain of the box in the r-direction to contain finest resolution !
-REAL*8, PARAMETER :: x_fine = 11.5D0
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+! Corona !
 
-! Inner domain of the box in the theta-direction to contain finest resolution !
-REAL*8, PARAMETER :: y_fine = pi/4.0d0
+! Want a corona? !
+LOGICAL, PARAMETER :: corona = .false. 
+
+! ideal gas m/kt !
+REAL*8, PARAMETER :: a_corn = 1.0d0
+
+! Density scale 
+REAL*8, PARAMETER :: a_eta = 1.0d-4
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 ! Controlling density/magnetic field floor

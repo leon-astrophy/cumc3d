@@ -1,5 +1,5 @@
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-! CUMC3D_Ver2022-1.0 (Last Modified: Leon)
+! CUMC3D-Ver1.65 (Last Modified: Leon)
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 ! Foreword:
 ! Developed by Leung Shing Chi based on the WENO prototype developed by Wong Ka Wing in 2010
@@ -17,12 +17,6 @@ INTEGER, PARAMETER :: even = 0, odd = 1
 ! Which direction of reconstruction
 INTEGER, PARAMETER :: x_dir = 1, y_dir = 2, z_dir = 3
 
-! Apply boundary conditions to the full/partial box
-INTEGER, PARAMETER :: part = 0, full = 1	
-
-! Which type of matter considering
-INTEGER, PARAMETER :: dm_f = 1, nm_f = 2
-
 ! pi constant 
 REAL*8, PARAMETER :: pi = 4.D0*DATAN(1.D0)
 
@@ -37,10 +31,10 @@ REAL*8, PARAMETER :: small_num = TINY(1.0D0)
 ! 0 = Cartesian coordinate
 ! 1 = Cylindrical coordinate
 ! 2 = Spherical coordinate
-INTEGER, PARAMETER :: coordinate_flag = 2
+INTEGER, PARAMETER :: coordinate_flag = 1
 
 ! Dimension, 1 = 1D, 2 = 2D, 3 = 3D
-INTEGER, PARAMETER :: n_dim = 2
+INTEGER, PARAMETER :: n_dim = 3
 
 ! Flag for boundary condition
 ! The boundary flag is defined by four scalar
@@ -55,7 +49,7 @@ INTEGER, PARAMETER :: n_dim = 2
 ! 2 = reflecting boundary (depend on scalar/vector)
 ! 3 = axis-symmetric
 ! 4 = equatorial-symmetric
-INTEGER :: boundary_flag(6) = (/1,1,3,3,0,0/)
+INTEGER :: boundary_flag(6) = (/1,1,0,0,1,1/)
 
 ! Flag for simulating with the full box (extend to negative x,y,z)
 LOGICAL, PARAMETER :: fullx_flag = .false.
@@ -63,49 +57,28 @@ LOGICAL, PARAMETER :: fully_flag = .false.
 LOGICAL, PARAMETER :: fullz_flag = .false.
 
 ! Starting position of the grid !
-REAL*8, PARAMETER :: x1_start = 0.0d0
-REAL*8, PARAMETER :: y1_start = 0.0d0
-REAL*8, PARAMETER :: z1_start = 0.0d0
+REAL*8, PARAMETER :: x_start = 1.5d0
+REAL*8, PARAMETER :: y_start = 0.0d0
+REAL*8, PARAMETER :: z_start = -10.0d0
 
 ! Ending position of the grid !
-REAL*8, PARAMETER :: x1_end = 1.0d0
-REAL*8, PARAMETER :: y1_end = 1.0d0
-REAL*8, PARAMETER :: z1_end = 1.0d0
-
-! The number of grid in the x,y,z direction for DM
-INTEGER, PARAMETER :: nx_1 = 1
-INTEGER, PARAMETER :: ny_1 = 1
-INTEGER, PARAMETER :: nz_1 = 1
-
-! Grid sizes for DM 
-! Hint: The standard grid size (Note: 1 unit = 1.4774 km)
-REAL*8, PARAMETER :: dx1_ini = (x1_end - x1_start)/DBLE(nx_1)	
-REAL*8, PARAMETER :: dy1_ini = (y1_end - y1_start)/DBLE(ny_1)	
-REAL*8, PARAMETER :: dz1_ini = (z1_end - z1_start)/DBLE(nz_1)	
-
-! Starting position of the grid !
-REAL*8, PARAMETER :: x2_start = 1.5d0
-REAL*8, PARAMETER :: y2_start = 0.0d0
-REAL*8, PARAMETER :: z2_start = 0.0d0
-
-! Ending position of the grid !
-REAL*8, PARAMETER :: x2_end = 11.5d0
-REAL*8, PARAMETER :: y2_end = pi
-REAL*8, PARAMETER :: z2_end = 2.0d0*pi
+REAL*8, PARAMETER :: x_end = 21.5d0
+REAL*8, PARAMETER :: y_end = 2.0d0*pi
+REAL*8, PARAMETER :: z_end = 10.0d0
 
 ! The number of grid in the x,y,z direction for NM
-INTEGER, PARAMETER :: nx_2 = 128
-INTEGER, PARAMETER :: ny_2 = 128
-INTEGER, PARAMETER :: nz_2 = 1
+INTEGER, PARAMETER :: nx = 128 
+INTEGER, PARAMETER :: ny = 128
+INTEGER, PARAMETER :: nz = 128
 
 ! Grid sizes for NM
-REAL*8, PARAMETER :: dx2_ini = (x2_end - x2_start)/DBLE(nx_2)	
-REAL*8, PARAMETER :: dy2_ini = (y2_end - y2_start)/DBLE(ny_2)	
-REAL*8, PARAMETER :: dz2_ini = (z2_end - z2_start)/DBLE(nz_2)	
+REAL*8, PARAMETER :: dx_ini = (x_end - x_start)/DBLE(nx)	
+REAL*8, PARAMETER :: dy_ini = (y_end - y_start)/DBLE(ny)	
+REAL*8, PARAMETER :: dz_ini = (z_end - z_start)/DBLE(nz)	
 
 ! Cournat-Friedrich-Levy constant
 ! Defined as dt = cfl * dx / MAX(vel + cs)
-REAL*8, PARAMETER :: cfl = 0.20D0			
+REAL*8, PARAMETER :: cfl = 0.80D0			
 
 ! Maximum time to be simulated in the model
 REAL*8 :: total_time = 120.0D0
@@ -126,30 +99,20 @@ LOGICAL, PARAMETER :: HLLC_flag = .false.
 ! Use the HLLD Riemann solver !
 LOGICAL, PARAMETER :: HLLD_flag = .true.
 
+! Use the TVD (Mignone 2014) reconstruction scheme with Min-Mod limiter !
+LOGICAL, PARAMETER :: tvdmm_flag = .false.
+
 ! Use the TVD (Mignone 2014) reconstruction scheme with MC limiter !
 LOGICAL, PARAMETER :: tvdmc_flag = .false.
 
 ! Use the TVD (Mignone 2014) reconstruction scheme with Van-Leer limiter !
 LOGICAL, PARAMETER :: tvdvl_flag = .false.
 
-! Use the PPM (Mignone 2014) reconstruction scheme !
-LOGICAL, PARAMETER :: ppm_flag = .true.
-
 ! Use the PPM (Colella 1984) reconstruction scheme !
-LOGICAL, PARAMETER :: ppmc_flag = .false.
+LOGICAL, PARAMETER :: ppmc_flag = .true.
 
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-! Section for grid/atmospheric settings
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
-! Check if the NM/DM density fall below the lower limit !
-LOGICAL, PARAMETER :: checkrho_flag = .true.
-
-! Using custom variables floor !
-LOGICAL, PARAMETER :: custom_floor = .true.
-
-! Fix the DM/NM atmospheric density !
-LOGICAL, PARAMETER :: fixrhonm_flag = .false.
+! Use the WENO (Shu 1997) reconstruction scheme !
+LOGICAL, PARAMETER :: weno_flag = .false.
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 ! Section for Output setting

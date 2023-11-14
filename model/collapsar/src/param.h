@@ -5,43 +5,13 @@
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 ! Unit constants !
 
-! Physical constants to be as one !
-REAL*8, PARAMETER :: gconst = 6.67430D-8
+! Speed of light in cgs !
 REAL*8, PARAMETER :: clight = 2.99792458D10
-REAL*8, PARAMETER :: solar = 1.98847D33
-
-! Here, mu_0 is not in cgs !
-REAL*8, PARAMETER :: mu_0 = 1.25663706212D-6
-
-! Solar Radius !
-REAL*8, PARAMETER :: rsolar = 6.96342D10
-
-! 1 GeV !
-REAL*8, PARAMETER :: GeV2gram = 1.78266191D-24
-
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-! Unit conversions !
-
-! Conversion between units !
-REAL*8, PARAMETER :: lencgs2code = (clight**2)/(solar*gconst)
-REAL*8, PARAMETER :: masscgs2code = (1.0D0/solar)
-REAL*8, PARAMETER :: tcgs2code = (clight**3)/(solar*gconst)
-
-! Derived conversion !
-REAL*8, PARAMETER :: rhocgs2code = (masscgs2code/lencgs2code**3)
-REAL*8, PARAMETER :: taucgs2code = (masscgs2code*lencgs2code**2/tcgs2code**2)
-REAL*8, PARAMETER :: h_bar = (1.054571817D-27)*(lencgs2code**2*masscgs2code/tcgs2code)
-
-! Current conversion !
-REAL*8, PARAMETER :: amp2code = (mu_0*1.0D5*masscgs2code*lencgs2code)**(0.5D0)/tcgs2code
-
-! Magnetic field !
-REAL*8, PARAMETER :: gauss2code = 1.0D-1*masscgs2code/amp2code/tcgs2code**2
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-! floor values !
-REAL*8, PARAMETER :: max_alv = 1.0d0
+! floor values for alven speed (in speed of light) !
+REAL*8 :: max_alv = 5.0d0*clight
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 ! For the physical setup !
@@ -50,16 +20,16 @@ REAL*8, PARAMETER :: max_alv = 1.0d0
 INTEGER, PARAMETER :: rotation_rule = 2
 
 ! Differential rotations, position of maximum angular velocity (in cgs) !
-REAL*8, PARAMETER :: s_0 = (5.0D3*1.0D5)*lencgs2code
+REAL*8 :: s_0 = (5.0D3)*(1.0D5)
 
 ! Differential rotations, core angular velocity (in cgs) !
-REAL*8, PARAMETER :: w_0 = 10.0D0/tcgs2code
+REAL*8 :: w_0 = 10.0D0
 
 ! Maximum magnetic field strength (in gauss) !
-REAL*8, PARAMETER :: b_0 = 1.0D10*gauss2code
+REAL*8 :: b_0 = 1.0D10
 
-! Limiting rotation velocity for the progenitor
-REAL*8, PARAMETER :: v_crit = 0.01D0
+! Limiting rotation velocity for the progenitor (in speed of light) !
+REAL*8 :: v_crit = 0.01D0*clight
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 ! Section for solving gravity !

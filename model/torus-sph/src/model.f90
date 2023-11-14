@@ -6,6 +6,7 @@
 SUBROUTINE GET_MODEL
 USE DEFINITION
 USE MHD_MODULE
+USE CUSTOM_DEF
 IMPLICIT NONE
 INCLUDE "param.h"
 
@@ -15,23 +16,25 @@ INCLUDE "param.h"
 INTEGER :: i, j, k, l
 
 ! Real variables !
-REAL*8 :: rand
-REAL*8 :: h_square
+REAL*8 :: s_eq
+REAL*8 :: rand_num
 REAL*8 :: c_const
 REAL*8 :: k_poly
-REAL*8 :: brac
-REAL*8 :: rho
+REAL*8 :: enthalpy
 REAL*8 :: rho_a
-REAL*8 :: s_eq
-REAL*8 :: omega
+REAL*8 :: rho_lim
+REAL*8 :: rho_local
+REAL*8 :: omega_vel
 REAL*8 :: t_scale
+REAL*8 :: lkep2
+REAL*8 :: omega
 
 ! Normalization !
-REAL*8 :: pmag
 REAL*8 :: pgas
-REAL*8 :: beta_old
+REAL*8 :: pmag
 REAL*8 :: beta_min
 REAL*8 :: beta_loc
+REAL*8 :: beta_old
 REAL*8 :: B_0
 REAL*8 :: b_2
 REAL*8 :: maxdb
@@ -42,80 +45,85 @@ REAL*8, ALLOCATABLE, DIMENSION(:,:,:) :: A_phi, A_corner
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-! Allocate ! 
-ALLOCATE(A_phi(-2:nx_2+3,-2:ny_2+3,-2:nz_2+3))
-ALLOCATE(A_corner(-2:nx_2+3,-2:ny_2+3,-2:nz_2+3))
+! Allocate !  
+ALLOCATE(A_phi(-2:nx+3,-2:ny+3,-2:nz+3))
+ALLOCATE(A_corner(-2:nx+3,-2:ny+3,-2:nz+3))
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 ! override adiabatic index !
-ggas2 = gamma
+ggas = gamma
 
-! Find h**2, for which w = hs**(-q) !
-h_square = (2.0D0 - 2.0D0*q_grad)*(schwarzschild(s_0,r_sh) - schwarzschild(s_1,r_sh)) & 
-          /(s_0**(2.0D0 - 2.0D0*q_grad) - s_1**(2.0D0 - 2.0D0*q_grad))
-          
+! Square of kepler angular momentum !
+lkep2 = s_max**(2.0d0*q_grad - 1.0d0)/(s_max - r_sh)**2
+
 ! Find integration constant !
-c_const = (s_0**(2.0D0 - 2.0D0*q_grad)*schwarzschild(s_1,r_sh) - s_1**(2.0D0 - 2.0D0*q_grad)*schwarzschild(s_0,r_sh)) & 
-        /(s_0**(2.0D0 - 2.0D0*q_grad) - s_1**(2.0D0 - 2.0D0*q_grad))
+c_const = schwarzschild(s_in,r_sh) - lkep2*s_in**(2.0d0 - 2.0d0*q_grad)/(2.0d0 - 2.0d0*q_grad)
+
+! Find enthalpy !
+enthalpy = - schwarzschild(s_max,r_sh) + lkep2*s_max**(2.0d0 - 2.0d0*q_grad)/(2.0d0 - 2.0d0*q_grad) + c_const
 
 ! Find polytropic constant, defined at the position of maximum density along equator, and we set the max density to be 1 !
-k_poly = c_const + h_square*s_max**(2.0D0 - 2.0D0*q_grad)/(2.0D0 - 2.0D0*q_grad) - schwarzschild(s_max,r_sh)
+k_poly = enthalpy*(ggas - 1.0d0)/ggas/rho_max**(ggas - 1.0d0)
 
 ! Exit condition !
 IF(k_poly < 0.0d0) THEN
   STOP 'The polytropic constant is negative'
 END IF
 
-! Find polytropic constant !
-k_poly = k_poly*(gamma - 1.0d0)/gamma/(rho_max**(gamma - 1.0d0))
-
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 ! solve for the density profile !
-DO l = 1, nz_2
-  DO k = 1, ny_2
-    DO j = 1, nx_2
+DO l = 1, nz
+  DO k = 1, ny
+    DO j = 1, nx
 
       ! polar radius !
-      s_eq = x2(j)*sin2(k)
+      s_eq = x(j)*sine(k)
 
-      ! bracket term !
-      brac = c_const + h_square*s_eq**(2.0D0 - 2.0D0*q_grad)/(2.0D0 - 2.0D0*q_grad) - schwarzschild(x2(j),r_sh)
-      IF(brac < 0.0d0) THEN
-        brac = 0.0d0
+      ! Find enthalpy !
+      enthalpy = - schwarzschild(x(j),r_sh) + lkep2*s_eq**(2.0d0 - 2.0d0*q_grad)/(2.0d0 - 2.0d0*q_grad) + c_const
+      
+      ! Find density !
+      IF(enthalpy < 0.0d0) THEN
+        enthalpy = 0.0d0
       END IF
-      brac = brac*(gamma - 1.0d0)/gamma/k_poly
 
       ! torus density and pressure
-      rho = brac**(1.0d0/(gamma - 1.0d0))
-      rho_a = rho_max*rho_fac
+      rho_local = (enthalpy*(ggas - 1.0d0)/ggas/k_poly)**(1.0d0/(gamma - 1.0d0))
+      
+      ! Choose !
+      IF(corona) THEN
+        rho_a = a_eta*rho_max*EXP(-a_corn*(schwarzschild(x(j),r_sh) - schwarzschild(s_in,r_sh)))
+      ELSE
+        rho_a = rho_fac*rho_max
+      ENDIF
+      rho_lim = rho_fac*rho_max
 
       ! Select based on conditions !
-      IF(rho >= rho_a .AND. s_eq >= s_0 .AND. s_eq <=s_1) THEN
-        prim2(irho2,j,k,l) = rho
-        omega = DSQRT(h_square)*s_eq**(-q_grad)
-        prim2(ivel2_z,j,k,l) = omega*s_eq
+      IF (rho_local > rho_lim .AND. s_eq >= s_in) THEN
+        prim(irho,j,k,l) = rho_local
+        omega = DSQRT(lkep2)*s_eq**(-q_grad)
+        prim(ivz,j,k,l) = omega*s_eq
+        prim(itau,j,k,l) = k_poly*prim(irho,j,k,l)**(gamma)
+        epsilon(j,k,l) = k_poly*prim(irho,j,k,l)**(gamma - 1.0D0)/(gamma - 1.0D0)
       ELSE
-        prim2(irho2,j,k,l) = rho_a
-        prim2(ivel2_z,j,k,l) = 0.0d0                   
+        prim(irho,j,k,l) = rho_a
+        prim(ivz,j,k,l) = 0.0d0   
+        IF(corona) THEN
+          prim(itau,j,k,l) = prim(irho,j,k,l)/a_corn
+          epsilon(j,k,l) = prim(itau,j,k,l)/prim(irho,j,k,l)/(gamma - 1.0d0)
+        ELSE
+          prim(itau,j,k,l) = k_poly*prim(irho,j,k,l)**(gamma)
+          epsilon(j,k,l) = k_poly*prim(irho,j,k,l)**(gamma - 1.0D0)/(gamma - 1.0D0)
+        END IF            
       END IF
-      
-      ! vector potential !
-      IF(prim2(irho2,j,k,l) >= rho_cut) THEN
-        A_phi(j,k,l) = (prim2(irho2,j,k,l) - rho_cut)/rho_max
-      END IF
-      
-    END DO
-  END DO
-END DO
 
-! Find pressure and epsilon
-DO l = 1, nz_2
-  DO k = 1, ny_2
-    DO j = 1, nx_2
-      prim2(itau2,j,k,l) = k_poly*prim2(irho2,j,k,l)**(gamma)
-      epsilon2(j,k,l) = k_poly*prim2(irho2,j,k,l)**(gamma - 1.0D0)/(gamma - 1.0D0)
+      ! vector potential !
+      IF(prim(irho,j,k,l) >= rho_cut) THEN
+        A_phi(j,k,l) = (prim(irho,j,k,l) - rho_cut)/rho_max
+      END IF
+      
     END DO
   END DO
 END DO
@@ -123,9 +131,9 @@ END DO
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 ! Get cell-corner vector potential !
-DO l = 1, nz_2
-  DO k = 1, ny_2
-    DO j = 1, nx_2
+DO l = 1, nz
+  DO k = 1, ny
+    DO j = 1, nx
       A_corner(j,k,l) = 0.25D0*(A_phi(j,k,l) + A_phi(j+1,k,l) + A_phi(j,k+1,l) + A_phi(j+1,k+1,l))
     END DO
   END DO
@@ -133,24 +141,24 @@ END DO
 
 ! First, initialize magnetic fields !
 bcell(ibx:ibz,:,:,:) = 0.0d0
-prim2(ibx:ibz,:,:,:) = 0.0d0
+prim(ibx:ibz,:,:,:) = 0.0d0
 
 ! Get face-magnetic fields by cross product !
-DO l = 0, nz_2
-  DO k = 0, ny_2
-    DO j = 0, nx_2
-      prim2(ibx,j,k,l) = (sin2f(k)*a_phi(j,k,l) - sin2f(k-1)*a_phi(j,k-1,l))*xF2(j)/(xF2(j)**2*dcos2(k) + small_num)
-      prim2(iby,j,k,l) = -(xF2(j)*a_phi(j,k,l) - xF2(j-1)*a_phi(j-1,k,l))*sin2f(k)/(0.5d0*dx2_sq(j)*sin2f(k) + small_num)
+DO l = 0, nz
+  DO k = 0, ny
+    DO j = 0, nx
+      prim(ibx,j,k,l) = (sinf(k)*A_corner(j,k,l) - sinf(k-1)*A_corner(j,k-1,l))/(xF(j)*dcose(k)+small_num)
+      prim(iby,j,k,l) = - (xF(j)*A_corner(j,k,l) - xF(j-1)*A_corner(j-1,k,l))/(x(j)*dx(j))
     END DO
   END DO
 END DO
 
 ! Get cell-centered magnetic fields by averaging !
-DO l = 1, nz_2
-  DO k = 1, ny_2
-    DO j = 1, nx_2
-      bcell(ibx,j,k,l) = 1.5D0*dx2(j)/dx2_cb(j)*(xF2(j)**2*prim2(ibx,j,k,l) + xF2(j-1)**2*prim2(ibx,j-1,k,l))
-      bcell(iby,j,k,l) = 0.5D0*dy2(k)/dcos2(k)*(sin2f(k)*prim2(iby,j,k,l) + sin2f(k-1)*prim2(iby,j,k-1,l))
+DO l = 1, nz
+  DO k = 1, ny
+    DO j = 1, nx
+      bcell(ibx,j,k,l) = 1.5D0*dx(j)/dx_cb(j)*(xF(j)**2*prim(ibx,j,k,l) + xF(j-1)**2*prim(ibx,j-1,k,l))
+      bcell(iby,j,k,l) = 0.5D0*dy(k)/dcose(k)*(sinf(k)*prim(iby,j,k,l) + sinf(k-1)*prim(iby,j,k-1,l))
     END DO
   END DO
 END DO
@@ -160,12 +168,12 @@ END DO
 ! Normalize magnetic field so that minimum magnetisation is beta !
 IF(normalize_by_minbeta) THEN
   beta_min = 1.0D30
-  DO l = 1, nz_2
-    DO k = 1, ny_2
-      DO j = 1, nx_2
+  DO l = 1, nz
+    DO k = 1, ny
+      DO j = 1, nx
         b_2 = bcell(ibx,j,k,l)**2 + bcell(iby,j,k,l)**2 + bcell(ibz,j,k,l)**2
         IF(b_2 > 0.0d0) THEN
-          beta_loc = 2.0d0*prim2(itau2,j,k,l)/b_2
+          beta_loc = 2.0d0*prim(itau,j,k,l)/b_2
           beta_min = MIN(beta_min, beta_loc)
         END IF
       END DO
@@ -179,12 +187,12 @@ IF(normalize_by_minbeta) THEN
 ELSE IF(normalize_by_vol) THEN
   pgas = 0.0d0
   pmag = 0.0d0
-  DO l = 1, nz_2
-    DO k = 1, ny_2
-      DO j = 1, nx_2
-        IF(prim2(irho2,j,k,l) > rho_a) THEN
-          pgas = pgas + prim2(itau2,j,k,l)*vol2(j,k,l)
-          pmag = pmag + 0.5D0*(bcell(ibx,j,k,l)**2 + bcell(iby,j,k,l)**2 + bcell(ibz,j,k,l)**2)*vol2(j,k,l)
+  DO l = 1, nz
+    DO k = 1, ny
+      DO j = 1, nx
+        IF(prim(irho,j,k,l) > rho_a) THEN
+          pgas = pgas + prim(itau,j,k,l)*vol(j,k,l)
+          pmag = pmag + 0.5D0*(bcell(ibx,j,k,l)**2 + bcell(iby,j,k,l)**2 + bcell(ibz,j,k,l)**2)*vol(j,k,l)
         END IF
       END DO
     END DO
@@ -201,9 +209,9 @@ END IF
 
 A_phi(:,:,:) = A_phi(:,:,:)*B_0
 ! Get cell-corner vector potential !
-DO l = 1, nz_2
-  DO k = 1, ny_2
-    DO j = 1, nx_2
+DO l = 1, nz
+  DO k = 1, ny
+    DO j = 1, nx
       A_corner(j,k,l) = 0.25D0*(A_phi(j,k,l) + A_phi(j+1,k,l) + A_phi(j,k+1,l) + A_phi(j+1,k+1,l))
     END DO
   END DO
@@ -211,26 +219,29 @@ END DO
 
 ! First, initialize magnetic fields !
 bcell(ibx:ibz,:,:,:) = 0.0d0
-prim2(ibx:ibz,:,:,:) = 0.0d0
+prim(ibx:ibz,:,:,:) = 0.0d0
 
 ! Get face-magnetic fields by cross product !
-DO l = 0, nz_2
-  DO k = 0, ny_2
-    DO j = 0, nx_2
-      prim2(ibx,j,k,l) = (sin2f(k)*a_phi(j,k,l) - sin2f(k-1)*a_phi(j,k-1,l))*xF2(j)/(xF2(j)**2*dcos2(k) + small_num)
-      prim2(iby,j,k,l) = -(xF2(j)*a_phi(j,k,l) - xF2(j-1)*a_phi(j-1,k,l))*sin2f(k)/(0.5d0*dx2_sq(j)*sin2f(k) + small_num)
+DO l = 0, nz
+  DO k = 0, ny
+    DO j = 0, nx
+      prim(ibx,j,k,l) = (sinf(k)*A_corner(j,k,l) - sinf(k-1)*A_corner(j,k-1,l))/(xF(j)*dcose(k)+small_num)
+      prim(iby,j,k,l) = - (xF(j)*A_corner(j,k,l) - xF(j-1)*A_corner(j-1,k,l))/(x(j)*dx(j))
     END DO
   END DO
 END DO
 
 ! Check divergence-B = 0 constraint !
 div_b = 0.0d0
-DO l = 1, nz_2
-  DO k = 1, ny_2
-    DO j = 1, nx_2
-      div_b = (xF2(j)**2*prim2(ibx,j,k,l) - xF2(j-1)**2*prim2(ibx,j-1,k,l))*dcos2(k)*dz2(l) &
-            + (sin2f(k)*prim2(iby,j,k,l) - sin2f(k-1)*prim2(iby,j,k-1,l))*0.5d0*dx2_sq(j)*dz2(l) &
-            + (bcell(ibz,j,k,l) - bcell(ibz,j,k,l-1))*0.5d0*dx2_sq(j)*dy2(k)
+DO l = 1, nz
+  DO k = 1, ny
+    DO j = 1, nx
+      div_b = (xF(j)*xF(j)*prim(ibx,j,k,l) - xF(j-1)*xF(j-1)*prim(ibx,j-1,k,l))/(dx_cb(j)/3.0d0) &
+
+            + (sinf(k)*prim(iby,j,k,l) - sinf(k-1)*prim(iby,j,k-1,l))*(x(j)*dx(j))/(dx_cb(j)*dcose(k)/3.0d0) &
+      
+            + (prim(ibz,j,k,l) - prim(ibz,j,k,l-1))*(x(j)*dx(j)*dy(k))/(dx_cb(j)*dcose(k)*dz(l)/3.0d0)
+            
       maxdb = MAX(maxdb, div_b)
     END DO
   END DO
@@ -241,18 +252,51 @@ WRITE (*,*)
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-! set atmospheric primitive variables !
-prim2_a(:) = 0.0D0
-prim2_a(irho2) = rho_max*rho_fac
-prim2_a(itau2) = k_poly*prim2_a(irho2)**(gamma)
-eps2_a = k_poly*prim2_a(irho2)**(gamma - 1.0D0)/(gamma - 1.0D0)
-
 ! orbital time scasle
-t_scale = 2.0d0*pi/(DSQRT(h_square)*s_max**(-q_grad))
+t_scale = 2.0d0*pi/(DSQRT(lkep2)*s_max**(-q_grad))
 
 ! Set output profile interval !
-total_time = 1000.0d0 !*t_scale
-output_profiletime = 20.0d0 !total_time/20.0d0
+total_time = 20.0D0*t_scale
+output_profiletime = 10.0d0
+
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+! coronal floor !
+IF(corona) THEN
+  DO l = 1, nz
+    DO k = 1, ny
+      DO j = 1, nx
+        rho_floor(j,k,l) = a_eta*rho_max*EXP(-a_corn*(schwarzschild(x(j),r_sh) - schwarzschild(s_in,r_sh)))
+        p_floor(j,k,l) = rho_floor(j,k,l)/a_corn
+        eps_floor(j,k,l) = p_floor(j,k,l)/rho_floor(j,k,l)/(ggas - 1.0d0)
+      END DO
+    END DO
+  END DO
+ELSE
+  DO l = 1, nz
+    DO k = 1, ny
+      DO j = 1, nx
+        rho_floor(j,k,l) = rho_max*rho_fac
+        p_floor(j,k,l) = k_poly*rho_floor(j,k,l)**(gamma)
+        eps_floor(j,k,l) = k_poly*rho_floor(j,k,l)**(gamma - 1.0D0)/(gamma - 1.0D0)
+      END DO
+    END DO
+  END DO
+END IF
+
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+! perturb the torus !
+DO l = 1, nz
+  DO k = 1, ny
+    DO j = 1, nx
+      IF(prim(irho,j,k,l) > rho_floor(j,k,l)) THEN
+        CALL RANDOM_NUMBER(rand_num)
+        prim(irho,j,k,l) = prim(irho,j,k,l) + prim(irho,j,k,l)*(rand_num - 0.5d0)/(0.5d0)*1.0d-4
+      END IF
+    END DO
+  END DO
+END DO
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 

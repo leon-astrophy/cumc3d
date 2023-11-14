@@ -1,7 +1,0 @@
-./model/collapsar/def.f90 
-./model/collapsar/custom.f90 
-./model/collapsar/findpressure.f90 
-./model/collapsar/getepsilon.f90 
-./model/collapsar/model.f90 
-./model/collapsar/poisson.f90 
-./model/collapsar/soundspeed.f90 

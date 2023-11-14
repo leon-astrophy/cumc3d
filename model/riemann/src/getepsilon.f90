@@ -13,7 +13,7 @@ REAL*8, INTENT (IN) :: rho_in, p_in
 REAL*8, INTENT (OUT) :: eps_out
 
 ! For DM Output !
-eps_out = p_in/rho_in/(ggas2 - 1.0D0)
+eps_out = p_in/rho_in/(ggas - 1.0D0)
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 

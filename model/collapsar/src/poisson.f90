@@ -13,12 +13,12 @@ INCLUDE "param.h"
 INTEGER :: i, j, k, l
 
 ! Get poisson coefficient !
-Do i = 1, nx_2
-	Do j = 1, ny_2
-		Do k = 1, nz_2
-			CALL poisson_coef(x2(i-1), x2(i), x2(i+1), &
-												y2(j-1), y2(j), y2(j+1), &
-												z2(k-1), z2(k), z2(k+1), &
+Do i = 1, nx
+	Do j = 1, ny
+		Do k = 1, nz
+			CALL poisson_coef(x(i-1), x(i), x(i+1), &
+												y(j-1), y(j), y(j+1), &
+												z(k-1), z(k), z(k+1), &
 												ajp1(i), ajm1(i), bkp1(i,j), bkm1(i,j), &
 												clp1(i,j,k), clm1(i,j,k), epsc(i,j,k))
 		end do

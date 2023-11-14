@@ -13,12 +13,12 @@ REAL*8, INTENT (IN) :: p_in, rho_in, eps_in
 REAL*8, INTENT (OUT) :: cs_out
 
 ! Local variables !
-REAL*8 :: dpdden, dpdeps
+REAL*8 :: dpdden, dpdint
 
 ! We do the DM case first !
-dpdden = eps_in * (ggas2 - 1.0D0)
-dpdeps = rho_in * (ggas2 - 1.0D0)
-cs_out = DSQRT(dpdden+dpdeps*p_in/(rho_in*rho_in))
+dpdden = eps_in * (ggas - 1.0D0)
+dpdint = rho_in * (ggas - 1.0D0)
+cs_out = DSQRT(dpdden+dpdint*p_in/(rho_in*rho_in))
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 

@@ -63,27 +63,27 @@ path = str(path) + str(models) + '/'
 
 ################################################################################
 
-#arrays for coordinate and dimensions#
-n_dim = ['1d', '2d', '3d']
-coords = ['cartesian', 'cylindrical', 'spherical']
-
-# read grid parameter files, get model dimension and coordinate #
-f = h5py.File(path+'outfile/grid_param.hdf5', 'r')
-dset = f['dimension']
-dim = int(dset[:][0])
-dset = f['coordinate']
-coord = int(dset[:][0])
-
-################################################################################
-
 # filename#
 filename = []
 
 #load#
 for root, dirs, files in os.walk(path+'outfile/'):
-    for file in files:
-        if file.endswith("nm.hdf5"):
-            filename.append(os.path.join(file))
+  for file in files:
+    if file.endswith("nm.hdf5"):
+      filename.append(os.path.join(file))
+
+################################################################################
+
+#arrays for coordinate and dimensions#
+n_dim = ['1d', '2d', '3d']
+coords = ['cartesian', 'cylindrical', 'spherical']
+
+# read grid parameter files, get model dimension and coordinate #
+f = h5py.File(path+'outfile/'+filename[0], 'r')
+dset = f['dimension']
+dim = int(dset[:][0])
+dset = f['coordinate']
+coord = int(dset[:][0])
 
 ################################################################################
 
@@ -96,15 +96,14 @@ print('\t')
 print('Now, run the plotting script ...')
 print('\t')
 if(n_dim == '1d'):
-    script = './plot/plotprofile-1d.py'
+  script = './plot/plotprofile-1d.py'
 else:
-    script = './plot/plotcontour-'+str(coords)+'.py'
+  script = './plot/'+str(coords)+'.py'
 
 #run python script, loop over filename #
 for i in range (0, len(filename)):
   hdf5_file = path+'outfile/'+filename[i]
-  grid_file = path+'outfile/grid_param.hdf5'
-  Popen(['python3', script, grid_file, hdf5_file], close_fds=True)
+  Popen(['python3', script, hdf5_file], close_fds=True)
 
 ################################################################################
 

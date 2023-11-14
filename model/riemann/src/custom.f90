@@ -70,12 +70,59 @@ IMPLICIT NONE
 
 END SUBROUTINE
 
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+! Back up fluxes from riemann solvers
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+SUBROUTINE GETFLUX_X
+USE DEFINITION
+IMPLICIT NONE
+
+END SUBROUTINE
+
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+! Back up fluxes from riemann solvers
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+SUBROUTINE GETFLUX_Y
+USE DEFINITION
+IMPLICIT NONE
+
+END SUBROUTINE
+
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+! Back up fluxes from riemann solvers
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+SUBROUTINE GETFLUX_Z
+USE DEFINITION
+IMPLICIT NONE
+
+END SUBROUTINE
+
 !!!!!!!!!!!!!!!!!!!!!!!!!
 ! Custom variable floor !
 !!!!!!!!!!!!!!!!!!!!!!!!!
-SUBROUTINE CUSTOMFLOOR
+SUBROUTINE CUSTOM_CHECKRHO
 USE DEFINITION
 IMPLICIT NONE
+  
+! Dummy variables
+INTEGER :: i, j, k, l
+  
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+  
+  
+!$OMP PARALLEL DO COLLAPSE(3) SCHEDULE(STATIC)
+!$ACC PARALLEL LOOP GANG WORKER VECTOR COLLAPSE(3) DEFAULT(PRESENT)
+DO l = 1, nz
+  DO k = 1, ny
+    DO j = 1, nx
+      epsilon(j,k,l) = MAX(epsilon(j,k,l), 0.0d0)
+    END DO
+  END DO
+END DO
+!$ACC END PARALLEL
+!$OMP END PARALLEL DO
+
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 END SUBROUTINE
 
@@ -96,10 +143,10 @@ INTEGER :: i, j, k, l
 IF(test_model == 6 .OR. test_model == 18) then
   !$OMP PARALLEL DO COLLAPSE(3) SCHEDULE(STATIC)
   !$ACC PARALLEL LOOP GANG WORKER VECTOR COLLAPSE(3) DEFAULT(present)
-  DO l = nz_min_2, nz_part_2
-    DO k = ny_min_2, ny_part_2
-      DO j = nx_min_2, nx_part_2
-        sc2(ivel2_y,j,k,l) = sc2(ivel2_y,j,k,l) - 0.1D0*prim2(irho2,j,k,l)
+  DO l = 1, nz
+    DO k = 1, ny
+      DO j = 1, nx
+        sc(ivy,j,k,l) = sc(ivy,j,k,l) - 0.1D0*prim(irho,j,k,l)
       END DO
     END DO
   END DO

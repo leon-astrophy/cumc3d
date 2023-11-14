@@ -48,28 +48,26 @@ CALL system_clock(time_start)
 IF(coordinate_flag == 0) THEN
   !$OMP DO COLLAPSE(3) SCHEDULE(STATIC)
   !$ACC PARALLEL LOOP GANG WORKER VECTOR COLLAPSE(3) DEFAULT(present)
-  DO l = nz_min_2, nz_part_2
-    DO k = ny_min_2, ny_part_2
-      DO j = nx_min_2, nx_part_2
-        bcell(ibx,j,k,l) = 0.5D0*(prim2(ibx,j,k,l) + prim2(ibx,j-1,k,l))
-        bcell(iby,j,k,l) = 0.5D0*(prim2(iby,j,k,l) + prim2(iby,j,k-1,l))
-        bcell(ibz,j,k,l) = 0.5D0*(prim2(ibz,j,k,l) + prim2(ibz,j,k,l-1))
+  DO l = 1, nz
+    DO k = 1, ny
+      DO j = 1, nx
+        bcell(ibx,j,k,l) = 0.5D0*(prim(ibx,j,k,l) + prim(ibx,j-1,k,l))
+        bcell(iby,j,k,l) = 0.5D0*(prim(iby,j,k,l) + prim(iby,j,k-1,l))
+        bcell(ibz,j,k,l) = 0.5D0*(prim(ibz,j,k,l) + prim(ibz,j,k,l-1))
       END DO
     END DO
   END DO
   !$ACC END PARALLEL
-  !$OMP END DO
+  !$OMP END DO 
 ELSEIF(coordinate_flag == 1) THEN
   !$OMP DO COLLAPSE(3) SCHEDULE(STATIC)
   !$ACC PARALLEL LOOP GANG WORKER VECTOR COLLAPSE(3) DEFAULT(present)
-  DO l = nz_min_2, nz_part_2
-    DO k = ny_min_2, ny_part_2
-      DO j = nx_min_2, nx_part_2
-        bcell(ibx,j,k,l) = ((xF2(j) - x2cen(j))*prim2(ibx,j,k,l) + (x2cen(j) - xF2(j-1))*prim2(ibx,j-1,k,l))/(dx2(j))
-        !(xF2(j)*prim2(ibx,j,k,l) + xF2(j-1)*prim2(ibx,j-1,k,l))/(xF2(j) + xF2(j-1))
-        bcell(iby,j,k,l) = ((yF2(k) - y2cen(k))*prim2(iby,j,k,l) + (y2cen(k) - yF2(k-1))*prim2(iby,j,k-1,l))/(dy2(k))
-        !0.5D0*(prim2(iby,j,k,l) + prim2(iby,j,k-1,l))
-        bcell(ibz,j,k,l) = 0.5D0*(prim2(ibz,j,k,l) + prim2(ibz,j,k,l-1))
+  DO l = 1, nz
+    DO k = 1, ny
+      DO j = 1, nx
+        bcell(ibx,j,k,l) = (xF(j)*prim(ibx,j,k,l) + xF(j-1)*prim(ibx,j-1,k,l))/(xF(j) + xF(j-1))
+        bcell(iby,j,k,l) = 0.5D0*(prim(iby,j,k,l) + prim(iby,j,k-1,l))
+        bcell(ibz,j,k,l) = 0.5D0*(prim(ibz,j,k,l) + prim(ibz,j,k,l-1))
       END DO
     END DO
   END DO
@@ -78,14 +76,12 @@ ELSEIF(coordinate_flag == 1) THEN
 ELSEIF(coordinate_flag == 2) THEN
   !$OMP DO COLLAPSE(3) SCHEDULE(STATIC)
   !$ACC PARALLEL LOOP GANG WORKER VECTOR COLLAPSE(3) DEFAULT(present)
-  DO l = nz_min_2, nz_part_2
-    DO k = ny_min_2, ny_part_2
-      DO j = nx_min_2, nx_part_2
-        bcell(ibx,j,k,l) = ((xF2(j) - x2cen(j))*prim2(ibx,j,k,l) + (x2cen(j) - xF2(j-1))*prim2(ibx,j-1,k,l))/(dx2(j))
-        !1.5D0*dx2(j)/dx2_cb(j)*(xF2(j)**2*prim2(ibx,j,k,l) + xF2(j-1)**2*prim2(ibx,j-1,k,l))
-        bcell(iby,j,k,l) = ((yF2(k) - y2cen(k))*prim2(iby,j,k,l) + (y2cen(k) - yF2(k-1))*prim2(iby,j,k-1,l))/(dy2(k))
-        !0.5D0*dy2(k)/dcos2(k)*(sin2f(k)*prim2(iby,j,k,l) + sin2f(k-1)*prim2(iby,j,k-1,l))
-        bcell(ibz,j,k,l) = 0.5D0*(prim2(ibz,j,k,l) + prim2(ibz,j,k,l-1))
+  DO l = 1, nz
+    DO k = 1, ny
+      DO j = 1, nx
+        bcell(ibx,j,k,l) = 1.5D0*dx(j)/dx_cb(j)*(xF(j)**2*prim(ibx,j,k,l) + xF(j-1)**2*prim(ibx,j-1,k,l))
+        bcell(iby,j,k,l) = 0.5D0*dy(k)/dcose(k)*(sinf(k)*prim(iby,j,k,l) + sinf(k-1)*prim(iby,j,k-1,l))
+        bcell(ibz,j,k,l) = 0.5D0*(prim(ibz,j,k,l) + prim(ibz,j,k,l-1))
       END DO
     END DO
   END DO
@@ -97,15 +93,16 @@ ENDIF
 ! Convert NM hydro
 !$OMP DO COLLAPSE(3) SCHEDULE(STATIC)
 !$ACC PARALLEL LOOP GANG WORKER VECTOR COLLAPSE(3) DEFAULT(present) PRIVATE(vsquare, bsquare)
-DO l = nz_min_2 - 1, nz_part_2
-  DO k = ny_min_2 - 1, ny_part_2
-    DO j = nx_min_2 - 1, nx_part_2
-      vsquare = dot_product(prim2(ivel2_x:ivel2_z,j,k,l), prim2(ivel2_x:ivel2_z,j,k,l))
+DO l = 0, nz
+  DO k = 0, ny
+    DO j = 0, nx
+      vsquare = dot_product(prim(ivx:ivz,j,k,l), prim(ivx:ivz,j,k,l))
       bsquare = dot_product(bcell(ibx:ibz,j,k,l), bcell(ibx:ibz,j,k,l))
-		  cons2(imin2:ibx-1,j,k,l) = prim2(imin2:ibx-1,j,k,l)*prim2(irho2,j,k,l)
-	    cons2(irho2,j,k,l) = prim2(irho2,j,k,l)
-	    cons2(itau2,j,k,l) = prim2(irho2,j,k,l)*(epsilon2(j,k,l) + 0.5D0*vsquare) + 0.5D0*bsquare
-		  cons2(ibx:ibz,j,k,l) = prim2(ibx:ibz,j,k,l)
+	    cons(irho,j,k,l) = prim(irho,j,k,l)
+      cons(ivx:itau-1,j,k,l) = prim(ivx:itau-1,j,k,l)*prim(irho,j,k,l)
+	    cons(itau,j,k,l) = prim(irho,j,k,l)*(epsilon(j,k,l) + 0.5D0*vsquare) + 0.5D0*bsquare
+      cons(itau+1:ibx-1,j,k,l) = prim(itau+1:ibx-1,j,k,l)*prim(irho,j,k,l)
+		  cons(ibx:ibz,j,k,l) = prim(ibx:ibz,j,k,l)
 	  END DO
   END DO
 END DO
@@ -129,7 +126,6 @@ END SUBROUTINE
 SUBROUTINE FROMUTORVE
 USE DEFINITION
 USE MHD_MODULE
-use ieee_arithmetic
 IMPLICIT NONE
 
 ! Dummy variables
@@ -137,9 +133,6 @@ INTEGER :: i, j, k, l
 
 ! Squared velocity !
 REAL*8 :: vsquare, bsquare
-
-! For epsilon !
-REAL*8 :: factor
 
 ! Check timing with or without openmp
 #ifdef DEBUG
@@ -154,33 +147,18 @@ CALL system_clock(time_start)
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 ! For NM sectors !
 
-!$OMP PARALLEL PRIVATE(vsquare, bsquare, factor)
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-! Convert the NM hydro
-!$OMP DO COLLAPSE(3) SCHEDULE(STATIC)
-!$ACC PARALLEL LOOP GANG WORKER VECTOR COLLAPSE(3) DEFAULT(present)
-DO l = nz_min_2 - 1, nz_part_2
-  DO k = ny_min_2 - 1, ny_part_2
-    DO j = nx_min_2 - 1, nx_part_2
-		  prim2(imin2:ibx-1,j,k,l) = cons2(imin2:ibx-1,j,k,l)/cons2(irho2,j,k,l)
-      prim2(ibx:ibz,j,k,l) = cons2(ibx:ibz,j,k,l)
-    END DO
-  END DO
-END DO
-!$ACC END PARALLEL
-!$OMP END DO
-
+!$OMP PARALLEL PRIVATE(vsquare, bsquare)
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 ! Get cell centered magnetic field !
 IF(coordinate_flag == 0) THEN
   !$OMP DO COLLAPSE(3) SCHEDULE(STATIC)
   !$ACC PARALLEL LOOP GANG WORKER VECTOR COLLAPSE(3) DEFAULT(present)
-  DO l = nz_min_2, nz_part_2
-    DO k = ny_min_2, ny_part_2
-      DO j = nx_min_2, nx_part_2
-        bcell(ibx,j,k,l) = 0.5D0*(prim2(ibx,j,k,l) + prim2(ibx,j-1,k,l))
-        bcell(iby,j,k,l) = 0.5D0*(prim2(iby,j,k,l) + prim2(iby,j,k-1,l))
-        bcell(ibz,j,k,l) = 0.5D0*(prim2(ibz,j,k,l) + prim2(ibz,j,k,l-1))
+  DO l = 1, nz
+    DO k = 1, ny
+      DO j = 1, nx
+        bcell(ibx,j,k,l) = 0.5D0*(cons(ibx,j,k,l) + cons(ibx,j-1,k,l))
+        bcell(iby,j,k,l) = 0.5D0*(cons(iby,j,k,l) + cons(iby,j,k-1,l))
+        bcell(ibz,j,k,l) = 0.5D0*(cons(ibz,j,k,l) + cons(ibz,j,k,l-1))
       END DO
     END DO 
   END DO
@@ -189,14 +167,12 @@ IF(coordinate_flag == 0) THEN
 ELSEIF(coordinate_flag == 1) THEN
   !$OMP DO COLLAPSE(3) SCHEDULE(STATIC)
   !$ACC PARALLEL LOOP GANG WORKER VECTOR COLLAPSE(3) DEFAULT(present)
-  DO l = nz_min_2, nz_part_2
-    DO k = ny_min_2, ny_part_2
-      DO j = nx_min_2, nx_part_2
-        bcell(ibx,j,k,l) = ((xF2(j) - x2cen(j))*prim2(ibx,j,k,l) + (x2cen(j) - xF2(j-1))*prim2(ibx,j-1,k,l))/(dx2(j))
-        !(xF2(j)*prim2(ibx,j,k,l) + xF2(j-1)*prim2(ibx,j-1,k,l))/(xF2(j) + xF2(j-1))
-        bcell(iby,j,k,l) = ((yF2(k) - y2cen(k))*prim2(iby,j,k,l) + (y2cen(k) - yF2(k-1))*prim2(iby,j,k-1,l))/(dy2(k))
-        !0.5D0*(prim2(iby,j,k,l) + prim2(iby,j,k-1,l))
-        bcell(ibz,j,k,l) = 0.5D0*(prim2(ibz,j,k,l) + prim2(ibz,j,k,l-1))
+  DO l = 1, nz
+    DO k = 1, ny
+      DO j = 1, nx
+        bcell(ibx,j,k,l) = (xF(j)*cons(ibx,j,k,l) + xF(j-1)*cons(ibx,j-1,k,l))/(xF(j) + xF(j-1))
+        bcell(iby,j,k,l) = 0.5D0*(cons(iby,j,k,l) + cons(iby,j,k-1,l))
+        bcell(ibz,j,k,l) = 0.5D0*(cons(ibz,j,k,l) + cons(ibz,j,k,l-1))
       END DO
     END DO
   END DO
@@ -205,14 +181,12 @@ ELSEIF(coordinate_flag == 1) THEN
 ELSEIF(coordinate_flag == 2) THEN
   !$OMP DO COLLAPSE(3) SCHEDULE(STATIC)
   !$ACC PARALLEL LOOP GANG WORKER VECTOR COLLAPSE(3) DEFAULT(present)
-  DO l = nz_min_2, nz_part_2
-    DO k = ny_min_2, ny_part_2
-      DO j = nx_min_2, nx_part_2
-        bcell(ibx,j,k,l) = ((xF2(j) - x2cen(j))*prim2(ibx,j,k,l) + (x2cen(j) - xF2(j-1))*prim2(ibx,j-1,k,l))/(dx2(j))
-        !1.5D0*dx2(j)/dx2_cb(j)*(xF2(j)**2*prim2(ibx,j,k,l) + xF2(j-1)**2*prim2(ibx,j-1,k,l))
-        bcell(iby,j,k,l) = ((yF2(k) - y2cen(k))*prim2(iby,j,k,l) + (y2cen(k) - yF2(k-1))*prim2(iby,j,k-1,l))/(dy2(k))
-        !0.5D0*dy2(k)/dcos2(k)*(sin2f(k)*prim2(iby,j,k,l) + sin2f(k-1)*prim2(iby,j,k-1,l))
-        bcell(ibz,j,k,l) = 0.5D0*(prim2(ibz,j,k,l) + prim2(ibz,j,k,l-1))
+  DO l = 1, nz
+    DO k = 1, ny
+      DO j = 1, nx
+        bcell(ibx,j,k,l) = 1.5D0*dx(j)/dx_cb(j)*(xF(j)**2*cons(ibx,j,k,l) + xF(j-1)**2*cons(ibx,j-1,k,l))
+        bcell(iby,j,k,l) = 0.5D0*dy(k)/dcose(k)*(sinf(k)*cons(iby,j,k,l) + sinf(k-1)*cons(iby,j,k-1,l))
+        bcell(ibz,j,k,l) = 0.5D0*(cons(ibz,j,k,l) + cons(ibz,j,k,l-1))
       END DO
     END DO
   END DO
@@ -223,16 +197,17 @@ ENDIF
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 ! Do the rest conversation !
 !$OMP DO COLLAPSE(3) SCHEDULE(STATIC)
-!$ACC PARALLEL LOOP GANG WORKER VECTOR COLLAPSE(3) PRIVATE(vsquare, bsquare, factor) DEFAULT(present)
-DO l = nz_min_2, nz_part_2
-  DO k = ny_min_2, ny_part_2
-    DO j = nx_min_2, nx_part_2
-      prim2(irho2,j,k,l) = cons2(irho2,j,k,l)
+!$ACC PARALLEL LOOP GANG WORKER VECTOR COLLAPSE(3) PRIVATE(vsquare, bsquare) DEFAULT(present)
+DO l = 1, nz
+  DO k = 1, ny
+    DO j = 1, nx
+      prim(irho,j,k,l) = cons(irho,j,k,l)
+		  prim(ivx:itau-1,j,k,l) = cons(ivx:itau-1,j,k,l)/cons(irho,j,k,l)
+      prim(itau+1:ibx-1,j,k,l) = cons(itau+1:ibx-1,j,k,l)/cons(irho,j,k,l)
+      prim(ibx:ibz,j,k,l) = cons(ibx:ibz,j,k,l)
       bsquare = dot_product(bcell(ibx:ibz,j,k,l), bcell(ibx:ibz,j,k,l))
-      vsquare = dot_product(prim2(ivel2_x:ivel2_z,j,k,l), prim2(ivel2_x:ivel2_z,j,k,l))
-      epsilon2(j,k,l) = (cons2(itau2,j,k,l) - 0.5D0*bsquare)/cons2(irho2,j,k,l) - 0.5D0 * vsquare
-      factor = MAX(SIGN(1.0D0, epsilon2(j,k,l)), 0.0D0)
-      epsilon2(j,k,l) = factor*epsilon2(j,k,l) + (1.0d0 - factor)*eps2_a
+      vsquare = dot_product(prim(ivx:ivz,j,k,l), prim(ivx:ivz,j,k,l))
+      epsilon(j,k,l) = (cons(itau,j,k,l) - 0.5D0*bsquare)/cons(irho,j,k,l) - 0.5D0 * vsquare
     END DO
   END DO
 END DO

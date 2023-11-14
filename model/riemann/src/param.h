@@ -3,4 +3,4 @@
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 ! which test model ? !
-INTEGER, PARAMETER :: test_model = 13
+INTEGER, PARAMETER :: test_model = 16

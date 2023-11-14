@@ -10,9 +10,6 @@
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 SUBROUTINE RUNGEKUTTA
-USE RIEMANN_MODULE
-use ieee_arithmetic
-USE MHD_MODULE
 USE DEFINITION
 IMPLICIT NONE
 
@@ -40,11 +37,11 @@ CALL system_clock(time_start)
 ! Backup old arrays !
 !$OMP PARALLEL DO COLLAPSE(4) SCHEDULE(STATIC)
 !$ACC PARALLEL LOOP GANG WORKER VECTOR COLLAPSE(4) DEFAULT(PRESENT)
-DO l = nz_min_2 - 1, nz_part_2
-  DO k = ny_min_2 - 1, ny_part_2
-    DO j = nx_min_2 - 1, nx_part_2
-			DO i = imin2, imax2 
-				u_old2 (i,j,k,l) = cons2 (i,j,k,l)
+DO l = 0, nz
+  DO k = 0, ny
+    DO j = 0, nx
+			DO i = imin, imax 
+				u_old (i,j,k,l) = cons (i,j,k,l)
 			END DO
 		END DO
 	END DO
@@ -59,7 +56,7 @@ WRITE(*,*) 'backup = ', REAL(time_end - time_start) / rate
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 ! 1st iteration
-
+ 
 ! Discretize !
 CALL SPATIAL
 
@@ -70,11 +67,11 @@ CALL system_clock(time_start)
 ! NM sector !
 !$OMP PARALLEL DO COLLAPSE(4) SCHEDULE(STATIC)
 !$ACC PARALLEL LOOP GANG WORKER VECTOR COLLAPSE(4) DEFAULT(PRESENT)
-DO l = nz_min_2 - 1, nz_part_2
-  DO k = ny_min_2 - 1, ny_part_2
-    DO j = nx_min_2 - 1, nx_part_2
-			DO i = imin2, imax2 
-				cons2 (i,j,k,l) = u_old2 (i,j,k,l) + dt * l2 (i,j,k,l) 
+DO l = 0, nz
+  DO k = 0, ny
+    DO j = 0, nx
+			DO i = imin, imax 
+				cons (i,j,k,l) = u_old (i,j,k,l) + dt * l_rk (i,j,k,l) 
 			END DO
 		END DO
 	END DO
@@ -91,9 +88,7 @@ WRITE(*,*) 'rk1 = ', REAL(time_end - time_start) / rate
 CALL FROMUTORVE
 
 ! Check density !
-IF (checkrho_flag) THEN
-	CALL CHECKRHO
-END IF
+CALL CUSTOM_CHECKRHO
 
 ! Do conversion again !
 CALL FROMRVETOU
@@ -117,11 +112,11 @@ CALL system_clock(time_start)
 ! NM sector !
 !$OMP PARALLEL DO COLLAPSE(4) SCHEDULE(STATIC)
 !$ACC PARALLEL LOOP GANG WORKER VECTOR COLLAPSE(4) DEFAULT(PRESENT)
-DO l = nz_min_2 - 1, nz_part_2
-  DO k = ny_min_2 - 1, ny_part_2
-    DO j = nx_min_2 - 1, nx_part_2
-			DO i = imin2, imax2 
-				cons2 (i,j,k,l) = rk20 * u_old2(i,j,k,l) + rk21 * cons2 (i,j,k,l) + rk22 * dt * l2 (i,j,k,l)
+DO l = 0, nz
+  DO k = 0, ny
+    DO j = 0, nx
+			DO i = imin, imax 
+				cons (i,j,k,l) = rk20 * u_old(i,j,k,l) + rk21 * cons (i,j,k,l) + rk22 * dt * l_rk (i,j,k,l)
 			END DO
 		END DO
 	END DO
@@ -138,9 +133,7 @@ WRITE(*,*) 'rk2 = ', REAL(time_end - time_start) / rate
 CALL FROMUTORVE
 
 ! Check density !
-IF (checkrho_flag) THEN
-	CALL CHECKRHO
-END IF
+CALL CUSTOM_CHECKRHO
 
 ! Do conversion again !
 CALL FROMRVETOU
@@ -163,11 +156,11 @@ CALL system_clock(time_start)
 ! NM sector !
 !$OMP PARALLEL DO COLLAPSE(4) SCHEDULE(STATIC)
 !$ACC PARALLEL LOOP GANG WORKER VECTOR COLLAPSE(4) DEFAULT(PRESENT)
-DO l = nz_min_2 - 1, nz_part_2
-  DO k = ny_min_2 - 1, ny_part_2
-    DO j = nx_min_2 - 1, nx_part_2
-			DO i = imin2, imax2 
-				cons2 (i,j,k,l) = rk30 * u_old2(i,j,k,l) + rk31 * cons2 (i,j,k,l) + rk32 * dt * l2 (i,j,k,l)
+DO l = 0, nz
+  DO k = 0, ny
+    DO j = 0, nx
+			DO i = imin, imax 
+				cons (i,j,k,l) = rk30 * u_old(i,j,k,l) + rk31 * cons (i,j,k,l) + rk32 * dt * l_rk (i,j,k,l)
 			END DO
 		END DO
 	END DO
@@ -183,43 +176,18 @@ WRITE(*,*) 'rk3 = ', REAL(time_end - time_start) / rate
 ! Convert from conservative to primitive
 CALL FROMUTORVE 
 
+! Check density !
+CALL CUSTOM_CHECKRHO
+
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 ! Section for operator splitting
 
 CALL OPERATOR_SPLIT
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-! Section for adjusting atmospheric density !
-
-! Do for NM !
-IF(fixrhonm_flag) THEN
-
-	! look for minimum atmospheri density !
-	rhoaold = minval(prim2(irho2,:,:,:))
-
-	! Adjust density !
-	!$OMP PARALLEL DO COLLAPSE(3) SCHEDULE(STATIC)
-	!$ACC PARALLEL LOOP GANG WORKER VECTOR COLLAPSE(3) DEFAULT(PRESENT)
-	DO l = nz_min_2, nz_part_2
-		DO k = ny_min_2, ny_part_2
-			DO j = nx_min_2, nx_part_2
-				IF(prim2(irho2,j,k,l) == rhoaold) THEN
-					prim2(irho2,j,k,l) = prim2_a(irho2)
-				END IF
-			END DO
-		END DO
-	END DO
-	!$ACC END PARALLEL
-	!$OMP END PARALLEL DO
-
-END IF
-
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 ! Check density !
-IF (checkrho_flag) THEN
-	CALL CHECKRHO
-END IF
+CALL CUSTOM_CHECKRHO
 
 ! Update again !
 CALL FROMRVETOU
@@ -250,9 +218,9 @@ END SUBROUTINE
 !
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-SUBROUTINE finddt
-USE definition
-USE MHD_module
+SUBROUTINE FINDDT
+USE DEFINITION
+USE MHD_MODULE
 IMPLICIT NONE
 
 ! Dummy variables
@@ -296,48 +264,48 @@ dt_out2 = 1.0D5
 !$ACC PARALLEL LOOP GANG WORKER VECTOR COLLAPSE(3) DEFAULT(PRESENT) &
 !$ACC PRIVATE(a2_mhd, b2_mhd, a4_mhd, b4_mhd, b2x_mhd, b2y_mhd, b2z_mhd, & 
 !$ACC cfx_mhd, cfy_mhd, cfz_mhd, lambda, lambda1, lambda2, lambda3, dt_temp2) REDUCTION(MIN:dt_out2)
-DO l = nz_min_2, nz_part_2
-	DO k = ny_min_2, ny_part_2
-		DO j = nx_min_2, nx_part_2
+DO l = 1, nz
+	DO k = 1, ny
+		DO j = 1, nx
 
 			! Only grid with density above threshold density is counted
-			a2_mhd = cs2(j,k,l)*cs2(j,k,l)
+			a2_mhd = cs(j,k,l)*cs(j,k,l)
 			a4_mhd = a2_mhd*a2_mhd
-			b2x_mhd = (bcell(ibx,j,k,l)*bcell(ibx,j,k,l)/prim2(irho2,j,k,l))
-			b2y_mhd = (bcell(iby,j,k,l)*bcell(iby,j,k,l)/prim2(irho2,j,k,l))
-			b2z_mhd = (bcell(ibz,j,k,l)*bcell(ibz,j,k,l)/prim2(irho2,j,k,l))
+			b2x_mhd = (bcell(ibx,j,k,l)*bcell(ibx,j,k,l)/prim(irho,j,k,l))
+			b2y_mhd = (bcell(iby,j,k,l)*bcell(iby,j,k,l)/prim(irho,j,k,l))
+			b2z_mhd = (bcell(ibz,j,k,l)*bcell(ibz,j,k,l)/prim(irho,j,k,l))
 			b2_mhd = b2x_mhd + b2y_mhd + b2z_mhd
 			b4_mhd = b2_mhd*b2_mhd
 			cfx_mhd = DSQRT(0.5D0*(a2_mhd + b2_mhd + DSQRT((a4_mhd + 2.0d0*a2_mhd*b2_mhd + b4_mhd) - 4.0D0*a2_mhd*b2x_mhd)))
 			cfy_mhd = DSQRT(0.5D0*(a2_mhd + b2_mhd + DSQRT((a4_mhd + 2.0d0*a2_mhd*b2_mhd + b4_mhd) - 4.0D0*a2_mhd*b2y_mhd)))
 			cfz_mhd = DSQRT(0.5D0*(a2_mhd + b2_mhd + DSQRT((a4_mhd + 2.0d0*a2_mhd*b2_mhd + b4_mhd) - 4.0D0*a2_mhd*b2z_mhd)))
-			lambda1 = ABS(prim2(ivel2_x,j,k,l)) + cfx_mhd
-			lambda2 = ABS(prim2(ivel2_y,j,k,l)) + cfy_mhd
-			lambda3 = ABS(prim2(ivel2_z,j,k,l)) + cfz_mhd
+			lambda1 = ABS(prim(ivx,j,k,l)) + cfx_mhd
+			lambda2 = ABS(prim(ivy,j,k,l)) + cfy_mhd
+			lambda3 = ABS(prim(ivz,j,k,l)) + cfz_mhd
 			lambda = MAX(lambda1, lambda2, lambda3)
-
+                        
 			! Look for minimum grid size !
-			dt_temp2 = dx2(j)
+			dt_temp2 = dx(j)
 			IF(coordinate_flag == 0) THEN
 				IF(n_dim > 1) THEN
-					dt_temp2 = MIN(dt_temp2, dy2(k))
+					dt_temp2 = MIN(dt_temp2, dy(k))
 				END IF
 				IF(n_dim > 2) THEN
-					dt_temp2 = MIN(dt_temp2, dz2(l))
+					dt_temp2 = MIN(dt_temp2, dz(l))
 				END IF
 			ELSEIF(coordinate_flag == 1) THEN
-				IF(n_dim > 1 .AND. ny_2 > 1) THEN
-					dt_temp2 = MIN(dt_temp2, x2(j)*dy2(k))
+				IF(n_dim > 1 .AND. ny > 1) THEN
+					dt_temp2 = MIN(dt_temp2, x(j)*dy(k))
 				END IF
 				IF(n_dim > 2) THEN
-					dt_temp2 = MIN(dt_temp2, dz2(l))
+					dt_temp2 = MIN(dt_temp2, dz(l))
 				END IF
 			ELSEIF(coordinate_flag == 2) THEN
 				IF(n_dim > 1) THEN
-					dt_temp2 = MIN(dt_temp2, x2(j)*dy2(k))
+					dt_temp2 = MIN(dt_temp2, x(j)*dy(k))
 				END IF
 				IF(n_dim > 2) THEN
-					dt_temp2 = MIN(dt_temp2, x2(j)*sin2(k)*dz2(l))
+					dt_temp2 = MIN(dt_temp2, x(j)*sine(k)*dz(l))
 				END IF
 			END IF
 			dt_temp2 = dt_temp2*cfl/lambda

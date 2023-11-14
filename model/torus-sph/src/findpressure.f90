@@ -5,6 +5,7 @@
 ! with subroutine GETRHOEOSRTOP                                      !
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 SUBROUTINE FINDPRESSURE
+USE CUSTOM_DEF
 USE DEFINITION
 IMPLICIT NONE
 
@@ -16,13 +17,19 @@ INTEGER :: i, j, k, l
 ! The following steps are more or less similar , so no repeat 
 !$OMP PARALLEL DO COLLAPSE(3) SCHEDULE(STATIC)
 !$ACC PARALLEL LOOP GANG WORKER VECTOR COLLAPSE(3) DEFAULT(PRESENT)
-DO l = nz_min_2 - 3, nz_part_2 + 3
-	DO k = ny_min_2 - 3, ny_part_2 + 3
-		DO j = nx_min_2 - 3, nx_part_2 + 3
-      prim2(itau2,j,k,l) = prim2(irho2,j,k,l) * epsilon2(j,k,l) * (ggas2 - 1.0D0) 
-      dpdrho2 (j,k,l) = epsilon2(j,k,l) * (ggas2 - 1.0D0)
-      dpdeps2 (j,k,l) = prim2(irho2,j,k,l) * (ggas2 - 1.0D0)
-      cs2(j,k,l) = DSQRT(dpdrho2(j,k,l)+dpdeps2(j,k,l)*prim2(itau2,j,k,l)/(prim2(irho2,j,k,l)*prim2(irho2,j,k,l)))
+DO l = -2, nz + 3
+	DO k = -2, ny + 3
+		DO j = -2, nx + 3
+      IF(prim(irho,j,k,l) > rho_floor(j,k,l)) THEN
+        prim(itau,j,k,l) = prim(irho,j,k,l) * epsilon(j,k,l) * (ggas - 1.0D0) 
+        dpdrho (j,k,l) = epsilon(j,k,l) * (ggas - 1.0D0)
+        dpdeps (j,k,l) = prim(irho,j,k,l) * (ggas - 1.0D0)
+      ELSE
+        prim(itau,j,k,l) = p_floor(j,k,l)
+        dpdrho (j,k,l) = eps_floor(j,k,l) * (ggas - 1.0D0)
+        dpdeps (j,k,l) = rho_floor(j,k,l) * (ggas - 1.0D0)
+      END IF
+      cs(j,k,l) = DSQRT(dpdrho(j,k,l)+dpdeps(j,k,l)*prim(itau,j,k,l)/(prim(irho,j,k,l)*prim(irho,j,k,l)))
     END DO
   END DO
 END DO
@@ -65,7 +72,7 @@ REAL*8, INTENT (IN) :: rho_in, eps_in
 REAL*8, INTENT (OUT) :: p_out
 
 ! For DM/NM, choose by type !
-p_out = rho_in * eps_in ** (ggas2 - 1.0D0)
+p_out = rho_in * eps_in ** (ggas - 1.0D0)
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
